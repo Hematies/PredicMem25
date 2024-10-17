@@ -12,7 +12,7 @@ protected:
 	
 	distance_t distanceToHyperplane(bool oneHotSequence [SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], class_t hyperplane);
 public:
-	class_t operator()(bool opPredict, class_t input[SEQUENCE_LENGTH], class_t target);
+	class_t operator()(class_t input[SEQUENCE_LENGTH], class_t target);
 };
 
 template<typename weight_t, typename class_t, typename distance_t>
@@ -79,14 +79,16 @@ void SVM<weight_t, class_t, distance_t>::fit(class_t input[SEQUENCE_LENGTH], cla
 }
 
 template<typename weight_t, typename class_t, typename distance_t>
-class_t SVM<weight_t, class_t, distance_t>::operator()(bool opPredict, class_t input[SEQUENCE_LENGTH], class_t target) {
-	class_t res = target;
-	if (opPredict) {
-		res = predict(input);
+class_t SVM<weight_t, class_t, distance_t>::operator()(class_t input[SEQUENCE_LENGTH], class_t target) {
+	class_t res;
+	fit(input, target);
+	class_t newInput[SEQUENCE_LENGTH];
+	for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
+		newInput[i] = input[i + 1];
 	}
-	else {
-		fit(input, target);
-	}
+	newInput[SEQUENCE_LENGTH - 1] = target;
+
+	res = predict(newInput);
 	return res;
 }
 
