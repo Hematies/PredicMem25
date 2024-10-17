@@ -8,7 +8,7 @@ struct DictionaryEntry {
 	confidence_t confidence;
 };
 
-template<typename index_t, typename delta_t, typename confidence_t>
+template<typename index_t, typename delta_t, typename confidence_t> 
 class Dictionary {
 protected:
 	DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES];
