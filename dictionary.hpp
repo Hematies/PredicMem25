@@ -11,14 +11,19 @@ struct DictionaryEntry {
 template<typename index_t, typename delta_t, typename confidence_t> 
 class Dictionary {
 protected:
-	DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES];
+	DictionaryEntry<delta_t, confidence_t> *dictionaryEntries;
 	void updateConfidence(index_t index);
 	index_t getIndexOfDelta(delta_t delta);
 	index_t getIndexOfLeastFrequent();
 public:
+	Dictionary(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]);
 	DictionaryEntry<delta_t, confidence_t> operator()(bool opRead, bool useIndex, index_t index, delta_t delta);
 };
 
+template<typename index_t, typename delta_t, typename confidence_t>
+Dictionary<index_t, delta_t, confidence_t>::Dictionary(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) {
+	this->dictionaryEntries = dictionaryEntries;
+}
 
 
 template<typename index_t, typename delta_t, typename confidence_t>
