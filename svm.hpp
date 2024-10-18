@@ -3,8 +3,8 @@
 template<typename weight_t, typename class_t, typename distance_t>
 class SVM {
 protected:
-	weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL];
-	weight_t intercepts[NUM_CLASSES];
+	weight_t *weights;
+	weight_t *intercepts;
 
 	void encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL]);
 	void fit(class_t input[SEQUENCE_LENGTH], class_t target);
@@ -12,8 +12,15 @@ protected:
 	
 	distance_t distanceToHyperplane(bool oneHotSequence [SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], class_t hyperplane);
 public:
-	class_t operator()(bool opPredict, class_t input[SEQUENCE_LENGTH], class_t target);
+	SVM(weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], weight_t intercepts[NUM_CLASSES]);
+	class_t operator()(bool opOnlyPredict, class_t input[SEQUENCE_LENGTH], class_t target);
 };
+
+template<typename weight_t, typename class_t, typename distance_t>
+SVM<weight_t, class_t, distance_t>::SVM(weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], weight_t intercepts[NUM_CLASSES]) {
+	this->weights = weights;
+	this->intercepts = intercepts;
+}
 
 template<typename weight_t, typename class_t, typename distance_t>
 void SVM<weight_t, class_t, distance_t>::encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL]) {
@@ -79,14 +86,23 @@ void SVM<weight_t, class_t, distance_t>::fit(class_t input[SEQUENCE_LENGTH], cla
 }
 
 template<typename weight_t, typename class_t, typename distance_t>
-class_t SVM<weight_t, class_t, distance_t>::operator()(bool opPredict, class_t input[SEQUENCE_LENGTH], class_t target) {
-	class_t res = target;
-	if (opPredict) {
-		res = predict(input);
+class_t SVM<weight_t, class_t, distance_t>::operator()(bool opOnlyPredict, class_t input[SEQUENCE_LENGTH], class_t target) {
+	class_t res;
+
+	if (!opOnlyPredict) {
+		fit(input, target);
+		class_t newInput[SEQUENCE_LENGTH];
+		for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
+			newInput[i] = input[i + 1];
+		}
+		newInput[SEQUENCE_LENGTH - 1] = target;
+
+		res = predict(newInput);
 	}
 	else {
-		fit(input, target);
+		res = predict(input);
 	}
+	
 	return res;
 }
 
