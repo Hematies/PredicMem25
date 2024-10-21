@@ -22,16 +22,9 @@ protected:
 	way_t queryWay(index_t index, tag_t tag);
 
 public:
-	InputBuffer(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS]);
+	InputBuffer(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS]) : entries(entries){}
 	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> operator()(bool opRead, address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry);
 };
-
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
-InputBuffer(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS]) {
-	this->entries = entries;
-}
-
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::updateLRU(index_t index, way_t way)
@@ -75,7 +68,7 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 {
 	way_t res = IB_NUM_WAYS;
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
-		if (entries[index][w].tag == tag)
+		if (entries[index][w].tag == tag && entries[index][w].valid)
 			res = w;
 	}
 	return res

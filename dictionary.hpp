@@ -16,15 +16,9 @@ protected:
 	index_t getIndexOfDelta(delta_t delta);
 	index_t getIndexOfLeastFrequent();
 public:
-	Dictionary(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]);
-	DictionaryEntry<delta_t, confidence_t> operator()(bool opRead, bool useIndex, index_t index, delta_t delta);
+	Dictionary(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) : dictionaryEntries(dictionaryEntries){}
+	DictionaryEntry<delta_t, confidence_t> operator()(bool opRead, bool useIndex, index_t index, delta_t delta, index_t& targetIndex);
 };
-
-template<typename index_t, typename delta_t, typename confidence_t>
-Dictionary<index_t, delta_t, confidence_t>::Dictionary(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) {
-	this->dictionaryEntries = dictionaryEntries;
-}
-
 
 template<typename index_t, typename delta_t, typename confidence_t>
 void Dictionary<index_t, delta_t, confidence_t>::updateConfidence(index_t index) {
@@ -71,20 +65,20 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent() {
 }
 
 template<typename index_t, typename delta_t, typename confidence_t>
-DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::operator()(bool opRead, bool useIndex, index_t index, delta_t delta) {
+DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::operator()(
+	bool opRead, bool useIndex, index_t index, delta_t delta, index_t &resultIndex) {
 	DictionaryEntry<delta_t, confidence_t> res;
 	
 	// If there is a read:
-	index_t targetIndex;
 	if (opRead) {
 		if (useIndex) {
-			targetIndex = index;
-			res = this->dictionaryEntries[targetIndex];
+			resultIndex = index;
+			res = this->dictionaryEntries[resultIndex];
 		}
 		else {
-			targetIndex = this->getIndexOfDelta(delta);
-			if (targetIndex < NUM_CLASSES) {
-				res = this->dictionaryEntries[targetIndex];
+			resultIndex = this->getIndexOfDelta(delta);
+			if (resultIndex < NUM_CLASSES) {
+				res = this->dictionaryEntries[resultIndex];
 			}
 			
 		}
@@ -92,18 +86,19 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 	// If there is a write:
 	else { 
 
-		targetIndex = this->getIndexOfDelta(delta);
-		if (targetIndex < NUM_CLASSES) {
-			res = this->dictionaryEntries[targetIndex];
+		resultIndex = this->getIndexOfDelta(delta);
+		if (resultIndex < NUM_CLASSES) {
+			res = this->dictionaryEntries[resultIndex];
 		}
 		else {
-			targetIndex = this->getIndexOfLeastFrequent();
+			resultIndex = this->getIndexOfLeastFrequent();
 			res.delta = delta;
 			res.valid = true;
-			res.confidence = 0;
+			res.confidence = DICTIONARY_LFU_INITIAL_CONFIDENCE;
+			dictionaryEntries[resultIndex] = res;
 		}	
 	}
-	this->updateConfidence(targetIndex);
+	this->updateConfidence(resultIndex);
 
 	return res;
 }
