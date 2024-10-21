@@ -3,7 +3,7 @@
 template<typename weight_t, typename class_t, typename distance_t>
 class SVM {
 protected:
-	weight_t *weights;
+	weight_t (*weights)[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL];
 	weight_t *intercepts;
 
 	void encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL]);
@@ -53,7 +53,7 @@ class_t SVM<weight_t, class_t, distance_t>::predict(class_t input [SEQUENCE_LENG
 			res = c;
 		}
 	}
-	return c;
+	return res;
 }
 
 template<typename weight_t, typename class_t, typename distance_t>

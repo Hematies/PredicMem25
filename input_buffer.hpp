@@ -15,7 +15,7 @@ struct InputBufferEntry {
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 class InputBuffer {
 protected:
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> *entries;
+	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> (* entries)[IB_NUM_WAYS];
 
 	void updateLRU(index_t index, way_t way);
 	way_t getLeastRecentWay(index_t index);
@@ -31,7 +31,7 @@ void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, con
 {
 	bool areAllWaysSaturated = true;
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
-		areAllWaysSaturated = areAllWaysSaturated & this->entries[index][way].lruCounter == IB_MAX_LRU_COUNTER;
+		areAllWaysSaturated = areAllWaysSaturated && (this->entries[index][way].lruCounter == IB_MAX_LRU_COUNTER);
 	}
 
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
@@ -60,7 +60,7 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 			leastRecency = entries[index][w].lruCounter;
 		}
 	}
-	return res
+	return res;
 }
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
@@ -71,13 +71,14 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 		if (entries[index][w].tag == tag && entries[index][w].valid)
 			res = w;
 	}
-	return res
+	return res;
 }
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
 operator()(bool opRead, address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry) {
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res;
+	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res = 
+		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
@@ -93,6 +94,9 @@ operator()(bool opRead, address_t address, InputBufferEntry<tag_t, block_address
 	else {
 		if (way == IB_NUM_WAYS) {
 			way = this->getLeastRecentWay(index);
+		}
+		else {
+			entry.lruCounter = this->entries[index][way].lruCounter;
 		}
 		res = entry;
 		this->entries[index][way] = entry;
