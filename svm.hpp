@@ -70,10 +70,10 @@ void SVM<weight_t, class_t, distance_t>::fit(class_t input[SEQUENCE_LENGTH], cla
 			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 				for (int j = 0; j < NUM_CLASSES_INCLUDING_NULL; j++) {
 					if (oneHotSequence[i][j])
-						weights[c][i][j] += (classIsTarget ? +1 : -1) >> SVM_LEARNING_RATE_LOG2;
+						weights[c][i][j] += (classIsTarget ? -1 : +1) >> SVM_LEARNING_RATE_LOG2;
 				}
 			}
-			intercepts[c] += (classIsTarget ? -1 : +1) >> SVM_LEARNING_RATE_LOG2;
+			intercepts[c] += (classIsTarget ? +1 : -1) >> SVM_LEARNING_RATE_LOG2;
 			
 		}
 
