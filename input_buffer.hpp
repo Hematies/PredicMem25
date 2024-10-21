@@ -77,7 +77,8 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
 operator()(bool opRead, address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry) {
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res;
+	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res = 
+		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
@@ -93,6 +94,9 @@ operator()(bool opRead, address_t address, InputBufferEntry<tag_t, block_address
 	else {
 		if (way == IB_NUM_WAYS) {
 			way = this->getLeastRecentWay(index);
+		}
+		else {
+			entry.lruCounter = this->entries[index][way].lruCounter;
 		}
 		res = entry;
 		this->entries[index][way] = entry;

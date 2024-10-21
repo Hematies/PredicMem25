@@ -57,7 +57,7 @@ int GASP::operator()(address_t inputBufferAddress, block_address_t memoryAddress
 					inputBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 			}
 			else {
-				if (inputBufferEntry.confidence <= (PREDICTION_CONFIDENCE_DECREASE))
+				if (inputBufferEntry.confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
 					inputBufferEntry.confidence = 0;
 				else
 					inputBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
@@ -77,7 +77,7 @@ int GASP::operator()(address_t inputBufferAddress, block_address_t memoryAddress
 			for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
 				inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
 			}
-			inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = predictedClass;
+			inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = dictionaryClass;
 
 		}
 		// If there has been a miss, prepare a blank new input buffer entry:
@@ -103,7 +103,7 @@ int GASP::operator()(address_t inputBufferAddress, block_address_t memoryAddress
 		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 		if (performPrefetch) {
-			addressesToPrefetch[prefetchDegree] = predictedAddress;
+			addressesToPrefetch[0] = predictedAddress;
 			
 			// 6) Apply recursive/successive prefetching on the calculated prefetching degree (>= 1):
 			prefetchDegree = this->confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
