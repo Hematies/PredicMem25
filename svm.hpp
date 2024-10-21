@@ -12,15 +12,10 @@ protected:
 	
 	distance_t distanceToHyperplane(bool oneHotSequence [SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], class_t hyperplane);
 public:
-	SVM(weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], weight_t intercepts[NUM_CLASSES]);
+	SVM(weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], weight_t intercepts[NUM_CLASSES]):
+		weights(weights), intercepts(intercepts){}
 	class_t operator()(bool opOnlyPredict, class_t input[SEQUENCE_LENGTH], class_t target);
 };
-
-template<typename weight_t, typename class_t, typename distance_t>
-SVM<weight_t, class_t, distance_t>::SVM(weight_t weights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], weight_t intercepts[NUM_CLASSES]) {
-	this->weights = weights;
-	this->intercepts = intercepts;
-}
 
 template<typename weight_t, typename class_t, typename distance_t>
 void SVM<weight_t, class_t, distance_t>::encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL]) {

@@ -1,0 +1,98 @@
+#pragma once
+#include "global.hpp"
+
+
+class GASP {
+protected:
+	InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
+	Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
+	SVM<svm_weight_t, class_t, svm_distance_t> svm;
+	
+
+public:
+
+	GASP(
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS],
+		DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES],
+		svm_weight_t svmWeights[NUM_CLASSES][SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL], svm_weight_t svmIntercepts[NUM_CLASSES]
+	) : 
+		inputBuffer(InputBuffer<address_t, ib_tag_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>(inputBufferEntries)),
+		dictionary(Dictionary<dic_index_t, delta_t, dic_confidence_t>(dictionaryEntries)),
+		svm(SVM<svm_weight_t, class_t, svm_distance_t>(svmWeights, svmIntercepts)) {}
+
+	int prefetch(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
+		int prefetchDegree = 0;
+
+		// 1) Input buffer is read:
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry;
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
+			this->inputBuffer(true, programCounter, emptyEntry);
+
+		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
+		ib_tag_t tag = memoryAddress >> numIndexBits;
+
+		// Skip operation if the previous access is equal to the current:
+		if (inputBufferEntry.lastAddress != memoryAddress) {
+			// Continue if there has been a hit:
+			if (inputBufferEntry.valid) {
+
+				// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
+				if (inputBufferEntry.lastPredictedAddress == memoryAddress) {
+					if (inputBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
+						inputBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
+					else
+						inputBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+				}
+				else {
+					if (inputBufferEntry.confidence <= (PREDICTION_CONFIDENCE_DECREASE))
+						inputBufferEntry.confidence = 0;
+					else
+						inputBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
+				}
+			
+				// 3) Compute the resulting delta and its class:
+				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
+				class_t dictionaryClass;
+				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = this->dictionary(false, false, 0, delta, dictionaryClass);
+
+				// 4) Fit-then-predict with the SVM:
+				class_t predictedClass = this->svm(false, inputBufferEntry.sequence, dictionaryClass);
+
+				// 5) Get the finally predicted address:
+				dic_index_t dummyIndex;
+				delta_t predictedDelta = this->dictionary(true, true, predictedClass, 0, dummyIndex).delta;
+				block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
+
+				addressesToPrefetch[prefetchDegree] = predictedAddress;
+				prefetchDegree++;
+
+				// Prepare the data of the updated input buffer entry:
+				inputBufferEntry.lastAddress = memoryAddress;
+				inputBufferEntry.lastPredictedAddress = predictedAddress;
+				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
+					inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
+				}
+				inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = predictedClass;
+
+			}
+			// If there has been a miss, prepare a blank new input buffer entry:
+			else {
+				inputBufferEntry.tag = tag;
+				inputBufferEntry.valid = true;
+				inputBufferEntry.lastAddress = memoryAddress;
+				inputBufferEntry.lastPredictedAddress = 0;
+				inputBufferEntry.lruCounter = 1;
+				inputBufferEntry.confidence = 0;
+				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+					inputBufferEntry.sequence[i] = NUM_CLASSES;
+				}
+			
+			}
+
+			// 6) Update the input buffer with the entry:
+			inputBuffer(false, programCounter, inputBufferEntry);
+		}
+
+		return prefetchDegree;
+	}
+};
