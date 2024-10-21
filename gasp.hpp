@@ -33,7 +33,8 @@ int GASP::operator()(address_t inputBufferAddress, block_address_t memoryAddress
 	int prefetchDegree = 0;
 
 	// 1) Input buffer is read:
-	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry;
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry = 
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
 		this->inputBuffer(true, inputBufferAddress, emptyEntry);
 
