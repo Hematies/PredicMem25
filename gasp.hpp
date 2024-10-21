@@ -33,6 +33,9 @@ public:
 
 		// Skip operation if the previous access is equal to the current:
 		if (inputBufferEntry.lastAddress != memoryAddress) {
+			class_t predictedClass;
+			bool performPrefetch = false;
+
 			// Continue if there has been a hit:
 			if (inputBufferEntry.valid) {
 
@@ -49,6 +52,9 @@ public:
 					else
 						inputBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 				}
+
+				if (inputBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
+					performPrefetch = true;
 			
 				// 3) Compute the resulting delta and its class:
 				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
@@ -56,19 +62,8 @@ public:
 				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = this->dictionary(false, false, 0, delta, dictionaryClass);
 
 				// 4) Fit-then-predict with the SVM:
-				class_t predictedClass = this->svm(false, inputBufferEntry.sequence, dictionaryClass);
+				predictedClass = this->svm(false, inputBufferEntry.sequence, dictionaryClass);
 
-				// 5) Get the finally predicted address:
-				dic_index_t dummyIndex;
-				delta_t predictedDelta = this->dictionary(true, true, predictedClass, 0, dummyIndex).delta;
-				block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
-
-				addressesToPrefetch[prefetchDegree] = predictedAddress;
-				prefetchDegree++;
-
-				// Prepare the data of the updated input buffer entry:
-				inputBufferEntry.lastAddress = memoryAddress;
-				inputBufferEntry.lastPredictedAddress = predictedAddress;
 				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
 					inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
 				}
@@ -86,10 +81,26 @@ public:
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 					inputBufferEntry.sequence[i] = NUM_CLASSES;
 				}
+
+				// 4) Predict with the SVM:
+				predictedClass = this->svm(true, inputBufferEntry.sequence, 0);
 			
 			}
 
+			// 5) Get the finally predicted address:
+			dic_index_t dummyIndex;
+			delta_t predictedDelta = this->dictionary(true, true, predictedClass, 0, dummyIndex).delta;
+			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
+
+			if (performPrefetch) {
+				addressesToPrefetch[prefetchDegree] = predictedAddress;
+				prefetchDegree++;
+
+			}
+			
 			// 6) Update the input buffer with the entry:
+			inputBufferEntry.lastAddress = memoryAddress;
+			inputBufferEntry.lastPredictedAddress = predictedAddress;
 			inputBuffer(false, programCounter, inputBufferEntry);
 		}
 
