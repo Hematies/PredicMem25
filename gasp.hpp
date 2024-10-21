@@ -20,90 +20,92 @@ public:
 		dictionary(Dictionary<dic_index_t, delta_t, dic_confidence_t>(dictionaryEntries)),
 		svm(SVM<svm_weight_t, class_t, svm_distance_t>(svmWeights, svmIntercepts)) {}
 
-	int prefetch(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
-		int prefetchDegree = 0;
+	int operator()(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]);
+};
 
-		// 1) Input buffer is read:
-		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry;
-		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-			this->inputBuffer(true, programCounter, emptyEntry);
+int GASP::operator()(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
+	int prefetchDegree = 0;
 
-		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
-		ib_tag_t tag = memoryAddress >> numIndexBits;
+	// 1) Input buffer is read:
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry;
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
+		this->inputBuffer(true, programCounter, emptyEntry);
 
-		// Skip operation if the previous access is equal to the current:
-		if (inputBufferEntry.lastAddress != memoryAddress) {
-			class_t predictedClass;
-			bool performPrefetch = false;
+	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
+	ib_tag_t tag = memoryAddress >> numIndexBits;
 
-			// Continue if there has been a hit:
-			if (inputBufferEntry.valid) {
+	// Skip operation if the previous access is equal to the current:
+	if (inputBufferEntry.lastAddress != memoryAddress) {
+		class_t predictedClass;
+		bool performPrefetch = false;
 
-				// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
-				if (inputBufferEntry.lastPredictedAddress == memoryAddress) {
-					if (inputBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
-						inputBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
-					else
-						inputBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
-				}
-				else {
-					if (inputBufferEntry.confidence <= (PREDICTION_CONFIDENCE_DECREASE))
-						inputBufferEntry.confidence = 0;
-					else
-						inputBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
-				}
+		// Continue if there has been a hit:
+		if (inputBufferEntry.valid) {
 
-				if (inputBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
-					performPrefetch = true;
-			
-				// 3) Compute the resulting delta and its class:
-				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
-				class_t dictionaryClass;
-				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = this->dictionary(false, false, 0, delta, dictionaryClass);
-
-				// 4) Fit-then-predict with the SVM:
-				predictedClass = this->svm(false, inputBufferEntry.sequence, dictionaryClass);
-
-				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
-					inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
-				}
-				inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = predictedClass;
-
+			// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
+			if (inputBufferEntry.lastPredictedAddress == memoryAddress) {
+				if (inputBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
+					inputBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
+				else
+					inputBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 			}
-			// If there has been a miss, prepare a blank new input buffer entry:
 			else {
-				inputBufferEntry.tag = tag;
-				inputBufferEntry.valid = true;
-				inputBufferEntry.lastAddress = memoryAddress;
-				inputBufferEntry.lastPredictedAddress = 0;
-				inputBufferEntry.lruCounter = 1;
-				inputBufferEntry.confidence = 0;
-				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-					inputBufferEntry.sequence[i] = NUM_CLASSES;
-				}
-
-				// 4) Predict with the SVM:
-				predictedClass = this->svm(true, inputBufferEntry.sequence, 0);
-			
+				if (inputBufferEntry.confidence <= (PREDICTION_CONFIDENCE_DECREASE))
+					inputBufferEntry.confidence = 0;
+				else
+					inputBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 			}
 
-			// 5) Get the finally predicted address:
-			dic_index_t dummyIndex;
-			delta_t predictedDelta = this->dictionary(true, true, predictedClass, 0, dummyIndex).delta;
-			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
+			if (inputBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
+				performPrefetch = true;
 
-			if (performPrefetch) {
-				addressesToPrefetch[prefetchDegree] = predictedAddress;
-				prefetchDegree++;
+			// 3) Compute the resulting delta and its class:
+			delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
+			class_t dictionaryClass;
+			DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = this->dictionary(false, false, 0, delta, dictionaryClass);
 
+			// 4) Fit-then-predict with the SVM:
+			predictedClass = this->svm(false, inputBufferEntry.sequence, dictionaryClass);
+
+			for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
+				inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
 			}
-			
-			// 6) Update the input buffer with the entry:
+			inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = predictedClass;
+
+		}
+		// If there has been a miss, prepare a blank new input buffer entry:
+		else {
+			inputBufferEntry.tag = tag;
+			inputBufferEntry.valid = true;
 			inputBufferEntry.lastAddress = memoryAddress;
-			inputBufferEntry.lastPredictedAddress = predictedAddress;
-			inputBuffer(false, programCounter, inputBufferEntry);
+			inputBufferEntry.lastPredictedAddress = 0;
+			inputBufferEntry.lruCounter = 1;
+			inputBufferEntry.confidence = 0;
+			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+				inputBufferEntry.sequence[i] = NUM_CLASSES;
+			}
+
+			// 4) Predict with the SVM:
+			predictedClass = this->svm(true, inputBufferEntry.sequence, 0);
+
 		}
 
-		return prefetchDegree;
+		// 5) Get the finally predicted address:
+		dic_index_t dummyIndex;
+		delta_t predictedDelta = this->dictionary(true, true, predictedClass, 0, dummyIndex).delta;
+		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
+
+		if (performPrefetch) {
+			addressesToPrefetch[prefetchDegree] = predictedAddress;
+			prefetchDegree++;
+
+		}
+
+		// 6) Update the input buffer with the entry:
+		inputBufferEntry.lastAddress = memoryAddress;
+		inputBufferEntry.lastPredictedAddress = predictedAddress;
+		inputBuffer(false, programCounter, inputBufferEntry);
 	}
-};
+
+	return prefetchDegree;
+}
