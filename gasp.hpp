@@ -29,13 +29,13 @@ public:
 	int operator()(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]);
 };
 
-int GASP::operator()(address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
+int GASP::operator()(address_t inputBufferAddress, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
 	int prefetchDegree = 0;
 
 	// 1) Input buffer is read:
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> emptyEntry;
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-		this->inputBuffer(true, programCounter, emptyEntry);
+		this->inputBuffer(true, inputBufferAddress, emptyEntry);
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	ib_tag_t tag = memoryAddress >> numIndexBits;
@@ -112,7 +112,7 @@ int GASP::operator()(address_t programCounter, block_address_t memoryAddress, bl
 		// 7) Update the input buffer with the entry:
 		inputBufferEntry.lastAddress = memoryAddress;
 		inputBufferEntry.lastPredictedAddress = predictedAddress;
-		inputBuffer(false, programCounter, inputBufferEntry);
+		inputBuffer(false, inputBufferAddress, inputBufferEntry);
 	}
 
 	return prefetchDegree;
