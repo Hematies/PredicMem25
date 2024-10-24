@@ -1,0 +1,15 @@
+<AutoPilot:ProjectResources xmlns:AutoPilot="com.autoesl.autopilot.ui.directiveView">
+    <sourceFile name="">
+        <directive functionName="testDictionary" label="" functionLabel="">
+            <pragma name="TOP">
+                <option name="name" value="testDictionary"/>
+            </pragma>
+        </directive>
+        <directive functionName="testDictionary" label="" functionLabel="">
+            <pragma name="TOP">
+                <option name="name" value="testDictionary"/>
+            </pragma>
+        </directive>
+    </sourceFile>
+</AutoPilot:ProjectResources>
+
