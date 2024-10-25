@@ -1,13 +1,13 @@
 <AutoPilot:ProjectResources xmlns:AutoPilot="com.autoesl.autopilot.ui.directiveView">
     <sourceFile name="">
-        <directive functionName="testInputBuffer" label="" functionLabel="">
+        <directive functionName="testSVM" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="testInputBuffer"/>
+                <option name="name" value="testSVM"/>
             </pragma>
         </directive>
-        <directive functionName="testInputBuffer" label="" functionLabel="">
+        <directive functionName="testSVM" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="testInputBuffer"/>
+                <option name="name" value="testSVM"/>
             </pragma>
         </directive>
     </sourceFile>

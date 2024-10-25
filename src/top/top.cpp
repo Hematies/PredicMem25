@@ -18,7 +18,7 @@ DictionaryEntry<delta_t, dic_confidence_t> testDictionary(dic_index_t index){
 }
 
 InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> testInputBuffer(address_t addr){
-#pragma HLS TOP
+// #pragma HLS TOP
 
 	static InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 		entries[IB_NUM_SETS][IB_NUM_WAYS];
@@ -42,3 +42,23 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 
 	return res;
 }
+
+class_t testSVM(){
+
+#pragma HLS TOP
+	static class_t input[SEQUENCE_LENGTH];
+#pragma HLS ARRAY_PARTITION variable=input complete
+	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
+#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+	static svm_weight_t intercepts[NUM_CLASSES];
+#pragma HLS ARRAY_PARTITION variable=intercepts complete
+
+
+	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+
+	class_t res = svm.fitAndPredict(weight_matrices, intercepts, input, 0);
+	res = svm.predict(weight_matrices, intercepts, input);
+	return res;
+}
+
+
