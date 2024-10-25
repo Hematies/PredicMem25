@@ -4,7 +4,7 @@
 ## Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project PredicMem25
-set_top testDictionary
+set_top testInputBuffer
 add_files PredicMem25/src/include/config.hpp
 add_files PredicMem25/src/include/const_expr.hpp
 add_files PredicMem25/src/include/data_type.hpp
