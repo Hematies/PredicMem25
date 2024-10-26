@@ -104,7 +104,8 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
 read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress) {
-#pragma HLS PIPELINE
+// #pragma HLS INLINE
+	#pragma HLS PIPELINE
 	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res = 
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
 
@@ -129,6 +130,7 @@ void
 InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
 write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry) {
+// #pragma HLS INLINE
 #pragma HLS PIPELINE
 	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res =
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();

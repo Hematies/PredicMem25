@@ -28,3 +28,4 @@ constexpr LookUpTable<data_t, N> fillUniformLookUpTable(int min, int max) {
 	}
 	return res;
 }
+

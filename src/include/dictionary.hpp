@@ -74,7 +74,8 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(Dict
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex) {
-#pragma HLS PIPELINE
+// #pragma HLS INLINE
+	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 
 	if (useIndex) {
@@ -96,7 +97,8 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::write(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex) {
-#pragma HLS PIPELINE
+// #pragma HLS INLINE
+	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 	
 
