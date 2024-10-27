@@ -1,4 +1,4 @@
-<project xmlns="com.autoesl.autopilot.project" name="PredicMem25" top="testSVM">
+<project xmlns="com.autoesl.autopilot.project" name="PredicMem25" top="testGASP">
     <includePaths/>
     <libraryPaths/>
     <Simulation>

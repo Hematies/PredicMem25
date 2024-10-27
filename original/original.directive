@@ -5,14 +5,9 @@
                 <option name="name" value="testGASP"/>
             </pragma>
         </directive>
-        <directive functionName="testSVM" label="" functionLabel="">
+        <directive functionName="testGASP" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="testSVM"/>
-            </pragma>
-        </directive>
-        <directive functionName="testSVM" label="" functionLabel="">
-            <pragma name="TOP">
-                <option name="name" value="testSVM"/>
+                <option name="name" value="testGASP"/>
             </pragma>
         </directive>
     </sourceFile>

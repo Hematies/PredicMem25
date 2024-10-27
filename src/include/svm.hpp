@@ -43,8 +43,11 @@ void SVM<weight_t, class_t, distance_t>::encodeInOneHot(class_t classSequence[SE
 
 template<typename weight_t, typename class_t, typename distance_t>
 distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(weigth_matrix_t<weight_t> weight_matrix, weight_t intercept, class_t sequence[SEQUENCE_LENGTH]) {
-#pragma HLS INLINE
+#pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=0 complete
+// #pragma HLS DEPENDENCE array false inter variable=weight_matrices->weights
 
+#pragma HLS INLINE
+// #pragma HLS PIPELINE
 	distance_t res = 0;
 	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 #pragma HLS UNROLL
@@ -57,7 +60,13 @@ distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(weigth_matri
 
 template<typename weight_t, typename class_t, typename distance_t>
 class_t SVM<weight_t, class_t, distance_t>::predict_(weigth_matrix_t<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t sequence [SEQUENCE_LENGTH]) {
+#pragma HLS ARRAY_PARTITION variable=weight_matrix complete
+#pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=0 complete
+#pragma HLS ARRAY_PARTITION variable=intercepts complete
+#pragma HLS ARRAY_PARTITION variable=sequence complete
+
 	#pragma HLS INLINE
+// #pragma HLS PIPELINE
 
 	class_t res = 0;
 	distance_t minDistance = distanceToHyperplane(weight_matrices[0], intercepts[0], sequence); // oneHotSequence);
@@ -105,7 +114,12 @@ void SVM<weight_t, class_t, distance_t>::fit(weigth_matrix_t<weight_t> weight_ma
 template<typename weight_t, typename class_t, typename distance_t>
 class_t SVM<weight_t, class_t, distance_t>::fitAndPredict(weigth_matrix_t<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target) {
 	// #pragma HLS INLINE
+#pragma HLS ARRAY_PARTITION variable=weight_matrix complete
+#pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=0 complete
+#pragma HLS ARRAY_PARTITION variable=intercepts complete
 	#pragma HLS PIPELINE
+#pragma HLS ARRAY_PARTITION variable=input complete
+
 	class_t res;
 
 	fit(weight_matrices, intercepts, input, target);
@@ -125,6 +139,10 @@ template<typename weight_t, typename class_t, typename distance_t>
 void SVM<weight_t, class_t, distance_t>::fitAndRecursivelyPredict(weigth_matrix_t<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
 		class_t outputs[MAX_PREFETCHING_DEGREE], int numPredictions) {
 	// #pragma HLS INLINE
+#pragma HLS ARRAY_PARTITION variable=weight_matrix complete
+#pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=0 complete
+#pragma HLS ARRAY_PARTITION variable=intercepts complete
+#pragma HLS ARRAY_PARTITION variable=input complete
 	#pragma HLS PIPELINE
 
 	fit(weight_matrices, intercepts, input, target);

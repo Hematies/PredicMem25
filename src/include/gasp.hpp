@@ -107,13 +107,13 @@ int GASP::operator()(
 			}
 
 			// 4) Predict with the SVM:
-			predictedClass = this->svm.predict(weight_matrices, intercepts, inputBufferEntry.sequence);
+			// predictedClass = this->svm.predict(weight_matrices, intercepts, inputBufferEntry.sequence);
 
 		}
 
 		// 5) Get the finally predicted address:
 		dic_index_t dummyIndex;
-		delta_t predictedDelta = this->dictionary.read(dictionaryEntries, true, predictedClass, 0, dummyIndex).delta;
+		delta_t predictedDelta = this->dictionary.read(dictionaryEntries, true, predictedClass, 0, dummyIndex, false).delta;
 		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 		if (performPrefetch) {
@@ -121,8 +121,10 @@ int GASP::operator()(
 
 			// 6) Apply recursive/successive prefetching on the calculated prefetching degree (>= 1):
 			prefetchDegree = this->confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
+			/*
 			this->succesivePrediction(inputBufferEntries, dictionaryEntries, weight_matrices, intercepts,
 					predictedAddress, inputBufferEntry.sequence, prefetchDegree, addressesToPrefetch);
+			*/
 		}
 
 		// 7) Update the input buffer with the entry:
@@ -156,7 +158,7 @@ void GASP::succesivePrediction(
 			class_t predictedClass = this->svm.predict(weight_matrices, intercepts, sequence);
 
 			dic_index_t dummyIndex;
-			delta_t predictedDelta = this->dictionary.read(dictionaryEntries, true, predictedClass, 0, dummyIndex).delta;
+			delta_t predictedDelta = this->dictionary.read(dictionaryEntries, true, predictedClass, 0, dummyIndex, false).delta;
 			memoryAddress = ((delta_t)memoryAddress + predictedDelta);
 
 			addressesToPrefetch[k] = memoryAddress;

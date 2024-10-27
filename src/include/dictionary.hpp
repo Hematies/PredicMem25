@@ -16,7 +16,8 @@ protected:
 	index_t getIndexOfLeastFrequent(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]);
 public:
 	Dictionary(){}
-	DictionaryEntry<delta_t, confidence_t> read(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex);
+	DictionaryEntry<delta_t, confidence_t> read(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
+			bool performUpdateConfidence);
 	DictionaryEntry<delta_t, confidence_t> write(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex);
 
 };
@@ -73,8 +74,9 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(Dict
 
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
-		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex) {
-// #pragma HLS INLINE
+		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
+		bool performUpdateConfidence) {
+	#pragma HLS INLINE
 	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 
@@ -89,7 +91,8 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		}
 
 	}
-	this->updateConfidence(dictionaryEntries, resultIndex);
+	if(performUpdateConfidence)
+		this->updateConfidence(dictionaryEntries, resultIndex);
 
 	return res;
 }
@@ -97,7 +100,7 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::write(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex) {
-// #pragma HLS INLINE
+	#pragma HLS INLINE
 	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 	

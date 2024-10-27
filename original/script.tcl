@@ -4,7 +4,7 @@
 ## Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project PredicMem25
-set_top testSVM
+set_top testGASP
 add_files PredicMem25/src/top/top.cpp
 add_files PredicMem25/src/include/svm.hpp
 add_files PredicMem25/src/include/input_buffer.hpp
