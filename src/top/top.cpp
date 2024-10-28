@@ -89,12 +89,16 @@ void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_
 
 
 
-int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, hls::stream<block_address_t> addressesToPrefetch){
-// #pragma HLS INTERFACE ap_ctrl_chain port=return
+void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		// hls::stream<block_address_t> &addressesToPrefetch
+		){
+// #pragma HLS STREAM variable=addressesToPrefetch depth=4
+// #pragma HLS INTERFACE ap_ctrl_chain // port=addressesToPrefetch
 // #pragma HLS TOP
 
-// #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
-// #pragma HLS ARRAY_PARTITION variable=addressesToPrefetch complete
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS ARRAY_PARTITION variable=addressesToPrefetch complete
 // #pragma HLS DEPENDENCE intra false variable=addressesToPrefetch
 
 
@@ -224,22 +228,27 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, hls::s
 		dic_index_t dummyIndex;
 		delta_t predictedDelta;
 
-		predictedDelta = dictionary.read(
-				dictionaryEntries,
-				true, predictedClasses[0], 0, dummyIndex, false).delta;
+		predictedDelta = dictionaryEntries[predictedClasses[0]].delta;
 		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 		if(performPrefetch){
+			block_address_t addressesToPrefetch_[MAX_PREFETCHING_DEGREE];
 			block_address_t prevAddress = predictedAddress;
-			addressesToPrefetch.write(predictedAddress);
+			addressesToPrefetch_[0] = predictedAddress;
 			for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
 #pragma HLS UNROLL
 				if(i < prefetchDegree){
-					delta_t predictedDelta_ = dictionary.read(
-									dictionaryEntries,
-									true, predictedClasses[i], 0, dummyIndex, false).delta;
-					addressesToPrefetch.write((delta_t)prevAddress + predictedDelta_);
-					prevAddress = (delta_t)prevAddress + predictedDelta_;
+					delta_t predictedDelta_ = dictionaryEntries[predictedClasses[i]].delta;
+					block_address_t addr = (delta_t)prevAddress + predictedDelta_;
+					addressesToPrefetch_[i] = addr;
+					prevAddress = addr;
+				}
+			}
+			for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+// #pragma HLS UNROLL
+				if(i < prefetchDegree){
+					// addressesToPrefetch.write(addressesToPrefetch_[i]);
+					addressesToPrefetch[i] = addressesToPrefetch_[i];
 				}
 			}
 		}
@@ -251,7 +260,7 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, hls::s
 		inputBuffer.write(inputBufferEntries, inputBufferAddress, inputBufferEntry);
 	}
 
-	return prefetchDegree;
+	// return prefetchDegree;
 }
 
 
