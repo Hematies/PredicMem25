@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../include/global.hpp"
+#include <hls_stream.h>
 
 DictionaryEntry<delta_t, dic_confidence_t> testDictionary(dic_index_t index){
 // #pragma HLS TOP
@@ -88,9 +89,14 @@ void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_
 
 
 
-int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]){
+int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, hls::stream<block_address_t> addressesToPrefetch){
 // #pragma HLS INTERFACE ap_ctrl_chain port=return
 // #pragma HLS TOP
+
+// #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+// #pragma HLS ARRAY_PARTITION variable=addressesToPrefetch complete
+// #pragma HLS DEPENDENCE intra false variable=addressesToPrefetch
+
 
 	static LookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>
 		confidenceLookUpTable = fillUniformLookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>(1, MAX_PREFETCHING_DEGREE);
@@ -150,15 +156,7 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_
 	// Skip operation if the previous access is equal to the current:
 	// if (inputBufferEntry.lastAddress != memoryAddress) {
 	if(true) {
-		class_t predictedClass;
-// #pragma HLS DEPENDENCE false inter variable=predictedClass
-
-		/*
-		DictionaryEntry<delta_t, dic_confidence_t> updatedDictionaryEntries[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=updatedDictionaryEntries complete
-*/
-// #pragma HLS AGGREGATE variable=updatedDictionaryEntries
-// #pragma HLS DEPENDENCE false inter variable=updatedDictionaryEntries
+		class_t predictedClasses[MAX_PREFETCHING_DEGREE];
 
 
 		bool performPrefetch = false;
@@ -187,11 +185,14 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_
 			// 3) Compute the resulting delta and its class:
 			delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
 			class_t dictionaryClass;
-// #pragma HLS DEPENDENCE false inter variable=dictionaryClass
 			DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(dictionaryEntries, delta, dictionaryClass);
 
-			// 4) Fit-then-predict with the SVM:
-			predictedClass = svm.fitAndPredict(weight_matrices, intercepts, inputBufferEntry.sequence, dictionaryClass);
+			// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
+			// on the calculated prefetching degree (>= 1):
+			prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
+			svm.fitAndRecursivelyPredict(weight_matrices, intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+					prefetchDegree == 0? 1 : prefetchDegree);
+
 
 
 			for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
@@ -215,44 +216,36 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_
 			}
 
 			// 4) Predict with the SVM:
-			predictedClass = svm.predict(weight_matrices, intercepts, inputBufferEntry.sequence);
+			predictedClasses[0] = svm.predict(weight_matrices, intercepts, inputBufferEntry.sequence);
 
 		}
 
 		// 5) Get the finally predicted address:
 		dic_index_t dummyIndex;
 		delta_t predictedDelta;
-// #pragma HLS DEPENDENCE false inter variable=predictedDelta
-
-		/*
-		for(int c = 0; c < NUM_CLASSES; c++){
-		#pragma HLS UNROLL
-			// updatedDictionaryEntries[c] = dictionaryEntries[c];
-			updatedDictionaryEntries[c].confidence = dictionaryEntries[c].confidence;
-			updatedDictionaryEntries[c].delta = dictionaryEntries[c].delta;
-			updatedDictionaryEntries[c].valid = dictionaryEntries[c].valid;
-		}
-		*/
-
 
 		predictedDelta = dictionary.read(
-				// updatedDictionaryEntries,
 				dictionaryEntries,
-				true, predictedClass, 0, dummyIndex, false).delta;
+				true, predictedClasses[0], 0, dummyIndex, false).delta;
 		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
-		if (performPrefetch) {
-			addressesToPrefetch[0] = predictedAddress;
-
-			// 6) Apply recursive/successive prefetching on the calculated prefetching degree (>= 1):
-			prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-			/*
-			succesivePrediction(inputBufferEntries, dictionaryEntries, weight_matrices, intercepts,
-					predictedAddress, inputBufferEntry.sequence, prefetchDegree, addressesToPrefetch);
-			*/
+		if(performPrefetch){
+			block_address_t prevAddress = predictedAddress;
+			addressesToPrefetch.write(predictedAddress);
+			for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
+#pragma HLS UNROLL
+				if(i < prefetchDegree){
+					delta_t predictedDelta_ = dictionary.read(
+									dictionaryEntries,
+									true, predictedClasses[i], 0, dummyIndex, false).delta;
+					addressesToPrefetch.write((delta_t)prevAddress + predictedDelta_);
+					prevAddress = (delta_t)prevAddress + predictedDelta_;
+				}
+			}
 		}
 
-		// 7) Update the input buffer with the entry:
+
+		// 6) Update the input buffer with the entry:
 		inputBufferEntry.lastAddress = memoryAddress;
 		inputBufferEntry.lastPredictedAddress = predictedAddress;
 		inputBuffer.write(inputBufferEntries, inputBufferAddress, inputBufferEntry);

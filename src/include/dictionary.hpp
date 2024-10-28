@@ -60,6 +60,7 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfDelta(DictionaryEn
 template<typename index_t, typename delta_t, typename confidence_t>
 index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) {
 #pragma HLS INLINE
+
 	index_t res = NUM_CLASSES;
 	confidence_t minConfidence = DICTIONARY_LFU_MAX_CONFIDENCE;
 	loop_getIndexOfLeastFrequent :for (int i = 0; i < NUM_CLASSES; i++) {
@@ -76,7 +77,7 @@ template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
 		bool performUpdateConfidence) {
-	#pragma HLS INLINE
+	// #pragma HLS INLINE
 	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 
@@ -102,6 +103,7 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex) {
 	#pragma HLS INLINE
 	#pragma HLS PIPELINE
+
 	DictionaryEntry<delta_t, confidence_t> res;
 	
 
