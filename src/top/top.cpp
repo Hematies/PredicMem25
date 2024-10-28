@@ -28,10 +28,10 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 		inputBuffer;
 
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res = {
-			true, 0, 1, {1,1,1,1,1,1,1,1}, 0, 2, 0
+			true, 0, 1, {1,1,1,1,1,1}, 0, 2, 0
 	};
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res1 = {
-			true, 20, 1, {1,1,1,1,1,1,1,1}, 0, 2, 0
+			true, 20, 1, {1,1,1,1,1,1}, 0, 2, 0
 	};
 	inputBuffer.write(entries, 0, res);
 	inputBuffer.write(entries, 1 << 30, res1);
@@ -45,7 +45,9 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 
 
 void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE]){
-// #pragma HLS TOP
+#pragma HLS TOP
+#pragma HLS INTERFACE ap_fifo port=output
+
 // #pragma PIPELINE
 	// static class_t input[SEQUENCE_LENGTH];
 	#pragma HLS ARRAY_PARTITION variable=input complete
@@ -53,6 +55,7 @@ void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_
 	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
 	// #pragma HLS SHARED variable=weight_matrices->weights
 	#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+// #pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=1 factor=8 block
 
 	static svm_weight_t intercepts[NUM_CLASSES];
 	// #pragma HLS SHARED variable=intercepts
@@ -76,15 +79,18 @@ void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_
 	class_t res1 = svm.predict(weight_matrices, intercepts, newInput);
 	return res1;
 	*/
-	svm.fitAndRecursivelyPredict(weight_matrices, intercepts, input, target, output, 1);
+	svm.fitAndRecursivelyPredict(weight_matrices, intercepts, input, target, output, 4);
 	// class_t res = svm.fitAndPredict(weight_matrices, intercepts, input, target);
 	// output[0] = res;
 }
 
 
+
+
+
 int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]){
 // #pragma HLS INTERFACE ap_ctrl_chain port=return
-#pragma HLS TOP
+// #pragma HLS TOP
 
 	static LookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>
 		confidenceLookUpTable = fillUniformLookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>(1, MAX_PREFETCHING_DEGREE);
@@ -92,21 +98,27 @@ int testGASP(address_t inputBufferAddress, block_address_t memoryAddress, block_
 	static DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES];
 #pragma HLS ARRAY_PARTITION variable=dictionaryEntries complete
 // #pragma HLS DEPENDENCE array false inter variable=dictionaryEntries
+	initDictionaryEntries<delta_t, dic_confidence_t>(dictionaryEntries);
 
 	static InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 			inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS];
 // #pragma HLS SHARED variable=inputBufferEntries
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntries dim=0 factor=2 block
-	#pragma HLS DEPENDENCE array false inter variable=inputBufferEntries
+#pragma HLS ARRAY_PARTITION variable=inputBufferEntries dim=0 factor=2 block
+#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntries
+
+	initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>(inputBufferEntries);
+
 
 	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
 // #pragma HLS DEPENDENCE array false inter variable=weight_matrices
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+	initSVMWeights<svm_weight_t>(weight_matrices);
 
 	static svm_weight_t intercepts[NUM_CLASSES];
 // #pragma HLS DEPENDENCE array false inter variable=intercepts
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
+	initSVMIntercepts<svm_weight_t>(intercepts);
 
 	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
 #pragma HLS DEPENDENCE false variable=inputBuffer
