@@ -109,16 +109,6 @@ class_t SVM<weight_t, class_t, distance_t>::predict_(weigth_matrix_t<weight_t> w
 		distances[c] = distanceToHyperplane(weight_matrices[c], intercepts[c], sequence);
 
 	}
-	/*
-	distance_t minDistance = distances[0];
-	for (int c = 0; c < NUM_CLASSES; c++) {
-#pragma HLS UNROLL
-		if (distances[c] < minDistance) {
-			minDistance = distances[c];
-			res = c;
-		}
-	}
-	*/
 
 	class_t indexes[NUM_CLASSES / 2];
 	distance_t minDistances[NUM_CLASSES / 2];
@@ -147,6 +137,7 @@ class_t SVM<weight_t, class_t, distance_t>::predict_(weigth_matrix_t<weight_t> w
 	}
 
 
+
 	return res;
 }
 
@@ -157,52 +148,6 @@ class_t SVM<weight_t, class_t, distance_t>::predict(weigth_matrix_t<weight_t> we
 	#pragma HLS PIPELINE
 	return predict_(weight_matrices, intercepts, sequence);
 }
-
-/*
-template<typename weight_t, typename class_t, typename distance_t>
-void SVM<weight_t, class_t, distance_t>::fit(weigth_matrix_t<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t sequence[SEQUENCE_LENGTH], class_t target) {
-#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-#pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
-#pragma HLS ARRAY_PARTITION variable=intercepts complete
-#pragma HLS ARRAY_PARTITION variable=sequence complete
-
-	// #pragma HLS INLINE
-#pragma HLS PIPELINE
-
-
-	for (int c = 0; c < NUM_CLASSES; c++) {
-#pragma HLS UNROLL
-		distance_t distance = distanceToHyperplane(weight_matrices[c], intercepts[c], sequence);// oneHotSequence);
-		bool classIsTarget = target == c;
-		bool isPredictionCorrect = classIsTarget ? distance <= -1 : distance >= +1;
-
-		if (!isPredictionCorrect){
-			if(classIsTarget){
-				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-	#pragma HLS UNROLL
-					class_t correspondingClass = sequence[i];
-					weight_matrices[c].weights[i][correspondingClass]--;
-
-				}
-				intercepts[c]++;
-			}
-			else{
-				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-	#pragma HLS UNROLL
-					class_t correspondingClass = sequence[i];
-					weight_matrices[c].weights[i][correspondingClass]++;
-
-				}
-				intercepts[c]--;
-			}
-
-		}
-
-
-	}
-}
-*/
-
 
 
 template<typename weight_t, typename class_t, typename distance_t>
@@ -223,33 +168,22 @@ void SVM<weight_t, class_t, distance_t>::fit(weigth_matrix_t<weight_t> weight_ma
 	const class_t predictedClass = predict_(weight_matrices, intercepts, sequence);
 
 	if(target != predictedClass){
-		/*
-		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-#pragma HLS UNROLL
-			class_t correspondingClass = sequence[i];
-			weight_matrices[target].weights[i][correspondingClass]++;
-		}
-		*/
+
 		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 		#pragma HLS UNROLL
 			for(int j = 0; j < NUM_CLASSES_INCLUDING_NULL; j++){
+#pragma HLS UNROLL
 				weight_matrices[target].weights[i][j] += (weight_t)
 						oneHotSequence[i][j];
 			}
 		}
 
 		intercepts[predictedClass]--;
-		/*
-		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-#pragma HLS UNROLL
-			class_t correspondingClass = sequence[i];
-			weight_matrices[target].weights[i][correspondingClass]--;
 
-		}
-		 */
 		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 		#pragma HLS UNROLL
 			for(int j = 0; j < NUM_CLASSES_INCLUDING_NULL; j++){
+#pragma HLS UNROLL
 				weight_matrices[target].weights[i][j] -= (weight_t)
 						oneHotSequence[i][j];
 			}
