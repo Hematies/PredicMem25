@@ -210,8 +210,8 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 		else {
 			inputBufferEntry.tag = tag;
 			inputBufferEntry.valid = true;
-			inputBufferEntry.lastAddress = memoryAddress;
-			inputBufferEntry.lastPredictedAddress = 0;
+			// inputBufferEntry.lastAddress = memoryAddress;
+			// inputBufferEntry.lastPredictedAddress = 0;
 			inputBufferEntry.lruCounter = 1;
 			inputBufferEntry.confidence = 0;
 			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
