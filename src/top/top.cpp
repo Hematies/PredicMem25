@@ -38,8 +38,9 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 	inputBuffer.write(entries, 1 << 30, res1);
 	inputBuffer.write(entries, 2, res);
 	inputBuffer.write(entries, 3, res);
-	res = inputBuffer.read(entries, 0);
-	res = inputBuffer.read(entries, 1);
+	bool inputBufferIsHit;
+	res = inputBuffer.read(entries, 0, inputBufferIsHit);
+	res = inputBuffer.read(entries, 1, inputBufferIsHit);
 
 	return res;
 }
@@ -53,7 +54,7 @@ void testSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_
 	// static class_t input[SEQUENCE_LENGTH];
 	#pragma HLS ARRAY_PARTITION variable=input complete
 
-	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
+	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
 	// #pragma HLS SHARED variable=weight_matrices->weights
 	#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 // #pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=1 factor=8 block
@@ -105,30 +106,23 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 	static LookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>
 		confidenceLookUpTable = fillUniformLookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>(1, MAX_PREFETCHING_DEGREE);
 
-	static DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=dictionaryEntries complete
+	static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
+		= initDictionaryEntries<delta_t, dic_confidence_t>();
+#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
 // #pragma HLS DEPENDENCE array false inter variable=dictionaryEntries
-	initDictionaryEntries<delta_t, dic_confidence_t>(dictionaryEntries);
 
-	static InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-			inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS];
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
+			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
 // #pragma HLS SHARED variable=inputBufferEntries
-#pragma HLS ARRAY_PARTITION variable=inputBufferEntries dim=0 factor=2 block
-#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntries
-
-	initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>(inputBufferEntries);
+#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix->entries dim=0 factor=2 block
+#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix->entries
 
 
-	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
+	static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
 // #pragma HLS DEPENDENCE array false inter variable=weight_matrices
-#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-#pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
-	initSVMWeights<svm_weight_t>(weight_matrices);
-
-	static svm_weight_t intercepts[NUM_CLASSES];
-// #pragma HLS DEPENDENCE array false inter variable=intercepts
-#pragma HLS ARRAY_PARTITION variable=intercepts complete
-	initSVMIntercepts<svm_weight_t>(intercepts);
+#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
+#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
+#pragma HLS ARRAY_PARTITION variable=svmMatrix->intercepts complete
 
 	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
 #pragma HLS DEPENDENCE false variable=inputBuffer
@@ -139,35 +133,27 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
 #pragma HLS DEPENDENCE false variable=svm
 
-	/*
-	static GASP gasp = GASP();
-	int res = gasp(inputBufferEntries, dictionaryEntries, weight_matrices, intercepts, inputBufferAddress, memoryAddress, addressesToPrefetch);
-	return res;
-	*/
-
-
 #pragma HLS PIPELINE
 	int prefetchDegree = 0;
 
 	// 1) Input buffer is read:
+	bool isInputBufferHit;
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-		inputBuffer.read(inputBufferEntries, inputBufferAddress);
+		inputBuffer.read(inputBufferEntriesMatrix.entries, inputBufferAddress, isInputBufferHit);
 #pragma HLS AGGREGATE variable=inputBufferEntry
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	ib_tag_t tag = memoryAddress >> numIndexBits;
 
 	// Skip operation if the previous access is equal to the current:
-	// if (inputBufferEntry.lastAddress != memoryAddress) {
-	if(true) {
+	if (inputBufferEntry.lastAddress != memoryAddress) {
 		class_t predictedClasses[MAX_PREFETCHING_DEGREE];
 
 
 		bool performPrefetch = false;
 
 		// Continue if there has been a hit:
-		// if (inputBufferEntry.valid) {
-		if(true) {
+		if (isInputBufferHit) {
 
 			// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
 			if (inputBufferEntry.lastPredictedAddress == memoryAddress) {
@@ -189,12 +175,13 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 			// 3) Compute the resulting delta and its class:
 			delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
 			class_t dictionaryClass;
-			DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(dictionaryEntries, delta, dictionaryClass);
+			DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(
+					dictionaryEntriesMatrix.entries, delta, dictionaryClass);
 
 			// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 			// on the calculated prefetching degree (>= 1):
 			prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-			svm.fitAndRecursivelyPredict(weight_matrices, intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+			svm.fitAndRecursivelyPredict(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
 					prefetchDegree == 0? 1 : prefetchDegree);
 
 
@@ -210,8 +197,6 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 		else {
 			inputBufferEntry.tag = tag;
 			inputBufferEntry.valid = true;
-			// inputBufferEntry.lastAddress = memoryAddress;
-			// inputBufferEntry.lastPredictedAddress = 0;
 			inputBufferEntry.lruCounter = 1;
 			inputBufferEntry.confidence = 0;
 			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
@@ -220,7 +205,7 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 			}
 
 			// 4) Predict with the SVM:
-			predictedClasses[0] = svm.predict(weight_matrices, intercepts, inputBufferEntry.sequence);
+			predictedClasses[0] = svm.predict(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence);
 
 		}
 
@@ -228,7 +213,7 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 		dic_index_t dummyIndex;
 		delta_t predictedDelta;
 
-		predictedDelta = dictionaryEntries[predictedClasses[0]].delta;
+		predictedDelta = dictionaryEntriesMatrix.entries[predictedClasses[0]].delta;
 		block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 		if(performPrefetch){
@@ -238,16 +223,14 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 			for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
 #pragma HLS UNROLL
 				if(i < prefetchDegree){
-					delta_t predictedDelta_ = dictionaryEntries[predictedClasses[i]].delta;
+					delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[predictedClasses[i]].delta;
 					block_address_t addr = (delta_t)prevAddress + predictedDelta_;
 					addressesToPrefetch_[i] = addr;
 					prevAddress = addr;
 				}
 			}
 			for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-// #pragma HLS UNROLL
 				if(i < prefetchDegree){
-					// addressesToPrefetch.write(addressesToPrefetch_[i]);
 					addressesToPrefetch[i] = addressesToPrefetch_[i];
 				}
 			}
@@ -257,7 +240,7 @@ void testGASP(address_t inputBufferAddress, block_address_t memoryAddress,
 		// 6) Update the input buffer with the entry:
 		inputBufferEntry.lastAddress = memoryAddress;
 		inputBufferEntry.lastPredictedAddress = predictedAddress;
-		inputBuffer.write(inputBufferEntries, inputBufferAddress, inputBufferEntry);
+		inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry);
 	}
 
 	// return prefetchDegree;

@@ -13,7 +13,7 @@ protected:
 	void succesivePrediction(
 		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS],
 		DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES],
-		weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES],
+		WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES],
 		svm_weight_t intercepts[NUM_CLASSES],
 		block_address_t baseAddress, class_t baseSequence[SEQUENCE_LENGTH],
 		const int numPredictions, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]);
@@ -28,7 +28,7 @@ public:
 
 	int operator()(InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS],
 			DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES],
-			weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES],
+			WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES],
 			svm_weight_t intercepts[NUM_CLASSES],
 			address_t programCounter, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]);
 };
@@ -36,7 +36,7 @@ public:
 int GASP::operator()(
 		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS],
 		DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES],
-		weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES],
+		WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES],
 		svm_weight_t intercepts[NUM_CLASSES],
 
 		address_t inputBufferAddress, block_address_t memoryAddress, block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]) {
@@ -45,8 +45,9 @@ int GASP::operator()(
 	int prefetchDegree = 0;
 
 	// 1) Input buffer is read:
+	bool isInputBufferHit;
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-		this->inputBuffer.read(inputBufferEntries, inputBufferAddress);
+		this->inputBuffer.read(inputBufferEntries, inputBufferAddress, isInputBufferHit);
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	ib_tag_t tag = memoryAddress >> numIndexBits;
@@ -140,7 +141,7 @@ int GASP::operator()(
 void GASP::succesivePrediction(
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntries[IB_NUM_SETS][IB_NUM_WAYS],
 	DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES],
-	weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES],
+	WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES],
 	svm_weight_t intercepts[NUM_CLASSES],
 
 	block_address_t baseAddress, class_t baseSequence[SEQUENCE_LENGTH],

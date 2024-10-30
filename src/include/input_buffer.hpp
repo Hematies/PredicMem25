@@ -12,6 +12,13 @@ struct InputBufferEntry {
 	lru_t lruCounter;
 };
 
+
+template<typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
+struct InputBufferEntriesMatrix {
+		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
+};
+
+
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 class InputBuffer {
 protected:
@@ -23,7 +30,7 @@ protected:
 public:
 	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> read(
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-		address_t address);
+		address_t address, bool& isHit);
 	// InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>
 	void write(
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
@@ -103,7 +110,7 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
-read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress) {
+read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit) {
 // #pragma HLS INLINE
 #pragma HLS ARRAY_PARTITION variable=entries dim=0 factor=2 block
 
@@ -114,10 +121,12 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entr
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
 	index_t index = inputBufferAddress % (1 << numIndexBits);
+	isHit = false;
 	way_t way = this->queryWay(entries, index, tag);
 
 	if (way != IB_NUM_WAYS) {
 		res = entries[index][way];
+		isHit = true;
 	}
 	this->updateLRU(entries, index, way);
 

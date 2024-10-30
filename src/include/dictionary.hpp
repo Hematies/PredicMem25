@@ -8,6 +8,13 @@ struct DictionaryEntry {
 	confidence_t confidence;
 };
 
+
+template<typename delta_t, typename confidence_t>
+struct DictionaryEntriesMatrix {
+	DictionaryEntry<delta_t, confidence_t> entries[NUM_CLASSES];
+};
+
+
 template<typename index_t, typename delta_t, typename confidence_t> 
 class Dictionary {
 protected:
