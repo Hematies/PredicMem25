@@ -2,24 +2,29 @@
 #include "../include/global.hpp"
 #include <hls_stream.h>
 
-DictionaryEntry<delta_t, dic_confidence_t> testDictionary(dic_index_t index){
-// #pragma HLS TOP
-// #pragma HLS TOP
+DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead){
+	#pragma HLS PIPELINE
 
-	static DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=dictionaryEntries dim=1 complete
+	static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
+				= initDictionaryEntries<delta_t, dic_confidence_t>();
+		#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
 
 	static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
+		#pragma HLS DEPENDENCE false variable=dictionary
 
-	dic_index_t resultingIndex = 0;
-	DictionaryEntry<delta_t, dic_confidence_t> res = dictionary.write(dictionaryEntries, -2, resultingIndex);
-	res = dictionary.read(dictionaryEntries, true, 0, 0, resultIndex, true);
-	res = dictionary.read(dictionaryEntries, false, 0, -5, resultIndex, true);
+	dic_index_t resultIndex = 0;
+	DictionaryEntry<delta_t, dic_confidence_t> res;
+	if(performRead){
+		res = dictionary.read(dictionaryEntriesMatrix.entries, index != NUM_CLASSES, index, delta, resultIndex, true);
+	}
+	else{
+		res = dictionary.write(dictionaryEntriesMatrix.entries, delta, resultIndex);
+	}
 	return res;
 }
 
 InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
-		bool performRead, bool isHit){
+		bool performRead, bool& isHit){
 #pragma HLS PIPELINE
 
 
