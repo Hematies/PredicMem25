@@ -4,9 +4,11 @@
 #include "ap_int.h"
 
 typedef ap_uint<NUM_ADDRESS_BITS> address_t;
+typedef ap_uint<NUM_REGION_ADDRESS_BITS> region_address_t;
 typedef ap_uint<IB_NUM_SETS_LOG2> ib_index_t;
 typedef ap_uint<IB_NUM_WAYS_LOG2> ib_way_t;
 typedef ap_uint<IB_NUM_TAG_BITS> ib_tag_t;
+typedef ap_uint<IB_NUM_REGION_TAG_BITS> ib_region_tag_t;
 typedef ap_uint<NUM_BLOCK_ADDRESS_BITS> block_address_t;
 typedef ap_uint<NUM_CLASSES_INCLUDING_NULL_LOG2> class_t;
 typedef ap_uint<MAX_PREDICTION_CONFIDENCE_LOG2> ib_confidence_t;

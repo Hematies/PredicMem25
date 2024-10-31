@@ -5,9 +5,24 @@
                 <option name="name" value="testGASP"/>
             </pragma>
         </directive>
-        <directive functionName="testGASP" label="" functionLabel="">
+        <directive functionName="SGASP" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="testGASP"/>
+                <option name="name" value="SGASP"/>
+            </pragma>
+        </directive>
+        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
+            <pragma name="TOP">
+                <option name="name" value="SGASP"/>
+            </pragma>
+        </directive>
+        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
+            <pragma name="TOP">
+                <option name="name" value="prefetchWithSGASP"/>
+            </pragma>
+        </directive>
+        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
+            <pragma name="TOP">
+                <option name="name" value="prefetchWithSGASP"/>
             </pragma>
         </directive>
     </sourceFile>
