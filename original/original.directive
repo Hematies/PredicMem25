@@ -1,28 +1,18 @@
 <AutoPilot:ProjectResources xmlns:AutoPilot="com.autoesl.autopilot.ui.directiveView">
     <sourceFile name="">
-        <directive functionName="testGASP" label="" functionLabel="">
+        <directive functionName="operateInputBuffer" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="testGASP"/>
+                <option name="name" value="operateInputBuffer"/>
             </pragma>
         </directive>
-        <directive functionName="SGASP" label="" functionLabel="">
+        <directive functionName="prefetchWithGASP" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="SGASP"/>
+                <option name="name" value="prefetchWithGASP"/>
             </pragma>
         </directive>
-        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
+        <directive functionName="prefetchWithGASP" label="" functionLabel="">
             <pragma name="TOP">
-                <option name="name" value="SGASP"/>
-            </pragma>
-        </directive>
-        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
-            <pragma name="TOP">
-                <option name="name" value="prefetchWithSGASP"/>
-            </pragma>
-        </directive>
-        <directive functionName="prefetchWithSGASP" label="" functionLabel="">
-            <pragma name="TOP">
-                <option name="name" value="prefetchWithSGASP"/>
+                <option name="name" value="prefetchWithGASP"/>
             </pragma>
         </directive>
     </sourceFile>

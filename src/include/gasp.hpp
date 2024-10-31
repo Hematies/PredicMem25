@@ -96,7 +96,7 @@ public:
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
 				prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-				svm.fitAndRecursivelyPredict(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
 						prefetchDegree == 0? 1 : prefetchDegree);
 
 

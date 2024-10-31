@@ -29,8 +29,8 @@ protected:
 public:
 
 	class_t predict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH]);
-	class_t fitAndPredict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target);
-	void fitAndRecursivelyPredict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
+	class_t predictAndFit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target);
+	void recursivelyPredictAndFit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
 			class_t outputs[MAX_PREFETCHING_DEGREE], int numPredictions);
 
 };
@@ -203,7 +203,7 @@ void SVM<weight_t, class_t, distance_t>::fit(WeightMatrix<weight_t> weight_matri
 
 
 template<typename weight_t, typename class_t, typename distance_t>
-class_t SVM<weight_t, class_t, distance_t>::fitAndPredict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target) {
+class_t SVM<weight_t, class_t, distance_t>::predictAndFit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target) {
 	#pragma HLS INLINE
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 // #pragma HLS ARRAY_PARTITION variable=weight_matrix->weights dim=1 block factor=6
@@ -229,7 +229,7 @@ class_t SVM<weight_t, class_t, distance_t>::fitAndPredict(WeightMatrix<weight_t>
 }
 
 template<typename weight_t, typename class_t, typename distance_t>
-void SVM<weight_t, class_t, distance_t>::fitAndRecursivelyPredict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
+void SVM<weight_t, class_t, distance_t>::recursivelyPredictAndFit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
 		class_t outputs[MAX_PREFETCHING_DEGREE], int numPredictions) {
 	// #pragma HLS INLINE
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
