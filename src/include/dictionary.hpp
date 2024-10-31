@@ -8,6 +8,13 @@ struct DictionaryEntry {
 	confidence_t confidence;
 };
 
+
+template<typename delta_t, typename confidence_t>
+struct DictionaryEntriesMatrix {
+	DictionaryEntry<delta_t, confidence_t> entries[NUM_CLASSES];
+};
+
+
 template<typename index_t, typename delta_t, typename confidence_t> 
 class Dictionary {
 protected:
@@ -16,7 +23,8 @@ protected:
 	index_t getIndexOfLeastFrequent(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]);
 public:
 	Dictionary(){}
-	DictionaryEntry<delta_t, confidence_t> read(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex);
+	DictionaryEntry<delta_t, confidence_t> read(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
+			bool performUpdateConfidence);
 	DictionaryEntry<delta_t, confidence_t> write(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex);
 
 };
@@ -59,22 +67,56 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfDelta(DictionaryEn
 template<typename index_t, typename delta_t, typename confidence_t>
 index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) {
 #pragma HLS INLINE
-	index_t res = NUM_CLASSES;
-	confidence_t minConfidence = DICTIONARY_LFU_MAX_CONFIDENCE;
-	loop_getIndexOfLeastFrequent :for (int i = 0; i < NUM_CLASSES; i++) {
+// #pragma HLS PIPELINE
+// #pragma HLS ARRAY_PARTITION variable=dictionaryEntries block dim=1 factor=4
+
+	// index_t res = NUM_CLASSES;
+	// confidence_t minConfidence = dictionaryEntries[0].confidence;
+	/*
+	loop_getIndexOfLeastFrequent :for (int i = 1; i < NUM_CLASSES; i++) {
 #pragma HLS UNROLL
 		if (dictionaryEntries[i].confidence < minConfidence) {
 			res = i;
 			minConfidence = dictionaryEntries[i].confidence;
 		}
 	}
+	*/
+	index_t indexes[NUM_CLASSES / 2];
+	confidence_t minConfidences[NUM_CLASSES / 2];
+	for (int i = 0; i < NUM_CLASSES; i+=2) {
+		#pragma HLS UNROLL
+		if(i != (NUM_CLASSES - 1)){
+			bool lower = dictionaryEntries[i].confidence < dictionaryEntries[i+1].confidence;
+			indexes[i >> 1] = lower? i : i+1;
+			minConfidences[i >> 1] = lower? dictionaryEntries[i].confidence : dictionaryEntries[i+1].confidence;
+		}
+
+	}
+	index_t res = indexes[0];
+	confidence_t minConfidence = minConfidences[0];
+	for (int i = 0; i < NUM_CLASSES / 2; i++) {
+		#pragma HLS UNROLL
+		if (minConfidences[i] < minConfidence) {
+			res = indexes[i];
+			minConfidence = minConfidences[i];
+		}
+	}
+	if(NUM_CLASSES % 2 == 1){
+		if (dictionaryEntries[NUM_CLASSES - 1].confidence < minConfidence) {
+			res = NUM_CLASSES - 1;
+		}
+	}
+
+
 	return res;
 }
 
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
-		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex) {
-#pragma HLS PIPELINE
+		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
+		bool performUpdateConfidence) {
+	// #pragma HLS INLINE
+	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 
 	if (useIndex) {
@@ -88,7 +130,8 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		}
 
 	}
-	this->updateConfidence(dictionaryEntries, resultIndex);
+	if(performUpdateConfidence)
+		this->updateConfidence(dictionaryEntries, resultIndex);
 
 	return res;
 }
@@ -96,23 +139,28 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::write(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex) {
-#pragma HLS PIPELINE
+#pragma HLS ARRAY_PARTITION variable=dictionaryEntries complete
+
+	#pragma HLS INLINE
+	#pragma HLS PIPELINE
+
 	DictionaryEntry<delta_t, confidence_t> res;
 	
-
+	index_t leastFrequentIndex = this->getIndexOfLeastFrequent(dictionaryEntries);
 	resultIndex = this->getIndexOfDelta(dictionaryEntries, delta);
 	if (resultIndex < NUM_CLASSES) {
 		res = dictionaryEntries[resultIndex];
-		this->updateConfidence(dictionaryEntries, resultIndex);
+		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
 	else {
-		resultIndex = this->getIndexOfLeastFrequent(dictionaryEntries);
+		resultIndex = leastFrequentIndex;
 		res.delta = delta;
 		res.valid = true;
 		res.confidence = DICTIONARY_LFU_INITIAL_CONFIDENCE;
 		dictionaryEntries[resultIndex] = res;
 		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
+	this->updateConfidence(dictionaryEntries, resultIndex);
 
 
 	return res;

@@ -1,64 +1,95 @@
 #include <iostream>
 #include "../include/global.hpp"
+#include <hls_stream.h>
 
-DictionaryEntry<delta_t, dic_confidence_t> testDictionary(dic_index_t index){
-// #pragma HLS TOP
-// #pragma HLS TOP
+DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead){
+	#pragma HLS PIPELINE
 
-	static DictionaryEntry<delta_t, dic_confidence_t> dictionaryEntries[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=dictionaryEntries dim=1 complete
+	static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
+				= initDictionaryEntries<delta_t, dic_confidence_t>();
+		#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
 
 	static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
+		#pragma HLS DEPENDENCE false variable=dictionary
 
-	dic_index_t resultingIndex = 0;
-	DictionaryEntry<delta_t, dic_confidence_t> res = dictionary.write(dictionaryEntries, -2, resultingIndex);
-	res = dictionary.read(dictionaryEntries, true, 0, 0, resultIndex);
-	res = dictionary.read(dictionaryEntries, false, 0, -5, resultIndex);
+	dic_index_t resultIndex = 0;
+	DictionaryEntry<delta_t, dic_confidence_t> res;
+	if(performRead){
+		res = dictionary.read(dictionaryEntriesMatrix.entries, index != NUM_CLASSES, index, delta, resultIndex, true);
+	}
+	else{
+		res = dictionary.write(dictionaryEntriesMatrix.entries, delta, resultIndex);
+	}
 	return res;
 }
 
-InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> testInputBuffer(address_t addr){
-// #pragma HLS TOP
+InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
+		bool performRead, bool& isHit){
+#pragma HLS PIPELINE
 
-	static InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-		entries[IB_NUM_SETS][IB_NUM_WAYS];
-#pragma HLS ARRAY_PARTITION variable=entries dim=0 factor=2 block
 
-	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-		inputBuffer;
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
+			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
+#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 factor=2 block
+#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
 
-	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res = {
-			true, 0, 1, {1,1,1,1,1,1,1,1}, 0, 2, 0
-	};
-	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res1 = {
-			true, 20, 1, {1,1,1,1,1,1,1,1}, 0, 2, 0
-	};
-	inputBuffer.write(entries, 0, res);
-	inputBuffer.write(entries, 1 << 30, res1);
-	inputBuffer.write(entries, 2, res);
-	inputBuffer.write(entries, 3, res);
-	res = inputBuffer.read(entries, 0);
-	res = inputBuffer.read(entries, 1);
+	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
+		#pragma HLS DEPENDENCE false variable=inputBuffer
 
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res;
+	if(performRead){
+		res = inputBuffer.read(inputBufferEntriesMatrix.entries, addr, isHit);
+	}
+	else{
+		inputBuffer.write(inputBufferEntriesMatrix.entries, addr, entry);
+		res = entry;
+	}
 	return res;
 }
 
-class_t testSVM(){
 
-#pragma HLS TOP
-	static class_t input[SEQUENCE_LENGTH];
-#pragma HLS ARRAY_PARTITION variable=input complete
-	static weigth_matrix_t<svm_weight_t> weight_matrices[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE]){
+
+#pragma HLS PIPELINE
+	#pragma HLS INTERFACE ap_fifo port=output
+
+	#pragma HLS ARRAY_PARTITION variable=input complete
+
+	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
+	// #pragma HLS SHARED variable=weight_matrices->weights
+	#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+	#pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+
 	static svm_weight_t intercepts[NUM_CLASSES];
-#pragma HLS ARRAY_PARTITION variable=intercepts complete
-
+	#pragma HLS ARRAY_PARTITION variable=intercepts complete
 
 	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
 
-	class_t res = svm.fitAndPredict(weight_matrices, intercepts, input, 0);
-	res = svm.predict(weight_matrices, intercepts, input);
-	return res;
+	svm.recursivelyPredictAndFit(weight_matrices, intercepts, input, target, output, MAX_PREFETCHING_DEGREE);
+
 }
+
+
+
+
+
+void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	GASP<GASP_TYPES> gasp = GASP<GASP_TYPES>();
+	gasp(instructionPointer, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSGASP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+}
+
 
 
