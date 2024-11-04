@@ -2,7 +2,7 @@
 #include "../include/global.hpp"
 #include <hls_stream.h>
 
-DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead){
+DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
 
 	static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
@@ -12,13 +12,13 @@ DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, 
 	static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 		#pragma HLS DEPENDENCE false variable=dictionary
 
-	dic_index_t resultIndex = 0;
+	resultIndex = 0;
 	DictionaryEntry<delta_t, dic_confidence_t> res;
 	if(performRead){
-		res = dictionary.read(dictionaryEntriesMatrix.entries, index != NUM_CLASSES, index, delta, resultIndex, true);
+		res = dictionary.read(dictionaryEntriesMatrix.entries, index != NUM_CLASSES, index, delta, resultIndex, true, isHit);
 	}
 	else{
-		res = dictionary.write(dictionaryEntriesMatrix.entries, delta, resultIndex);
+		res = dictionary.write(dictionaryEntriesMatrix.entries, delta, resultIndex, isHit);
 	}
 	return res;
 }

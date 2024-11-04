@@ -90,8 +90,9 @@ public:
 				// 3) Compute the resulting delta and its class:
 				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
 				class_t dictionaryClass;
+				bool dummyIsHit;
 				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(
-						dictionaryEntriesMatrix.entries, delta, dictionaryClass);
+						dictionaryEntriesMatrix.entries, delta, dictionaryClass, dummyIsHit);
 
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):

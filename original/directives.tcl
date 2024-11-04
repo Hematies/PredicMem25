@@ -4,5 +4,3 @@
 ## Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
 ############################################################
 set_directive_top -name prefetchWithGASP "prefetchWithGASP"
-
-
