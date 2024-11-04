@@ -1,6 +1,7 @@
 #include "../include/global.hpp"
 #include "experimentation.hpp"
 #include <string>
+#include "traceReader.hpp"
 
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
 std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
@@ -83,4 +84,43 @@ void parseSVMInOutLine(string line, SVMValidationInput& input, SVMValidationOutp
         output.output[i] = (class_t) std::stoi(outputElements[i]);
     } 
 
+}
+
+void InputBufferValidation::readTraceFile(string filePath){
+    auto traceReader = TraceReader(filePath);
+    auto lines = traceReader.readAllLines();
+
+    for(auto& line : lines){
+        InputBufferValidationInput input;
+        InputBufferValidationOutput output;
+        parseInputBufferInOutLine(line, input, output);
+        inputs.push_back(input);
+        outputs.push_back(output);
+    }
+}
+
+void DictionaryValidation::readTraceFile(string filePath){
+    auto traceReader = TraceReader(filePath);
+    auto lines = traceReader.readAllLines();
+
+    for(auto& line : lines){
+        DictionaryValidationInput input;
+        DictionaryValidationOutput output;
+        parseDictionaryInOutLine(line, input, output);
+        inputs.push_back(input);
+        outputs.push_back(output);
+    }
+}
+
+void SVMValidation::readTraceFile(string filePath){
+    auto traceReader = TraceReader(filePath);
+    auto lines = traceReader.readAllLines();
+
+    for(auto& line : lines){
+        SVMValidationInput input;
+        SVMValidationOutput output;
+        parseSVMInOutLine(line, input, output);
+        inputs.push_back(input);
+        outputs.push_back(output);
+    }
 }

@@ -2,8 +2,10 @@
 #include <iostream>
 #include <vector>
 #include "../include/global.hpp"
+#include "traceReader.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, bool &isHit);
 InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
@@ -29,7 +31,33 @@ class Experimentation{
 protected:
     vector<Experiment> experiments;
 public:
-    Experimentation(string folderPath);
+    Experimentation(string folderPath, ExperimentType type){
+        for (const auto & entry : fs::directory_iterator(folderPath)) {
+            switch (type)
+            {
+            case INPUT_BUFFER_VALIDATION:
+                experiments.push_back(InputBufferValidation(entry.path()));
+                break;
+            case INPUT_BUFFER_SOFT_VALIDATION:
+                experiments.push_back(InputBufferSoftValidation(entry.path()));
+                break;
+            case DICTIONARY_VALIDATION:
+                experiments.push_back(DictionaryValidation(entry.path()));
+                break;
+            case DICTIONARY_SOFT_VALIDATION:
+                experiments.push_back(DictionarySoftValidation(entry.path()));
+                break;
+            case SVM_VALIDATION:
+                experiments.push_back(SVMValidation(entry.path()));
+                break;
+            case SVM_SOFT_VALIDATION:
+                experiments.push_back(SVMSoftValidation(entry.path()));
+                break;
+            default:
+                break;
+            }
+        }
+    }
     bool perform(){
         bool res = true;
         for(auto& experiment : experiments){
@@ -114,7 +142,9 @@ public:
         }
         return res;
     }
-    bool checkConfiguration();
+    bool checkConfiguration(){
+        return true;
+    }
 };
 
 class InputBufferSoftValidation : public InputBufferValidation{
@@ -205,7 +235,9 @@ public:
         }
         return res;
     }
-    bool checkConfiguration();
+    bool checkConfiguration(){
+        return true;
+    }
     void readTraceFile(string filePath);
 };
 
@@ -301,7 +333,9 @@ public:
         }
         return res;
     }
-    bool checkConfiguration();
+    bool checkConfiguration(){
+        return true;
+    }
     void readTraceFile(string filePath);
 };
 

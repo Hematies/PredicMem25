@@ -1,10 +1,9 @@
 #include <iostream>
 #include "global.hpp"
-
-DictionaryEntry<delta_t, dic_confidence_t> testDictionary(dic_index_t index);
+#include "reading.hpp"
 
 int main()
 {
-    testDictionary(0);
+    
     return 0;
 }
