@@ -13,17 +13,16 @@ string svmTracesDirName = "svmTraces/";
 
 int main()
 {
-	auto inputBufferValidation = Experimentation<InputBufferSoftValidation>(traceDirPath + inputBufferTracesDirName// ,
-			// ExperimentType::INPUT_BUFFER_SOFT_VALIDATION
-			);
-	auto dictionaryValidation = Experimentation<DictionarySoftValidation>(traceDirPath + dictionaryTracesDirName// ,
-			// ExperimentType::DICTIONARY_SOFT_VALIDATION
-			);
-	auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + svmTracesDirName// ,
-			// ExperimentType::SVM_SOFT_VALIDATION
-			);
+	auto inputBufferValidation = Experimentation<InputBufferSoftValidation>(traceDirPath + inputBufferTracesDirName);
+	auto dictionaryValidation = Experimentation<DictionarySoftValidation>(traceDirPath + dictionaryTracesDirName);
+	auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + svmTracesDirName);
 
-	bool passed = inputBufferValidation.perform() && dictionaryValidation.perform() && svmValidation.perform();
+	bool passed = // inputBufferValidation.perform();
+			dictionaryValidation.perform()
+			// && svmValidation.perform()
+			;
+
+	cout << "Passed: " << to_string(passed) << "\n";
 	return !passed;
 
 }

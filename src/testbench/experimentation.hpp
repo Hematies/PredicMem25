@@ -3,9 +3,11 @@
 #include <vector>
 #include "../include/global.hpp"
 #include <dirent.h>
+#include "../top/top.hpp"
 
 using namespace std;
 
+/*
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit);
 InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
 		bool performRead, bool& isHit);
@@ -16,6 +18,8 @@ void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddres
 void prefetchWithSGASP(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		);
+*/
+
 
 enum ExperimentType {
   INPUT_BUFFER_VALIDATION,
@@ -33,7 +37,9 @@ protected:
     ExperimentType type;
 public:
     bool perform();
-    bool checkConfiguration();
+    bool checkConfiguration(){
+    	return true;
+    }
     void readTraceFile(string filePath);
     ExperimentType getType(){
         return type;
@@ -78,6 +84,7 @@ public:
     void readTraceFile(string filePath);
     bool perform(){
         bool res = false;
+
         if(checkConfiguration()){
             res = true;
             for(int i = 0; i < inputs.size(); i++){
@@ -96,9 +103,7 @@ public:
         }
         return res;
     }
-    bool checkConfiguration(){
-        return true;
-    }
+
 };
 
 class InputBufferSoftValidation : public InputBufferValidation{
@@ -115,6 +120,7 @@ public:
 
     bool perform(){
         bool res = false;
+
         if(checkConfiguration()){
             res = true;
             double hitRate = 0.0, targetHitRate = 0.0;
@@ -193,9 +199,7 @@ public:
         }
         return res;
     }
-    bool checkConfiguration(){
-        return true;
-    }
+
     void readTraceFile(string filePath);
 };
 
@@ -293,9 +297,7 @@ public:
         }
         return res;
     }
-    bool checkConfiguration(){
-        return true;
-    }
+
     void readTraceFile(string filePath);
 };
 
@@ -368,31 +370,6 @@ public:
         		files.push_back(pdir->d_name);
         }
         for (const auto & filename : files) {
-        	/*
-            switch (type)
-            {
-            case INPUT_BUFFER_VALIDATION:
-                experiments.push_back(InputBufferValidation(folderPath + "//" + filename));
-                break;
-            case INPUT_BUFFER_SOFT_VALIDATION:
-                experiments.push_back(InputBufferSoftValidation(folderPath + "//" + filename));
-                break;
-            case DICTIONARY_VALIDATION:
-                experiments.push_back(DictionaryValidation(folderPath + "//" + filename));
-                break;
-            case DICTIONARY_SOFT_VALIDATION:
-                experiments.push_back(DictionarySoftValidation(folderPath + "//" + filename));
-                break;
-            case SVM_VALIDATION:
-                experiments.push_back(SVMValidation(folderPath + "//" + filename));
-                break;
-            case SVM_SOFT_VALIDATION:
-                experiments.push_back(SVMSoftValidation(folderPath + "//" + filename));
-                break;
-            default:
-                break;
-            }
-            */
         	std::cout << folderPath + filename << "\n";
         	experiments.push_back(Experiment(folderPath + "//" + filename));
         }
@@ -403,7 +380,7 @@ public:
             bool success = experiment.perform();
             res = res && success;
             string type;
-            switch (type)
+            switch (experiment.getType())
 			{
 			case INPUT_BUFFER_VALIDATION:
 				type = "Input Buffer Validation";
