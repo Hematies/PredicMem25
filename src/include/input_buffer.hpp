@@ -10,12 +10,14 @@ struct InputBufferEntry {
 	confidence_t confidence;
 	block_address_t lastPredictedAddress;
 	lru_t lruCounter;
+	InputBufferEntry(){}
 };
 
 
 template<typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
 struct InputBufferEntriesMatrix {
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
+		InputBufferEntriesMatrix(){}
 };
 
 

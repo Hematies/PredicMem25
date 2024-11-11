@@ -6,14 +6,15 @@
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
 std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
     std::vector<std::string> tokens;
+    std::string s_ = std::string(s);
     size_t pos = 0;
     std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos) {
-        token = s.substr(0, pos);
+    while ((pos = s_.find(delimiter)) != std::string::npos) {
+        token = s_.substr(0, pos);
         tokens.push_back(token);
-        s.erase(0, pos + delimiter.length());
+        s_.erase(0, pos + delimiter.length());
     }
-    tokens.push_back(s);
+    tokens.push_back(s_);
 
     return tokens;
 }
@@ -64,7 +65,8 @@ void parseDictionaryInOutLine(string line, DictionaryValidationInput& input, Dic
     output.entry.valid = std::stoi(outputElements[0]);
     output.entry.delta = (delta_t) std::stol(outputElements[1]);
     output.entry.confidence = (dic_confidence_t) std::stoi(outputElements[2]);
-    output.isHit = std::stoi(outputElements[3]);
+    output.resultIndex = (dic_index_t) std::stoi(outputElements[3]);
+    output.isHit = std::stoi(outputElements[4]);
 
 }
 

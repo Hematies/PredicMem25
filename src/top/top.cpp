@@ -12,7 +12,7 @@ DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, 
 	static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 		#pragma HLS DEPENDENCE false variable=dictionary
 
-	resultIndex = 0;
+	// resultIndex = 0;
 	DictionaryEntry<delta_t, dic_confidence_t> res;
 	if(performRead){
 		res = dictionary.read(dictionaryEntriesMatrix.entries, index != NUM_CLASSES, index, delta, resultIndex, true, isHit);

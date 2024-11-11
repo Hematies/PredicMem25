@@ -15,7 +15,10 @@ add_files PredicMem25/src/include/init_data.hpp
 add_files PredicMem25/src/include/input_buffer.hpp
 add_files PredicMem25/src/include/svm.hpp
 add_files PredicMem25/src/top/top.cpp
+add_files -tb PredicMem25/src/testbench/traceReader.hpp -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
+add_files -tb PredicMem25/src/testbench/reading.hpp -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
 add_files -tb PredicMem25/src/testbench/main.cpp -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
+add_files -tb PredicMem25/src/testbench/experimentation.hpp -cflags "-Wno-unknown-pragmas" -csimflags "-Wno-unknown-pragmas"
 open_solution "original" -flow_target vivado
 set_part {xczu3eg-sbva484-1-i}
 create_clock -period 10 -name default

@@ -3,18 +3,21 @@
 template<typename weight_t>
 struct WeightMatrix{
 	weight_t weights[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL];
+	WeightMatrix(){}
 };
 
 template<typename class_t>
 struct InputSequence{
 	class_t sequence[SEQUENCE_LENGTH];
+	InputSequence(){}
 };
 
 template<typename weight_t>
 struct SVMWholeMatrix{
 	WeightMatrix<weight_t> weightMatrices[NUM_CLASSES];
 	weight_t intercepts[NUM_CLASSES];
-}
+	SVMWholeMatrix(){}
+};
 
 
 template<typename weight_t, typename class_t, typename distance_t>
@@ -90,7 +93,7 @@ distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(WeightMatrix
 		res += weights_[i];
 	}
 	if(SEQUENCE_LENGTH % 2 == 1){
-		res += selectedWeights[SEQUENCE_LENGTH - 1]
+		res += selectedWeights[SEQUENCE_LENGTH - 1];
 	}
 
 

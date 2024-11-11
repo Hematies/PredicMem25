@@ -26,11 +26,9 @@
 #include <fstream>      // std::ifstream
 // #include "BuffersSimulator.h"
 #include<set>
-#include<filesystem>
 #include<vector>
 
 using namespace std;
-namespace fs = std::filesystem;
 
 class TraceReader {
 public:
@@ -62,7 +60,7 @@ public:
 		this->endLine = t.endLine;
 	}
 
-	void copy(TraceReader<I, O>& t) {
+	void copy(TraceReader& t) {
 		t.filename = filename;
 		t.file = ifstream(filename);
 		t.file.open(filename);
@@ -135,14 +133,13 @@ public:
 					if (k < end) {
 						res.push_back(line);
 					}
-					k++;
-					
-				}
+				k++;
 				currentLine++;
+
 			}
 		}
 		// file.close();
-
+		return res;
 	}
 
 };

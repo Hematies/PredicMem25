@@ -5,7 +5,10 @@
         <SimFlow name="csim" csimMode="2" lastCsimMode="2"/>
     </Simulation>
     <files xmlns="">
+        <file name="../src/testbench/experimentation.hpp" sc="0" tb="1" cflags=" -Wno-unknown-pragmas" csimflags=" -Wno-unknown-pragmas" blackbox="false"/>
         <file name="../src/testbench/main.cpp" sc="0" tb="1" cflags=" -Wno-unknown-pragmas" csimflags=" -Wno-unknown-pragmas" blackbox="false"/>
+        <file name="../src/testbench/reading.hpp" sc="0" tb="1" cflags=" -Wno-unknown-pragmas" csimflags=" -Wno-unknown-pragmas" blackbox="false"/>
+        <file name="../src/testbench/traceReader.hpp" sc="0" tb="1" cflags=" -Wno-unknown-pragmas" csimflags=" -Wno-unknown-pragmas" blackbox="false"/>
         <file name="PredicMem25/src/top/top.cpp" sc="0" tb="false" cflags="" csimflags="" blackbox="false"/>
         <file name="PredicMem25/src/include/svm.hpp" sc="0" tb="false" cflags="" csimflags="" blackbox="false"/>
         <file name="PredicMem25/src/include/input_buffer.hpp" sc="0" tb="false" cflags="" csimflags="" blackbox="false"/>

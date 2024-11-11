@@ -2,12 +2,11 @@
 #include <iostream>
 #include <vector>
 #include "../include/global.hpp"
-#include "traceReader.h"
+#include <dirent.h>
 
 using namespace std;
-namespace fs = std::filesystem;
 
-DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, bool &isHit);
+DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit);
 InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
 		bool performRead, bool& isHit);
 void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE]);
@@ -27,53 +26,6 @@ enum ExperimentType {
   SVM_SOFT_VALIDATION,
 }; 
 
-class Experimentation{
-protected:
-    vector<Experiment> experiments;
-public:
-    Experimentation(string folderPath, ExperimentType type){
-        for (const auto & entry : fs::directory_iterator(folderPath)) {
-            switch (type)
-            {
-            case INPUT_BUFFER_VALIDATION:
-                experiments.push_back(InputBufferValidation(entry.path()));
-                break;
-            case INPUT_BUFFER_SOFT_VALIDATION:
-                experiments.push_back(InputBufferSoftValidation(entry.path()));
-                break;
-            case DICTIONARY_VALIDATION:
-                experiments.push_back(DictionaryValidation(entry.path()));
-                break;
-            case DICTIONARY_SOFT_VALIDATION:
-                experiments.push_back(DictionarySoftValidation(entry.path()));
-                break;
-            case SVM_VALIDATION:
-                experiments.push_back(SVMValidation(entry.path()));
-                break;
-            case SVM_SOFT_VALIDATION:
-                experiments.push_back(SVMSoftValidation(entry.path()));
-                break;
-            default:
-                break;
-            }
-        }
-    }
-    bool perform(){
-        bool res = true;
-        for(auto& experiment : experiments){
-            bool success = experiment.perform();
-            res = res && success;
-            if(!success){
-                cout << "FAILURE for experiment of type " << experiment.getType() << " and trace path " << experiment.getTracePath();
-            }
-            else{
-                cout << "SUCCESS for experiment of type " << experiment.getType() << " and trace path " << experiment.getTracePath();
-            }
-        }
-        return res;
-    }
-
-};
 
 class Experiment{
 protected:
@@ -118,10 +70,12 @@ protected:
     vector<InputBufferValidationInput> inputs;
     vector<InputBufferValidationOutput> outputs;
 public:
+    InputBufferValidation(){}
     InputBufferValidation(string filePath){
         type = ExperimentType::INPUT_BUFFER_VALIDATION;
         readTraceFile(filePath);
     }
+    void readTraceFile(string filePath);
     bool perform(){
         bool res = false;
         if(checkConfiguration()){
@@ -151,7 +105,9 @@ class InputBufferSoftValidation : public InputBufferValidation{
 protected:
     double hitRateDifferenceThreshold;
 public:
-    InputBufferSoftValidation(string filePath, double hitRateDifferenceThreshold){
+    InputBufferSoftValidation(){}
+
+    InputBufferSoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::INPUT_BUFFER_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
@@ -196,6 +152,7 @@ struct DictionaryValidationInput{
 
 struct DictionaryValidationOutput{
     DictionaryEntry<delta_t, dic_confidence_t> entry;
+    dic_index_t resultIndex;
     bool isHit;
 };
 
@@ -211,6 +168,7 @@ protected:
     vector<DictionaryValidationInput> inputs;
     vector<DictionaryValidationOutput> outputs;
 public:
+    DictionaryValidation(){}
     DictionaryValidation(string filePath){
         type = ExperimentType::DICTIONARY_VALIDATION;
         readTraceFile(filePath);
@@ -224,7 +182,7 @@ public:
                 auto targetOutput = outputs[i];
 
                 DictionaryValidationOutput output;
-                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.isHit);
+                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.resultIndex, output.isHit);
                 output.entry = entry;
 
                 if(!areDictionaryOutputsEqual(output, targetOutput)){
@@ -245,7 +203,8 @@ class DictionarySoftValidation : public DictionaryValidation{
 protected:
     double hitRateDifferenceThreshold;
 public:
-    DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold){
+    DictionarySoftValidation(){}
+    DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::DICTIONARY_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
@@ -263,7 +222,7 @@ public:
                 auto targetOutput = outputs[i];
 
                 DictionaryValidationOutput output;
-                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.isHit);
+                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.resultIndex, output.isHit);
                 output.entry = entry;
 
                 if(!input.performRead){
@@ -290,13 +249,13 @@ struct SVMValidationInput{
 };
 
 struct SVMValidationOutput{
-    class_t output[MAX_PREFETCHING_DEGREE]
+    class_t output[MAX_PREFETCHING_DEGREE];
 };
 
 bool areSVMOutputsEqual(SVMValidationOutput &output1, SVMValidationOutput &output2){
     bool res = true;
     for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-        res = res && output1.output[i] == output2.output[i]
+        res = res && output1.output[i] == output2.output[i];
     }
     return res;
 }
@@ -306,6 +265,7 @@ protected:
     vector<SVMValidationInput> inputs;
     vector<SVMValidationOutput> outputs;
 public:
+    SVMValidation(){}
     SVMValidation(string filePath){
         type = ExperimentType::SVM_VALIDATION;
         readTraceFile(filePath);
@@ -320,7 +280,7 @@ public:
 
                 SVMValidationOutput output;
                 for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-                    output.output = NUM_CLASSES;
+                    output.output[i] = NUM_CLASSES;
                 }
 
                 operateSVM(input.input, input.target, output.output);
@@ -343,7 +303,8 @@ class SVMSoftValidation : public SVMValidation{
 protected:
     double matchingThreshold;
 public:
-    SVMSoftValidation(string filePath, double matchingThreshold){
+    SVMSoftValidation(){}
+    SVMSoftValidation(string filePath, double matchingThreshold = 0.05){
         type = ExperimentType::SVM_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->matchingThreshold = matchingThreshold;
@@ -362,7 +323,7 @@ public:
 
                 SVMValidationOutput output;
                 for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-                    output.output = NUM_CLASSES;
+                    output.output[i] = NUM_CLASSES;
                 }
 
                 operateSVM(input.input, input.target, output.output);
@@ -388,3 +349,93 @@ public:
     }
 
 };
+
+template<class Experiment>
+class Experimentation{
+protected:
+    vector<Experiment> experiments;
+public:
+    Experimentation(){}
+    Experimentation(string folderPath// , ExperimentType type
+    		){
+        DIR    *dir;
+        dirent *pdir;
+        dir = opendir(folderPath.c_str());
+        vector<string> files;
+        while (pdir = readdir(dir))
+        {
+        	if(strcmp(pdir->d_name, "..") != 0 && strcmp(pdir->d_name, ".") != 0)
+        		files.push_back(pdir->d_name);
+        }
+        for (const auto & filename : files) {
+        	/*
+            switch (type)
+            {
+            case INPUT_BUFFER_VALIDATION:
+                experiments.push_back(InputBufferValidation(folderPath + "//" + filename));
+                break;
+            case INPUT_BUFFER_SOFT_VALIDATION:
+                experiments.push_back(InputBufferSoftValidation(folderPath + "//" + filename));
+                break;
+            case DICTIONARY_VALIDATION:
+                experiments.push_back(DictionaryValidation(folderPath + "//" + filename));
+                break;
+            case DICTIONARY_SOFT_VALIDATION:
+                experiments.push_back(DictionarySoftValidation(folderPath + "//" + filename));
+                break;
+            case SVM_VALIDATION:
+                experiments.push_back(SVMValidation(folderPath + "//" + filename));
+                break;
+            case SVM_SOFT_VALIDATION:
+                experiments.push_back(SVMSoftValidation(folderPath + "//" + filename));
+                break;
+            default:
+                break;
+            }
+            */
+        	std::cout << folderPath + filename << "\n";
+        	experiments.push_back(Experiment(folderPath + "//" + filename));
+        }
+    }
+    bool perform(){
+        bool res = true;
+        for(auto& experiment : experiments){
+            bool success = experiment.perform();
+            res = res && success;
+            string type;
+            switch (type)
+			{
+			case INPUT_BUFFER_VALIDATION:
+				type = "Input Buffer Validation";
+				break;
+			case INPUT_BUFFER_SOFT_VALIDATION:
+				type = "Input Buffer Soft Validation";
+				break;
+			case DICTIONARY_VALIDATION:
+				type = "Dictionary Validation";
+				break;
+			case DICTIONARY_SOFT_VALIDATION:
+				type = "Dictionary Soft Validation";
+				break;
+			case SVM_VALIDATION:
+				type = "SVM Validation";
+				break;
+			case SVM_SOFT_VALIDATION:
+				type = "SVM Soft Validation";
+				break;
+			default:
+				break;
+			}
+
+            if(!success){
+                cout << "FAILURE for experiment of type " << type << " and trace path " << experiment.getTracePath() << "\n";
+            }
+            else{
+                cout << "SUCCESS for experiment of type " << type << " and trace path " << experiment.getTracePath() << "\n";
+            }
+        }
+        return res;
+    }
+
+};
+

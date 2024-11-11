@@ -12,6 +12,7 @@ struct DictionaryEntry {
 template<typename delta_t, typename confidence_t>
 struct DictionaryEntriesMatrix {
 	DictionaryEntry<delta_t, confidence_t> entries[NUM_CLASSES];
+	DictionaryEntriesMatrix(){}
 };
 
 
