@@ -145,7 +145,6 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 #pragma HLS ARRAY_PARTITION variable=dictionaryEntries complete
 
 	#pragma HLS INLINE
-	#pragma HLS PIPELINE
 
 	DictionaryEntry<delta_t, confidence_t> res;
 	

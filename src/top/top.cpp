@@ -7,7 +7,7 @@ DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, 
 
 	static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
 				= initDictionaryEntries<delta_t, dic_confidence_t>();
-		#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
+		#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix.entries complete
 
 	static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 		#pragma HLS DEPENDENCE false variable=dictionary

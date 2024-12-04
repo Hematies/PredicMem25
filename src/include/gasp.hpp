@@ -26,7 +26,7 @@ public:
 
 		static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
 			= initDictionaryEntries<delta_t, dic_confidence_t>();
-	#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
+	#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix.entries complete
 
 		static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
@@ -35,9 +35,9 @@ public:
 
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->intercepts complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrix.intercepts complete
 
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
 	#pragma HLS DEPENDENCE false variable=inputBuffer
