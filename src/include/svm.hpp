@@ -61,7 +61,6 @@ distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(WeightMatrix
 // #pragma HLS DEPENDENCE array false inter variable=weight_matrices->weights
 
 #pragma HLS INLINE
-	#pragma HLS PIPELINE
 	distance_t res = -intercept;
 
 	distance_t selectedWeights[SEQUENCE_LENGTH];
@@ -239,7 +238,6 @@ void SVM<weight_t, class_t, distance_t>::recursivelyPredictAndFit(WeightMatrix<w
 #pragma HLS ARRAY_PARTITION variable=input complete
 #pragma HLS ARRAY_PARTITION variable=outputs complete
 #pragma HLS INLINE
-	#pragma HLS PIPELINE
 
 
 	class_t newInput[SEQUENCE_LENGTH];
