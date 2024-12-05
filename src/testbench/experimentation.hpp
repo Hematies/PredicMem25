@@ -2,10 +2,11 @@
 #include <iostream>
 #include <vector>
 #include "../include/global.hpp"
-#include <dirent.h>
+#include "dirent.h"
 #include "../top/top.hpp"
 
 using namespace std;
+
 
 /*
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit);
@@ -35,8 +36,8 @@ class Experiment{
 protected:
     string filePath;
     ExperimentType type;
+    int numOperations;
 public:
-    bool perform();
     bool checkConfiguration(){
     	return true;
     }
@@ -46,6 +47,9 @@ public:
     }
     string getTracePath(){
         return filePath;
+    }
+    int getNumOperations(){
+    	return numOperations;
     }
 };
 
@@ -75,33 +79,37 @@ class InputBufferValidation : public Experiment{
 protected:
     vector<InputBufferValidationInput> inputs;
     vector<InputBufferValidationOutput> outputs;
+    int i = 0;
+    bool allChecksAreCorrect = true;
 public:
     InputBufferValidation(){}
     InputBufferValidation(string filePath){
         type = ExperimentType::INPUT_BUFFER_VALIDATION;
         readTraceFile(filePath);
+        numOperations = inputs.size();
     }
     void readTraceFile(string filePath);
-    bool perform(){
-        bool res = false;
 
-        if(checkConfiguration()){
-            res = true;
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
+    void reset(){
+    	i = 0;
+    	allChecksAreCorrect = true;
+    }
 
-                InputBufferValidationOutput output;
-                auto entry = operateInputBuffer(input.inputBufferAddr, input.entry, input.performRead, output.isHit);
-                output.entry = entry;
+    InputBufferValidationInput getNextInput(){
+    	auto input = inputs[i];
+    	return input;
+    }
 
-                if(!areInputBufferOutputsEqual(output, targetOutput)){
-                    res = false;
-                    break;
-                }
-            }
-        }
-        return res;
+    void saveOutput(InputBufferValidationOutput output){
+    	auto target = outputs[i];
+    	if(!areInputBufferOutputsEqual(output, target)){
+    		allChecksAreCorrect = false;
+		}
+    	i++;
+    }
+
+    bool hasPassed(){
+    	return allChecksAreCorrect;
     }
 
 };
@@ -109,44 +117,43 @@ public:
 class InputBufferSoftValidation : public InputBufferValidation{
 protected:
     double hitRateDifferenceThreshold;
+    int numHits = 0, numTargetHits = 0;
+	int numReads = 0;
+	int i = 0;
 public:
     InputBufferSoftValidation(){}
 
     InputBufferSoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::INPUT_BUFFER_SOFT_VALIDATION;
         readTraceFile(filePath);
+        numOperations = inputs.size();
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
     }
 
-    bool perform(){
-        bool res = false;
+    void reset(){
+		i = 0;
+		numHits = 0;
+		numTargetHits = 0;
+		numReads = 0;
+	}
 
-        if(checkConfiguration()){
-            res = true;
-            double hitRate = 0.0, targetHitRate = 0.0;
-            int numReads = 0;
+    void saveOutput(InputBufferValidationOutput output){
+    	auto input = inputs[i];
+		auto target = outputs[i];
+		if(input.performRead){
+			numHits += (int)output.isHit;
+			numTargetHits += (int)target.isHit;
+			numReads++;
+		}
+		i++;
+	}
 
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
+	bool hasPassed(){
+		double hitRate = ((double)numHits) / numReads;
+		double targetHitRate = ((double)numTargetHits) / numReads;
 
-                InputBufferValidationOutput output;
-                auto entry = operateInputBuffer(input.inputBufferAddr, input.entry, input.performRead, output.isHit);
-                output.entry = entry;
-
-                if(input.performRead){
-                    hitRate += (int)output.isHit;
-                    targetHitRate += (int)targetOutput.isHit;
-                    numReads++;
-                }
-            }
-            hitRate = hitRate / numReads;
-            targetHitRate = targetHitRate / numReads;
-
-            res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
-        }
-        return res;
-    }
+		return abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+	}
 
 };
 
@@ -173,32 +180,37 @@ class DictionaryValidation : public Experiment{
 protected:
     vector<DictionaryValidationInput> inputs;
     vector<DictionaryValidationOutput> outputs;
+    int i = 0;
+	bool allChecksAreCorrect = true;
 public:
     DictionaryValidation(){}
     DictionaryValidation(string filePath){
         type = ExperimentType::DICTIONARY_VALIDATION;
         readTraceFile(filePath);
+        numOperations = inputs.size();
     }
-    bool perform(){
-        bool res = false;
-        if(checkConfiguration()){
-            res = true;
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
 
-                DictionaryValidationOutput output;
-                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.resultIndex, output.isHit);
-                output.entry = entry;
+    void reset(){
+		i = 0;
+		allChecksAreCorrect = true;
+	}
 
-                if(!areDictionaryOutputsEqual(output, targetOutput)){
-                    res = false;
-                    break;
-                }
-            }
-        }
-        return res;
-    }
+    DictionaryValidationInput getNextInput(){
+		auto input = inputs[i];
+		return input;
+	}
+
+	void saveOutput(DictionaryValidationOutput output){
+		auto target = outputs[i];
+		if(!areDictionaryOutputsEqual(output, target)){
+			allChecksAreCorrect = false;
+		}
+		i++;
+	}
+
+	bool hasPassed(){
+		return allChecksAreCorrect;
+	}
 
     void readTraceFile(string filePath);
 };
@@ -206,43 +218,42 @@ public:
 class DictionarySoftValidation : public DictionaryValidation{
 protected:
     double hitRateDifferenceThreshold;
+    int numHits = 0, numTargetHits = 0;
+	int numWrites = 0;
+	int i = 0;
 public:
     DictionarySoftValidation(){}
     DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::DICTIONARY_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
+        numOperations = inputs.size();
     }
 
-    bool perform(){
-        bool res = false;
-        if(checkConfiguration()){
-            res = true;
-            double hitRate = 0.0, targetHitRate = 0.0;
-            int numWrites = 0;
+    void reset(){
+		i = 0;
+		numHits = 0;
+		numTargetHits = 0;
+		numWrites = 0;
+	}
 
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
+	void saveOutput(DictionaryValidationOutput output){
+		auto input = inputs[i];
+		auto target = outputs[i];
+		if(!input.performRead){
+			numHits += (int)output.isHit;
+			numTargetHits += (int)target.isHit;
+			numWrites++;
+		}
+		i++;
+	}
 
-                DictionaryValidationOutput output;
-                auto entry = operateDictionary(input.index, input.delta, input.performRead, output.resultIndex, output.isHit);
-                output.entry = entry;
+	bool hasPassed(){
+		double hitRate = ((double)numHits) / numWrites;
+		double targetHitRate = ((double)numTargetHits) / numWrites;
 
-                if(!input.performRead){
-                    hitRate += (int)output.isHit;
-                    targetHitRate += (int)targetOutput.isHit;
-                    numWrites++;
-                }
-
-            }
-            hitRate = hitRate / numWrites;
-            targetHitRate = targetHitRate / numWrites;
-
-            res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
-        }
-        return res;
-    }
+		return abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+	}
 
 };
 
@@ -268,35 +279,36 @@ class SVMValidation : public Experiment{
 protected:
     vector<SVMValidationInput> inputs;
     vector<SVMValidationOutput> outputs;
+    int i = 0;
+	bool allChecksAreCorrect = true;
 public:
     SVMValidation(){}
     SVMValidation(string filePath){
         type = ExperimentType::SVM_VALIDATION;
         readTraceFile(filePath);
+        numOperations = inputs.size();
     }
-    bool perform(){
-        bool res = false;
-        if(checkConfiguration()){
-            res = true;
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
+    void reset(){
+		i = 0;
+		allChecksAreCorrect = true;
+	}
 
-                SVMValidationOutput output;
-                for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-                    output.output[i] = NUM_CLASSES;
-                }
+	SVMValidationInput getNextInput(){
+		auto input = inputs[i];
+		return input;
+	}
 
-                operateSVM(input.input, input.target, output.output);
+	void saveOutput(SVMValidationOutput output){
+		auto target = outputs[i];
+		if(!areSVMOutputsEqual(output, target)){
+			allChecksAreCorrect = false;
+		}
+		i++;
+	}
 
-                if(!areSVMOutputsEqual(output, targetOutput)){
-                    res = false;
-                    break;
-                }
-            }
-        }
-        return res;
-    }
+	bool hasPassed(){
+		return allChecksAreCorrect;
+	}
 
     void readTraceFile(string filePath);
 };
@@ -304,115 +316,60 @@ public:
 class SVMSoftValidation : public SVMValidation{
 protected:
     double matchingThreshold;
+    int numMatches = 0;
+	int numPredictions = 0;
+	int i = 0;
 public:
     SVMSoftValidation(){}
-    SVMSoftValidation(string filePath, double matchingThreshold = 0.05){
+    SVMSoftValidation(string filePath, double matchingThreshold = 0.8){
         type = ExperimentType::SVM_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->matchingThreshold = matchingThreshold;
+        numOperations = inputs.size();
     }
 
-    bool perform(){
-        bool res = false;
-        if(checkConfiguration()){
-            res = true;
-            double matchRate = 0.0;
-            int numPredictions = 0;
+    void reset(){
+		i = 0;
+		numMatches = 0;
+		numPredictions = 0;
+	}
 
-            for(int i = 0; i < inputs.size(); i++){
-                auto input = inputs[i];
-                auto targetOutput = outputs[i];
+	void saveOutput(SVMValidationOutput output){
+		auto input = inputs[i];
+		auto target = outputs[i];
+		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+			// Only counting true positives over all predictions (precision):
+			if(target.output[k] == NUM_CLASSES){
+				break;
+			}
+			else{
+				numMatches += target.output[k] == output.output[k];
+				numPredictions++;
+			}
 
-                SVMValidationOutput output;
-                for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-                    output.output[i] = NUM_CLASSES;
-                }
+		}
 
-                operateSVM(input.input, input.target, output.output);
+		i++;
+	}
 
-                for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-                    // Only counting true positives over all predictions (precision):
-                    if(targetOutput.output[i] == NUM_CLASSES){
-                        break;
-                    }
-                    else{
-                        matchRate += targetOutput.output[i] == output.output[i];
-                        numPredictions++;
-                    }
+	bool hasPassed(){
+		double matchRate = ((double) numMatches) / numPredictions;
 
-                }
-
-            }
-            matchRate = matchRate / numPredictions;
-
-            res = matchRate > this->matchingThreshold;
-        }
-        return res;
-    }
+		return matchRate > this->matchingThreshold;
+	}
 
 };
 
 template<class Experiment>
 class Experimentation{
-protected:
-    vector<Experiment> experiments;
 public:
+	vector<Experiment> experiments;
     Experimentation(){}
-    Experimentation(string folderPath// , ExperimentType type
+    Experimentation(string filePath// , ExperimentType type
     		){
-        DIR    *dir;
-        dirent *pdir;
-        dir = opendir(folderPath.c_str());
-        vector<string> files;
-        while (pdir = readdir(dir))
-        {
-        	if(strcmp(pdir->d_name, "..") != 0 && strcmp(pdir->d_name, ".") != 0)
-        		files.push_back(pdir->d_name);
-        }
-        for (const auto & filename : files) {
-        	std::cout << folderPath + filename << "\n";
-        	experiments.push_back(Experiment(folderPath + "//" + filename));
-        }
-    }
-    bool perform(){
-        bool res = true;
-        for(auto& experiment : experiments){
-            bool success = experiment.perform();
-            res = res && success;
-            string type;
-            switch (experiment.getType())
-			{
-			case INPUT_BUFFER_VALIDATION:
-				type = "Input Buffer Validation";
-				break;
-			case INPUT_BUFFER_SOFT_VALIDATION:
-				type = "Input Buffer Soft Validation";
-				break;
-			case DICTIONARY_VALIDATION:
-				type = "Dictionary Validation";
-				break;
-			case DICTIONARY_SOFT_VALIDATION:
-				type = "Dictionary Soft Validation";
-				break;
-			case SVM_VALIDATION:
-				type = "SVM Validation";
-				break;
-			case SVM_SOFT_VALIDATION:
-				type = "SVM Soft Validation";
-				break;
-			default:
-				break;
-			}
 
-            if(!success){
-                cout << "FAILURE for experiment of type " << type << " and trace path " << experiment.getTracePath() << "\n";
-            }
-            else{
-                cout << "SUCCESS for experiment of type " << type << " and trace path " << experiment.getTracePath() << "\n";
-            }
+		experiments.push_back(Experiment(filePath));
         }
-        return res;
-    }
 
 };
 
