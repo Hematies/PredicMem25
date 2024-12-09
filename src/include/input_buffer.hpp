@@ -104,8 +104,12 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
 #pragma HLS UNROLL
-		if (entries[index][w].tag == tag && entries[index][tag].valid)
+		if ((entries[index][w].tag == tag)  && (entries[index][w].valid)
+				){
 			res = w;
+			break;
+		}
+
 	}
 	return res;
 }
@@ -126,7 +130,7 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entr
 	isHit = false;
 	way_t way = this->queryWay(entries, index, tag);
 
-	if (way != IB_NUM_WAYS) {
+	if (way != (way_t)IB_NUM_WAYS) {
 		res = entries[index][way];
 		isHit = true;
 	}
@@ -157,13 +161,13 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> ent
 
 	if (way == IB_NUM_WAYS) {
 		way = this->getLeastRecentWay(entries, index);
-		entries[index][way].tag = entry.tag;
-		entries[index][way].valid = entry.valid;
 	}
 
 	entries[index][way].lastAddress = entry.lastAddress;
 	entries[index][way].confidence = entry.confidence;
 	entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
+	entries[index][way].tag = entry.tag;
+	entries[index][way].valid = entry.valid;
 	for(int i = 0; i < SEQUENCE_LENGTH; i++){
 #pragma HLS UNROLL
 		entries[index][way].sequence[i] = entry.sequence[i];
