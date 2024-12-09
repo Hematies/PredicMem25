@@ -119,7 +119,6 @@ protected:
     double hitRateDifferenceThreshold;
     int numHits = 0, numTargetHits = 0;
 	int numReads = 0;
-	int i = 0;
 public:
     InputBufferSoftValidation(){}
 
@@ -151,8 +150,13 @@ public:
 	bool hasPassed(){
 		double hitRate = ((double)numHits) / numReads;
 		double targetHitRate = ((double)numTargetHits) / numReads;
+		bool res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
 
-		return abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+		std::cout << "Input buffer hit rate: " << std::to_string(hitRate) << std::endl;
+		std::cout << "Target input buffer hit rate: " << std::to_string(targetHitRate) << std::endl;
+		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+
+		return res;
 	}
 
 };
@@ -220,7 +224,6 @@ protected:
     double hitRateDifferenceThreshold;
     int numHits = 0, numTargetHits = 0;
 	int numWrites = 0;
-	int i = 0;
 public:
     DictionarySoftValidation(){}
     DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
@@ -252,7 +255,14 @@ public:
 		double hitRate = ((double)numHits) / numWrites;
 		double targetHitRate = ((double)numTargetHits) / numWrites;
 
-		return abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+		bool res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+
+		std::cout << "Dictionary hit rate: " << std::to_string(hitRate) << std::endl;
+		std::cout << "Target dictionary hit rate: " << std::to_string(targetHitRate) << std::endl;
+		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+
+		return res;
+
 	}
 
 };
@@ -318,7 +328,6 @@ protected:
     double matchingThreshold;
     int numMatches = 0;
 	int numPredictions = 0;
-	int i = 0;
 public:
     SVMSoftValidation(){}
     SVMSoftValidation(string filePath, double matchingThreshold = 0.8){
@@ -355,7 +364,13 @@ public:
 	bool hasPassed(){
 		double matchRate = ((double) numMatches) / numPredictions;
 
-		return matchRate > this->matchingThreshold;
+		bool res = matchRate > this->matchingThreshold;
+
+		std::cout << "SVM results match rate: " << std::to_string(matchRate) << std::endl;
+		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+
+		return res;
+
 	}
 
 };
