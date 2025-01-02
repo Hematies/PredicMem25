@@ -11,7 +11,7 @@ string inputBufferTracesDirName = "inputBufferTraces//";
 string dictionaryTracesDirName = "dictionaryTraces//";
 string svmTracesDirName = "svmTraces//";
 
-bool validateInputBuffer = false, validateDictionary = true, validateSVM = false;
+bool validateInputBuffer = false, validateDictionary = false, validateSVM = true;
 
 int main()
 {

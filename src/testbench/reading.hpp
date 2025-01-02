@@ -24,9 +24,21 @@ void parseInputBufferInOutLine(string line, InputBufferValidationInput& input, I
     string inputLine = chains[0], outputLine = chains[1];
     vector<string> inputElements = split(inputLine, ","), outputElements = split(outputLine, ",");
 
+    /*
+    for(auto element : inputElements){
+    	std::cout << element << ", ";
+    }
+    std::cout << "; ";
+
+    for(auto element : outputElements){
+        	std::cout << element << ", ";
+        }
+        std::cout << std::endl;
+	*/
     // Input:
     input.inputBufferAddr = (address_t) std::stol(inputElements[0]);
-    input.entry.valid = std::stoi(inputElements[1]);
+    // input.entry.valid = std::stoi(inputElements[1]);
+    input.entry.valid = true;
     input.entry.tag = (ib_tag_t) std::stol(inputElements[2]);
     input.entry.lastAddress = (block_address_t) std::stol(inputElements[3]);
     for(int i = 0; i < SEQUENCE_LENGTH; i++){

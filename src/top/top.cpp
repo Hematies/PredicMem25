@@ -30,11 +30,16 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 
 	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 factor=2 block
+// #pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
+#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 factor=2 block
+// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
+// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=inputBufferEntriesMatrix.entries
 #pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
 
 	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
-		#pragma HLS DEPENDENCE false variable=inputBuffer
+	// #pragma HLS DEPENDENCE false variable=inputBuffer
+
+
 
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res;
 	if(performRead){
@@ -58,15 +63,17 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
 	// #pragma HLS SHARED variable=weight_matrices->weights
 	#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-	// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+	#pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
 
 	static svm_weight_t intercepts[NUM_CLASSES];
 	#pragma HLS ARRAY_PARTITION variable=intercepts complete
 
 	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
 
-	svm.recursivelyPredictAndFit(weight_matrices, intercepts, input, target, output, MAX_PREFETCHING_DEGREE);
-
+	// svm.recursivelyPredictAndFit(weight_matrices, intercepts, input, target, output, MAX_PREFETCHING_DEGREE);
+	svm.fit(weight_matrices, intercepts, input, target);
+	// output[0] = svm.predictAndFit(weight_matrices, intercepts, input, target);
+	// output[0] = svm.predict(weight_matrices, intercepts, input);
 }
 
 

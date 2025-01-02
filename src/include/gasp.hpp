@@ -30,7 +30,7 @@ public:
 
 		static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 factor=2 block
+	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 	#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
 
 
@@ -55,7 +55,7 @@ public:
 		bool isInputBufferHit;
 		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
 			inputBuffer.read(inputBufferEntriesMatrix.entries, inputBufferAddress, isInputBufferHit);
-	#pragma HLS AGGREGATE variable=inputBufferEntry
+	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 		ib_tag_t tag = memoryAddress >> numIndexBits;
@@ -129,7 +129,7 @@ public:
 			dic_index_t dummyIndex;
 			delta_t predictedDelta;
 
-			predictedDelta = dictionaryEntriesMatrix.entries[predictedClasses[0]].delta;
+			predictedDelta = dictionaryEntriesMatrix.entries[(int)predictedClasses[0]].delta;
 			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 			if(performPrefetch){
@@ -139,7 +139,7 @@ public:
 				for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
 	#pragma HLS UNROLL
 					if(i < prefetchDegree){
-						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[predictedClasses[i]].delta;
+						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[(int)predictedClasses[i]].delta;
 						block_address_t addr = (delta_t)prevAddress + predictedDelta_;
 						addressesToPrefetch_[i] = addr;
 						prevAddress = addr;

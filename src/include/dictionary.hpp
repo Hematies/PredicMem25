@@ -160,7 +160,7 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		res.delta = delta;
 		res.valid = true;
 		res.confidence = DICTIONARY_LFU_INITIAL_CONFIDENCE;
-		dictionaryEntries[resultIndex] = res;
+		dictionaryEntries[(int)resultIndex] = res;
 		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
 	this->updateConfidence(dictionaryEntries, resultIndex);

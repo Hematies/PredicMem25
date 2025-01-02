@@ -73,7 +73,7 @@ void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, con
 
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
 #pragma HLS UNROLL
-		entries[index][way].lruCounter = lruCounters[w];
+		entries[index][w].lruCounter = lruCounters[w];
 	}
 }
 
@@ -104,10 +104,10 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
 #pragma HLS UNROLL
-		if ((entries[index][w].tag == tag)  && (entries[index][w].valid)
+		if ((entries[index][w].tag == tag) //  && (entries[index][w].valid)
 				){
 			res = w;
-			break;
+			// break;
 		}
 
 	}
@@ -118,9 +118,9 @@ template<typename address_t, typename index_t, typename way_t, typename tag_t, t
 InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
 read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit) {
 // #pragma HLS INLINE
-#pragma HLS ARRAY_PARTITION variable=entries dim=0 factor=2 block
+#pragma HLS PIPELINE
+#pragma HLS ARRAY_PARTITION variable=entries dim=2 factor=2 block
 
-	#pragma HLS PIPELINE
 	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res = 
 		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
 
@@ -129,6 +129,7 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entr
 	index_t index = inputBufferAddress % (1 << numIndexBits);
 	isHit = false;
 	way_t way = this->queryWay(entries, index, tag);
+
 
 	if (way != (way_t)IB_NUM_WAYS) {
 		res = entries[index][way];
@@ -148,32 +149,44 @@ InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confiden
 write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry) {
 // #pragma HLS INLINE
-#pragma HLS ARRAY_PARTITION variable=entries dim=0 factor=2 block
 #pragma HLS PIPELINE
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res =
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
+
+// #pragma HLS DEPENDENCE array false RAW inter variable=entries
+
+#pragma HLS ARRAY_PARTITION variable=entries dim=2 factor=2 block
+// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
+// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
 	index_t index = inputBufferAddress % (1 << numIndexBits);
+	way_t leastRecentWay = this->getLeastRecentWay(entries, index);
 	way_t way = this->queryWay(entries, index, tag);
 
 
 	if (way == IB_NUM_WAYS) {
-		way = this->getLeastRecentWay(entries, index);
+		way = leastRecentWay;
+		// entries[index][way].lruCounter = 1;
+		// entries[index][way].tag = tag;
+		entry.lruCounter = 1;
+		entry.tag = tag;
 	}
 
-	entries[index][way].lastAddress = entry.lastAddress;
-	entries[index][way].confidence = entry.confidence;
-	entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
-	entries[index][way].tag = entry.tag;
-	entries[index][way].valid = entry.valid;
+	// entries[index][way].lastAddress = entry.lastAddress;
+	// entries[index][way].confidence = entry.confidence;
+	// entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
+
+	// entries[index][way].valid = true;
+	entry.valid = true;
+
+	entries[index][way] = entry;
+	/*
 	for(int i = 0; i < SEQUENCE_LENGTH; i++){
 #pragma HLS UNROLL
 		entries[index][way].sequence[i] = entry.sequence[i];
 	}
-
-	this->updateLRU(entries, index, way);
+	*/
+	// this->updateLRU(entries, index, way);
 
 }
 
