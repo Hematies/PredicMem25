@@ -62,11 +62,11 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 
 	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
 	// #pragma HLS SHARED variable=weight_matrices->weights
-	#pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-	#pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
 
 	static svm_weight_t intercepts[NUM_CLASSES];
-	#pragma HLS ARRAY_PARTITION variable=intercepts complete
+	// #pragma HLS ARRAY_PARTITION variable=intercepts complete
 
 	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
 
