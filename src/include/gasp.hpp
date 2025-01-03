@@ -35,6 +35,7 @@ public:
 
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
+		static SVMWholeMatrix<svm_weight_t> svmMatrixCopy = initSVMData<svm_weight_t>();
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.intercepts complete
@@ -97,7 +98,7 @@ public:
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
 				prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
 						prefetchDegree == 0? 1 : prefetchDegree);
 
 
@@ -121,7 +122,7 @@ public:
 				}
 
 				// 4) Predict with the SVM:
-				predictedClasses[0] = svm.predict(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence);
+				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
 
 			}
 
