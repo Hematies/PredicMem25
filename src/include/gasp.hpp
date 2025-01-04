@@ -30,14 +30,15 @@ public:
 
 		static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
-	#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
+	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 complete
+	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=3 complete
+	#pragma HLS DEPENDENCE array false WAR variable=inputBufferEntriesMatrix.entries
 
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
 		static SVMWholeMatrix<svm_weight_t> svmMatrixCopy = initSVMData<svm_weight_t>();
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrixCopy.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.intercepts complete
 
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
@@ -54,8 +55,9 @@ public:
 
 		// 1) Input buffer is read:
 		bool isInputBufferHit;
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntryDummy;
 		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-			inputBuffer.read(inputBufferEntriesMatrix.entries, inputBufferAddress, isInputBufferHit);
+			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntryDummy, true, isInputBufferHit);
 	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
@@ -157,7 +159,9 @@ public:
 			// 6) Update the input buffer with the entry:
 			inputBufferEntry.lastAddress = memoryAddress;
 			inputBufferEntry.lastPredictedAddress = predictedAddress;
-			inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry);
+			// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+			bool isInputBufferHitDummy;
+			// inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
 		}
 	}
 };

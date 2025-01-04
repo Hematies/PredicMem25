@@ -385,7 +385,7 @@ class_t SVM<weight_t, class_t, distance_t>::predictAndFit(WeightMatrix<weight_t>
 template<typename weight_t, typename class_t, typename distance_t>
 void SVM<weight_t, class_t, distance_t>::recursivelyPredictAndFit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], WeightMatrix<weight_t> weight_matrices_copy[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], weight_t intercepts_copy[NUM_CLASSES], class_t input[SEQUENCE_LENGTH], class_t target,
 		class_t outputs[MAX_PREFETCHING_DEGREE], int numPredictions) {
-	// #pragma HLS INLINE
+	#pragma HLS INLINE
 // #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 // #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
@@ -395,7 +395,7 @@ void SVM<weight_t, class_t, distance_t>::recursivelyPredictAndFit(WeightMatrix<w
 #pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices
 #pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices->weights
 #pragma HLS DEPENDENCE dependent=false type=inter variable=intercepts
-#pragma HLS PIPELINE
+// #pragma HLS PIPELINE
 
 	/*
 	WeightMatrix<weight_t> weight_matrices_[NUM_CLASSES];

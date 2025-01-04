@@ -30,25 +30,29 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 
 	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
+				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
 // #pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
-#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 factor=2 block
+// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 factor=2 block
 // #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 // #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=inputBufferEntriesMatrix.entries
-#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
+#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
 	// #pragma HLS DEPENDENCE false variable=inputBuffer
 
 
-
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res;
+	/*
 	if(performRead){
-		res = inputBuffer.read(inputBufferEntriesMatrix.entries, addr, isHit);
+		res = inputBuffer.read(inputBufferEntriesMatrixCopy.entries, addr, isHit);
 	}
 	else{
-		inputBuffer.write(inputBufferEntriesMatrix.entries, addr, entry);
+		inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries, addr, entry);
 		res = entry;
 	}
+	*/
+	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit);
 	return res;
 }
 
