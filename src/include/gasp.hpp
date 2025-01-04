@@ -30,8 +30,10 @@ public:
 
 		static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 complete
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=3 complete
+	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
+	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
+	#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
+
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 
@@ -161,7 +163,7 @@ public:
 			inputBufferEntry.lastPredictedAddress = predictedAddress;
 			// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
 			bool isInputBufferHitDummy;
-			// inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
+			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
 		}
 	}
 };

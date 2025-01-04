@@ -168,8 +168,8 @@ class_t SVM<weight_t, class_t, distance_t>::predict_(WeightMatrix<weight_t> weig
 
 template<typename weight_t, typename class_t, typename distance_t>
 class_t SVM<weight_t, class_t, distance_t>::predict(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t sequence[SEQUENCE_LENGTH]) {
-	// #pragma HLS INLINE
-	#pragma HLS PIPELINE
+	#pragma HLS INLINE
+	// #pragma HLS PIPELINE
 	return predict_(weight_matrices, intercepts, sequence);
 }
 
