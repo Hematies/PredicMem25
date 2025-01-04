@@ -32,7 +32,7 @@ public:
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
 	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 complete
 	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=3 complete
-	#pragma HLS DEPENDENCE array false WAR variable=inputBufferEntriesMatrix.entries
+	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
