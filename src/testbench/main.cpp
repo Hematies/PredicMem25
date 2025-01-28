@@ -27,10 +27,12 @@ int main(int argc, char **argv)
 		else if(argument == "--validateSVM" || argument == "-vSVM"){
 			validateSVM = true;
 		}
-		else{
-			cout << "No type of validation has been indicated\n";
-			return 1;
-		}
+
+	}
+
+	if(!validateInputBuffer && !validateDictionary && !validateSVM){
+		cout << "No type of validation has been indicated\n";
+		return 1;
 	}
 
 
