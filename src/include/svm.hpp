@@ -60,7 +60,7 @@ weight_t selectWeight(weight_t weights[NUM_CLASSES_INCLUDING_NULL], class_t corr
 
 template<typename weight_t, typename class_t, typename distance_t>
 distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(WeightMatrix<weight_t>& weight_matrix, weight_t intercept, class_t sequence[SEQUENCE_LENGTH]) {
-#pragma HLS BIND_STORAGE variable=weight_matrix type=RAM_T2P impl=bram latency=1
+#pragma HLS BIND_STORAGE variable=weight_matrix type=RAM_2P impl=lutram latency=1
 #pragma HLS ARRAY_PARTITION variable=weight_matrix.weights dim=1 complete
 
 #pragma HLS DEPENDENCE array false inter variable=weight_matrix.weights
@@ -113,7 +113,7 @@ template<typename weight_t, typename class_t, typename distance_t>
 class_t SVM<weight_t, class_t, distance_t>::predict_(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], class_t sequence [SEQUENCE_LENGTH]) {
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=1 complete
-#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_T2P impl=bram latency=1
+#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_2P impl=lutram latency=1
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
 #pragma HLS ARRAY_PARTITION variable=sequence complete
 
@@ -214,13 +214,13 @@ template<typename weight_t, typename class_t, typename distance_t>
 void SVM<weight_t, class_t, distance_t>::fit(WeightMatrix<weight_t> weight_matrices[NUM_CLASSES], WeightMatrix<weight_t> weight_matrices_copy[NUM_CLASSES], weight_t intercepts[NUM_CLASSES], weight_t intercepts_copy[NUM_CLASSES], class_t sequence[SEQUENCE_LENGTH], const class_t target) {
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 // #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
-#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_T2P impl=bram latency=1
+#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_2P impl=lutram latency=1
 
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
 
 #pragma HLS ARRAY_PARTITION variable=weight_matrices_copy complete
 // #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
-#pragma HLS BIND_STORAGE variable=weight_matrices_copy->weights type=RAM_T2P impl=bram latency=1
+#pragma HLS BIND_STORAGE variable=weight_matrices_copy->weights type=RAM_2P impl=lutram latency=1
 
 #pragma HLS ARRAY_PARTITION variable=intercepts_copy complete
 
@@ -362,7 +362,7 @@ class_t SVM<weight_t, class_t, distance_t>::predictAndFit(WeightMatrix<weight_t>
 // #pragma HLS PIPELINE
 // #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_T2P impl=bram latency=1
+#pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_2P impl=lutram latency=1
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
 #pragma HLS ARRAY_PARTITION variable=input complete
 
