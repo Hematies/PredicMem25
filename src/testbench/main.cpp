@@ -6,10 +6,10 @@
 
 using namespace std;
 
-string traceDirPath = "//home//pablo//Escritorio//PredicMem25//traces//";
-string inputBufferTracesDirName = "inputBufferTraces//";
-string dictionaryTracesDirName = "dictionaryTraces//";
-string svmTracesDirName = "svmTraces//";
+string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
+string inputBufferTracesDirName = "inputBufferTraces/";
+string dictionaryTracesDirName = "dictionaryTraces/";
+string svmTracesDirName = "svmTraces/";
 
 
 int main(int argc, char **argv)
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 	bool passed = true;
 
 	if(validateInputBuffer){
-		auto inputBufferValidation = Experimentation<InputBufferSoftValidation>(traceDirPath + string("inputBufferTrace.txt"));
+		auto inputBufferValidation = Experimentation<InputBufferSoftValidation>(traceDirPath + string("inputBufferTraceHeader.txt"));
 		auto experiments = inputBufferValidation.experiments;
 		for(auto& experiment : experiments){
 			for(int i = 0; i < experiment.getNumOperations(); i++){
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
 
 	if(validateDictionary){
-		auto dictionaryValidation = Experimentation<DictionarySoftValidation>(traceDirPath + string("dictionaryTrace.txt"));
+		auto dictionaryValidation = Experimentation<DictionarySoftValidation>(traceDirPath + string("dictionaryTraceHeader.txt"));
 		auto experiments = dictionaryValidation.experiments;
 		for(auto& experiment : experiments){
 			for(int i = 0; i < experiment.getNumOperations(); i++){
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
 
 	if(validateSVM){
-		auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + string("svmTrace.txt"));
+		auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + string("svmTraceHeader.txt"));
 		auto experiments = svmValidation.experiments;
 		for(auto& experiment : experiments){
 			for(int i = 0; i < experiment.getNumOperations(); i++){

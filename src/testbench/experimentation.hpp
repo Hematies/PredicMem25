@@ -377,14 +377,23 @@ public:
 
 template<class Experiment>
 class Experimentation{
+protected:
+	string headerPath;
+	vector<string> getTracePaths();
 public:
 	vector<Experiment> experiments;
     Experimentation(){}
-    Experimentation(string filePath// , ExperimentType type
+    Experimentation(string headerPath// , ExperimentType type
     		){
+    	this->headerPath = headerPath;
+    	auto tracePaths = this->getTracePaths();
+    	for(auto& tracePath : tracePaths){
+    		cout << "Trace path: " << tracePath << endl;
+    		experiments.push_back(Experiment(tracePath));
+    	}
+	}
 
-		experiments.push_back(Experiment(filePath));
-        }
+
 
 };
 

@@ -2,6 +2,7 @@
 #include "experimentation.hpp"
 #include <string>
 #include "traceReader.hpp"
+#include <libgen.h>
 
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
 std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
@@ -137,4 +138,18 @@ void SVMValidation::readTraceFile(string filePath){
         inputs.push_back(input);
         outputs.push_back(output);
     }
+}
+
+template<class Experiment>
+vector<string> Experimentation<Experiment>::getTracePaths(){
+	TraceReader reader = TraceReader(headerPath);
+	auto res = vector<string>();
+	string headerPath__ = headerPath + "";
+	char* headerPath_ = &headerPath__[0];
+	string dir = string(dirname(headerPath_));
+	auto lines = reader.readAllLines();
+	for(auto& line : lines){
+		res.push_back(dir + "/" + line);
+	}
+	return res;
 }

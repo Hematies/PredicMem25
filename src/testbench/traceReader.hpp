@@ -30,6 +30,7 @@
 
 using namespace std;
 
+
 class TraceReader {
 public:
 	string filename = "";
@@ -86,9 +87,8 @@ public:
 		string line;
 		unsigned long res = 0;
 		// while (file.peek() != EOF)
-		while (!file.eof())
+		while (getline(file, line))
 		{
-			getline(file, line);
 			if (line.compare(endLine) == 0) {
 				break;
 			}
@@ -123,10 +123,8 @@ public:
 		{
 			file.clear();
 			// file.seekg(0);
-			while (file.peek() != EOF)
+			while (getline(file, line))
 			{
-				getline(file, line);
-
 				// if ((k >= start) && (k < end)) {
 				if ((k >= end) || (line.compare(endLine) == 0)) break;
 				else 
