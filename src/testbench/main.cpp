@@ -11,10 +11,28 @@ string inputBufferTracesDirName = "inputBufferTraces//";
 string dictionaryTracesDirName = "dictionaryTraces//";
 string svmTracesDirName = "svmTraces//";
 
-bool validateInputBuffer = false, validateDictionary = false, validateSVM = true;
 
-int main()
+int main(int argc, char **argv)
 {
+	bool validateInputBuffer = false, validateDictionary = false, validateSVM = false;
+
+	for(int i = 1; i < argc; i++){
+		string argument = string(argv[i]);
+		if(argument == "--validateInputBuffer" || argument == "-vIB"){
+			validateInputBuffer = true;
+		}
+		else if(argument == "--validateDictionary" || argument == "-vD"){
+			validateDictionary = true;
+		}
+		else if(argument == "--validateSVM" || argument == "-vSVM"){
+			validateSVM = true;
+		}
+		else{
+			cout << "No type of validation has been indicated\n";
+			return 1;
+		}
+	}
+
 
 	bool passed = true;
 
