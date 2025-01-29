@@ -375,6 +375,109 @@ public:
 
 };
 
+struct PrefetchingValidationInput{
+	address_t instructionPointer;
+	block_address_t memoryAddress;
+};
+
+struct PrefetchingValidationOutput{
+	block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+};
+
+template<typename output_t>
+bool arePrefetchingOutputsEqual(output_t &output1, output_t &output2){
+    bool res = true;
+    for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+        res = res && output1.output[i] == output2.output[i];
+    }
+    return res;
+}
+
+class PrefetchingSoftValidation : public Experiment{
+protected:
+    vector<PrefetchingValidationInput> inputs;
+    vector<PrefetchingValidationOutput> outputs;
+    int i = 0;
+    double matchingThreshold;
+    int numPrefetches = 0;
+    int numMatches = 0;
+public:
+	PrefetchingSoftValidation(){}
+	PrefetchingSoftValidation(string filePath, double matchingThreshold = 0.8){
+        readTraceFile(filePath);
+        numOperations = inputs.size();
+        this->matchingThreshold = matchingThreshold;
+    }
+    void reset(){
+    	i = 0;
+		numMatches = 0;
+		numPrefetches = 0;
+	}
+
+    PrefetchingValidationInput getNextInput(){
+		auto input = inputs[i];
+		return input;
+	}
+
+	void saveOutput(PrefetchingValidationOutput output){
+		auto input = inputs[i];
+		auto target = outputs[i];
+
+		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+			// Only counting true positives over all predictions (precision):
+			if(target.addressesToPrefetch[k] == NUM_CLASSES){
+				break;
+			}
+			else {
+				numMatches += target.addressesToPrefetch[k] == output.addressesToPrefetch[k];
+				numPrefetches++;
+			}
+		}
+
+		i++;
+	}
+
+	bool hasPassed(){
+		double matchRate = ((double) numMatches) / numPrefetches;
+
+		bool res = matchRate > this->matchingThreshold;
+
+		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
+		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+
+		return res;
+
+	}
+
+    void readTraceFile(string filePath){
+    	// Pass...
+    }
+};
+
+class GASPSoftValidation : public PrefetchingSoftValidation{
+public:
+	GASPSoftValidation(){}
+	GASPSoftValidation(string filePath, double matchingThreshold = 0.8){
+		type = ExperimentType::GASP_SOFT_VALIDATION;
+        readTraceFile(filePath);
+        numOperations = inputs.size();
+        this->matchingThreshold = matchingThreshold;
+    }
+	void readTraceFile(string filePath);
+};
+
+class SGASPSoftValidation : public PrefetchingSoftValidation{
+public:
+	SGASPSoftValidation(){}
+	SGASPSoftValidation(string filePath, double matchingThreshold = 0.8){
+		type = ExperimentType::SGASP_SOFT_VALIDATION;
+        readTraceFile(filePath);
+        numOperations = inputs.size();
+        this->matchingThreshold = matchingThreshold;
+    }
+	void readTraceFile(string filePath);
+};
+
 template<class Experiment>
 class Experimentation{
 protected:
