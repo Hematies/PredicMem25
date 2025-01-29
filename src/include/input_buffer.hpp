@@ -108,7 +108,7 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 
 	for (int w = 0; w < IB_NUM_WAYS; w++) {
 #pragma HLS UNROLL
-		if ((set[w].tag == tag) //  && (entries[index][w].valid)
+		if ((set[w].tag == tag)  && (set[w].valid)
 				){
 			res = w;
 			// break;

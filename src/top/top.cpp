@@ -52,8 +52,7 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> 
 		res = entry;
 	}
 	*/
-	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, true, isHit);
-	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, false, isHit);
+	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit);
 	return res;
 }
 
