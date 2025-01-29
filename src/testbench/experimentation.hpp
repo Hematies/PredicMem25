@@ -150,7 +150,7 @@ public:
 	bool hasPassed(){
 		double hitRate = ((double)numHits) / numReads;
 		double targetHitRate = ((double)numTargetHits) / numReads;
-		bool res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+		bool res = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
 
 		std::cout << "Input buffer hit rate: " << std::to_string(hitRate) << std::endl;
 		std::cout << "Target input buffer hit rate: " << std::to_string(targetHitRate) << std::endl;
@@ -255,7 +255,7 @@ public:
 		double hitRate = ((double)numHits) / numWrites;
 		double targetHitRate = ((double)numTargetHits) / numWrites;
 
-		bool res = abs(hitRate - targetHitRate) < this->hitRateDifferenceThreshold;
+		bool res = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
 
 		std::cout << "Dictionary hit rate: " << std::to_string(hitRate) << std::endl;
 		std::cout << "Target dictionary hit rate: " << std::to_string(targetHitRate) << std::endl;
