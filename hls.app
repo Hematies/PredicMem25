@@ -1,8 +1,8 @@
-<project xmlns="com.autoesl.autopilot.project" name="PredicMem25" top="operateInputBuffer">
+<project xmlns="com.autoesl.autopilot.project" name="PredicMem25" top="prefetchWithGASP">
     <includePaths/>
     <libraryPaths/>
-    <Simulation>
-        <SimFlow name="csim" csimMode="2" lastCsimMode="2"/>
+    <Simulation argv="--validateGASP">
+        <SimFlow name="csim" ldflags="" csimMode="2" lastCsimMode="2"/>
     </Simulation>
     <files xmlns="">
         <file name="../src/testbench/experimentation.hpp" sc="0" tb="1" cflags=" -Wno-unknown-pragmas" csimflags=" -Wno-unknown-pragmas" blackbox="false"/>

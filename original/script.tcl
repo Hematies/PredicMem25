@@ -4,7 +4,7 @@
 ## Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
 ############################################################
 open_project PredicMem25
-set_top operateInputBuffer
+set_top prefetchWithGASP
 add_files PredicMem25/src/top/top.hpp
 add_files PredicMem25/src/top/top.cpp
 add_files PredicMem25/src/include/svm.hpp
@@ -24,7 +24,7 @@ open_solution "original" -flow_target vivado
 set_part {xczu3eg-sbva484-1-i}
 create_clock -period 10 -name default
 source "./PredicMem25/original/directives.tcl"
-csim_design
+csim_design -argv {--validateGASP}
 csynth_design
-cosim_design -setup
+cosim_design -argv {--validateGASP}
 export_design -format ip_catalog
