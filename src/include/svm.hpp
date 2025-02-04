@@ -74,10 +74,10 @@ distance_t SVM<weight_t, class_t, distance_t>::distanceToHyperplane(WeightMatrix
 
 	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 	#pragma HLS UNROLL
-			class_t correspondingClass = sequence[i];
-			// selectedWeights[i] = selectWeight<weight_t, class_t>(weight_matrix.weights[i], correspondingClass);
-			selectedWeights[i] = weight_matrix.weights[i][correspondingClass];
-		}
+		class_t correspondingClass = sequence[i];
+		// selectedWeights[i] = selectWeight<weight_t, class_t>(weight_matrix.weights[i], correspondingClass);
+		selectedWeights[i] = weight_matrix.weights[i][correspondingClass];
+	}
 
 	/*
 	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
@@ -233,93 +233,15 @@ void SVM<weight_t, class_t, distance_t>::fit(WeightMatrix<weight_t> weight_matri
 #pragma HLS DEPENDENCE dependent=false type=inter variable=intercepts_copy
 
 	#pragma HLS INLINE
-// #pragma HLS PIPELINE
-
-	/*
-	bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL];
-#pragma HLS ARRAY_PARTITION variable=oneHotSequence complete
-	encodeInOneHot(sequence, oneHotSequence);
-	*/
 
 	WeightMatrix<weight_t> weight_matrices_[NUM_CLASSES];
 	weight_t intercepts_[NUM_CLASSES];
 
 	/*
-	for(int k = 0; k < NUM_CLASSES; k++){
-#pragma HLS UNROLL
-		weight_matrices_[k] = weight_matrices[k];
-		intercepts_[k] = intercepts[k];
-	}
-	*/
-
 	class_t predictedClass = predict_(weight_matrices, intercepts, sequence);
 
-	/*
-	WeightMatrix<weight_t> weight_matrix_predicted_class = weight_matrices_[(int)predictedClass];
-	weight_t intercept_predicted_class = intercepts_[(int)predictedClass];
-	WeightMatrix<weight_t> weight_matrix_target_class = weight_matrices_[(int)target];
-	weight_t intercept_target_class = intercepts_[(int)target];
-	*/
-
-	// WeightMatrix<ap_int<2>> weight_matrices_delta[NUM_CLASSES];
-	// ap_int<2> intercepts_delta[NUM_CLASSES];
-
-	/*
-	for(int k = 0; k < NUM_CLASSES; k++){
-		bool classIsTargetOrPredicted = k == target || k == predictedClass;
-		#pragma HLS UNROLL
-		for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-		#pragma HLS UNROLL
-			for(int j = 0; j < NUM_CLASSES_INCLUDING_NULL; j++){
-			#pragma HLS UNROLL
-				weight_matrices_delta[k].weights[i][j] = k == target? -oneHotSequence[i][j] : 0;
-				// weight_matrices_delta[k].weights[i][j] = k == predictedClass? (ap_int<2>) +oneHotSequence[i][j] : weight_matrices_delta[k].weights[i][j];
-			}
-		}
-		intercepts_delta[k] = k == target? +1 : 0;
-		// intercepts_delta[k] = k == predictedClass? (ap_int<2>)-1 : intercepts_delta[k];
-
-	}
-	*/
-
-
 	if(target != predictedClass){
-		/*
-		for(int k = 0; k < NUM_CLASSES; k++){
-				#pragma HLS UNROLL
-				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-					#pragma HLS UNROLL
-						for(int j = 0; j < NUM_CLASSES_INCLUDING_NULL; j++){
-						#pragma HLS UNROLL
-							weight_matrices[k].weights[i][j] += weight_matrices_delta[k].weights[i][j];
-					}
-				}
-				intercepts[k] += intercepts_delta[k];
-			}
-		*/
 
-		// fitPredictedHyperplane(weight_matrix_predicted_class, intercept_predicted_class, sequence);
-		// fitTargetHyperplane(weight_matrix_target_class, intercept_target_class, sequence);
-
-		/*
-			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-			#pragma HLS UNROLL
-				weight_matrices[predictedClass].weights[i][sequence[i]]++;
-			}
-
-
-		intercepts[predictedClass]--;
-
-
-
-			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-			#pragma HLS UNROLL
-				weight_matrices[target].weights[i][sequence[i]]--;
-			}
-
-
-		intercepts[target]++;
-	*/
 		for(int k = 0; k < NUM_CLASSES; k++){
 			#pragma HLS UNROLL
 			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
@@ -344,13 +266,50 @@ void SVM<weight_t, class_t, distance_t>::fit(WeightMatrix<weight_t> weight_matri
 		}
 
 	}
-
-	/*
-	weight_matrices[predictedClass] = weight_matrix_predicted_class;
-	intercepts[predictedClass] = intercept_predicted_class;
-	weight_matrices[target] = weight_matrix_target_class;
-	intercepts[target] = intercept_target_class;
 	*/
+
+	distance_t distances[NUM_CLASSES];
+	#pragma HLS ARRAY_PARTITION variable=distances complete
+
+	for (int c = 0; c < NUM_CLASSES; c++) {
+#pragma HLS UNROLL
+		distances[c] = distanceToHyperplane(weight_matrices[c], intercepts[c], sequence);
+
+	}
+
+	for(int k = 0; k < NUM_CLASSES; k++){
+		#pragma HLS UNROLL
+		distance_t distance;
+		if(k == target){
+			distance = (1 << SVM_LEARNING_RATE_LOG2) + distances[k];
+		}
+		else{
+			distance = (1 << SVM_LEARNING_RATE_LOG2) - distances[k];
+		}
+		if(distance > 0) {
+			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+				#pragma HLS UNROLL
+				if(k == target){
+					weight_matrices[k].weights[i][sequence[i]]--;
+					weight_matrices_copy[k].weights[i][sequence[i]] = weight_matrices[k].weights[i][sequence[i]];
+				}
+				else{
+					weight_matrices[k].weights[i][sequence[i]]++;
+					weight_matrices_copy[k].weights[i][sequence[i]] = weight_matrices[k].weights[i][sequence[i]];
+				}
+			}
+			if(k == target){
+				intercepts[k]++;
+				intercepts_copy[k] = intercepts[k];
+			}
+			else {
+				intercepts[k]--;
+				intercepts_copy[k] = intercepts[k];
+			}
+		}
+
+	}
+
 
 
 }
@@ -409,6 +368,8 @@ void SVM<weight_t, class_t, distance_t>::recursivelyPredictAndFit(WeightMatrix<w
 			intercepts_[k] = intercepts[k];
 		}
 		*/
+	// fit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
+
 
 	class_t newInput[SEQUENCE_LENGTH];
 	for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
