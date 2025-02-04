@@ -26,18 +26,22 @@ public:
 
 		static DictionaryEntriesMatrix<delta_t, dic_confidence_t> dictionaryEntriesMatrix
 			= initDictionaryEntries<delta_t, dic_confidence_t>();
-	#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix->entries complete
+	#pragma HLS ARRAY_PARTITION variable=dictionaryEntriesMatrix.entries complete
 
 		static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	#pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 factor=2 block
-	#pragma HLS DEPENDENCE array false WAR inter variable=inputBufferEntriesMatrix.entries
+	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
+	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
+	#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
+
+	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->weightMatrices complete
-	#pragma HLS ARRAY_PARTITION variable=svmMatrix->intercepts complete
+		static SVMWholeMatrix<svm_weight_t> svmMatrixCopy = initSVMData<svm_weight_t>();
+	#pragma HLS ARRAY_PARTITION variable=svmMatrix.weightMatrices complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrixCopy.weightMatrices complete
+	#pragma HLS ARRAY_PARTITION variable=svmMatrix.intercepts complete
 
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
 	#pragma HLS DEPENDENCE false variable=inputBuffer
@@ -53,9 +57,10 @@ public:
 
 		// 1) Input buffer is read:
 		bool isInputBufferHit;
+		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntryDummy;
 		InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBufferEntry =
-			inputBuffer.read(inputBufferEntriesMatrix.entries, inputBufferAddress, isInputBufferHit);
-	#pragma HLS AGGREGATE variable=inputBufferEntry
+			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntryDummy, true, isInputBufferHit);
+	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 		ib_tag_t tag = memoryAddress >> numIndexBits;
@@ -90,13 +95,14 @@ public:
 				// 3) Compute the resulting delta and its class:
 				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
 				class_t dictionaryClass;
+				bool dummyIsHit;
 				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(
-						dictionaryEntriesMatrix.entries, delta, dictionaryClass);
+						dictionaryEntriesMatrix.entries, delta, dictionaryClass, dummyIsHit);
 
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
 				prefetchDegree = confidenceLookUpTable.table[inputBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
 						prefetchDegree == 0? 1 : prefetchDegree);
 
 
@@ -120,7 +126,7 @@ public:
 				}
 
 				// 4) Predict with the SVM:
-				predictedClasses[0] = svm.predict(svmMatrix.weightMatrices, svmMatrix.intercepts, inputBufferEntry.sequence);
+				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
 
 			}
 
@@ -128,7 +134,7 @@ public:
 			dic_index_t dummyIndex;
 			delta_t predictedDelta;
 
-			predictedDelta = dictionaryEntriesMatrix.entries[predictedClasses[0]].delta;
+			predictedDelta = dictionaryEntriesMatrix.entries[(int)predictedClasses[0]].delta;
 			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
 			if(performPrefetch){
@@ -138,7 +144,7 @@ public:
 				for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
 	#pragma HLS UNROLL
 					if(i < prefetchDegree){
-						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[predictedClasses[i]].delta;
+						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[(int)predictedClasses[i]].delta;
 						block_address_t addr = (delta_t)prevAddress + predictedDelta_;
 						addressesToPrefetch_[i] = addr;
 						prevAddress = addr;
@@ -150,12 +156,19 @@ public:
 					}
 				}
 			}
-
+			else{
+				for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+					#pragma HLS UNROLL
+					addressesToPrefetch[i] = 0;
+				}
+			}
 
 			// 6) Update the input buffer with the entry:
 			inputBufferEntry.lastAddress = memoryAddress;
 			inputBufferEntry.lastPredictedAddress = predictedAddress;
-			inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry);
+			// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+			bool isInputBufferHitDummy;
+			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
 		}
 	}
 };

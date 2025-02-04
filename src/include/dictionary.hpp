@@ -12,6 +12,7 @@ struct DictionaryEntry {
 template<typename delta_t, typename confidence_t>
 struct DictionaryEntriesMatrix {
 	DictionaryEntry<delta_t, confidence_t> entries[NUM_CLASSES];
+	DictionaryEntriesMatrix(){}
 };
 
 
@@ -24,8 +25,8 @@ protected:
 public:
 	Dictionary(){}
 	DictionaryEntry<delta_t, confidence_t> read(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
-			bool performUpdateConfidence);
-	DictionaryEntry<delta_t, confidence_t> write(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex);
+			bool performUpdateConfidence, bool &isHit);
+	DictionaryEntry<delta_t, confidence_t> write(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex, bool &isHit);
 
 };
 
@@ -114,10 +115,11 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(Dict
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
-		bool performUpdateConfidence) {
+		bool performUpdateConfidence, bool &isHit) {
 	// #pragma HLS INLINE
 	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
+	isHit = true;
 
 	if (useIndex) {
 		resultIndex = index;
@@ -125,6 +127,7 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 	}
 	else {
 		resultIndex = this->getIndexOfDelta(dictionaryEntries, delta);
+		isHit = resultIndex < NUM_CLASSES;
 		if (resultIndex < NUM_CLASSES) {
 			res = dictionaryEntries[resultIndex];
 		}
@@ -138,16 +141,16 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 
 template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::write(
-		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex) {
+		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], delta_t delta, index_t &resultIndex, bool &isHit) {
 #pragma HLS ARRAY_PARTITION variable=dictionaryEntries complete
 
 	#pragma HLS INLINE
-	#pragma HLS PIPELINE
 
 	DictionaryEntry<delta_t, confidence_t> res;
 	
 	index_t leastFrequentIndex = this->getIndexOfLeastFrequent(dictionaryEntries);
 	resultIndex = this->getIndexOfDelta(dictionaryEntries, delta);
+	isHit = resultIndex < NUM_CLASSES;
 	if (resultIndex < NUM_CLASSES) {
 		res = dictionaryEntries[resultIndex];
 		// this->updateConfidence(dictionaryEntries, resultIndex);
@@ -157,7 +160,7 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		res.delta = delta;
 		res.valid = true;
 		res.confidence = DICTIONARY_LFU_INITIAL_CONFIDENCE;
-		dictionaryEntries[resultIndex] = res;
+		dictionaryEntries[(int)resultIndex] = res;
 		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
 	this->updateConfidence(dictionaryEntries, resultIndex);
