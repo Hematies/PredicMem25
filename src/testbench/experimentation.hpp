@@ -329,10 +329,12 @@ class SVMSoftValidation : public SVMValidation{
 protected:
     double matchingThreshold;
     int numMatches = 0;
+    int numHits = 0;
+    int numTargetHits = 0;
 	int numPredictions = 0;
 public:
     SVMSoftValidation(){}
-    SVMSoftValidation(string filePath, double matchingThreshold = 0.8){
+    SVMSoftValidation(string filePath, double matchingThreshold = 0.85){
         type = ExperimentType::SVM_SOFT_VALIDATION;
         readTraceFile(filePath);
         this->matchingThreshold = matchingThreshold;
@@ -342,33 +344,42 @@ public:
     void reset(){
 		i = 0;
 		numMatches = 0;
+		numHits = 0;
+		numTargetHits = 0;
 		numPredictions = 0;
 	}
 
 	void saveOutput(SVMValidationOutput output){
 		auto input = inputs[i];
 		auto target = outputs[i];
+		numHits += inputs[i].target == output.output[0];
+		numTargetHits += inputs[i].target == target.output[0];
+
 		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 			// Only counting true positives over all predictions (precision):
 			if(target.output[k] == NUM_CLASSES){
 				break;
 			}
-			else{
+			// else if(inputs[i].target == target.output[0]){
 				numMatches += target.output[k] == output.output[k];
-				numPredictions++;
-			}
 
+				numPredictions++;
+			// }
 		}
+
 
 		i++;
 	}
 
 	bool hasPassed(){
 		double matchRate = ((double) numMatches) / numPredictions;
+		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
 
-		bool res = matchRate > this->matchingThreshold;
+		// bool res = matchRate > this->matchingThreshold;
+		// bool res = abs(hitDifference) < 0.05;
 
 		std::cout << "SVM results match rate: " << std::to_string(matchRate) << std::endl;
+		std::cout << "SVM results precision difference: " << std::to_string(precisionDifference) << std::endl;
 		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
