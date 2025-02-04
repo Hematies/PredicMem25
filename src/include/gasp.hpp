@@ -156,7 +156,12 @@ public:
 					}
 				}
 			}
-
+			else{
+				for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+					#pragma HLS UNROLL
+					addressesToPrefetch[i] = 0;
+				}
+			}
 
 			// 6) Update the input buffer with the entry:
 			inputBufferEntry.lastAddress = memoryAddress;

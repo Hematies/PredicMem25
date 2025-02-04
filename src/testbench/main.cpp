@@ -14,7 +14,8 @@ string svmTracesDirName = "svmTraces/";
 
 int main(int argc, char **argv)
 {
-	bool validateInputBuffer = false, validateDictionary = false, validateSVM = false;
+ 	bool validateInputBuffer = false, validateDictionary = false, validateSVM = false,
+ 			validateGASP = false, validateSGASP = false;
 
 	for(int i = 1; i < argc; i++){
 		string argument = string(argv[i]);
@@ -27,10 +28,17 @@ int main(int argc, char **argv)
 		else if(argument == "--validateSVM" || argument == "-vSVM"){
 			validateSVM = true;
 		}
+		else if(argument == "--validateGASP" || argument == "-vG"){
+			validateGASP = true;
+		}
+		else if(argument == "--validateSGASP" || argument == "-vS"){
+			validateSGASP = true;
+		}
 
 	}
 
-	if(!validateInputBuffer && !validateDictionary && !validateSVM){
+	if(!validateInputBuffer && !validateDictionary && !validateSVM
+			&& !validateGASP && !validateSGASP){
 		cout << "No type of validation has been indicated\n";
 		return 1;
 	}
@@ -51,7 +59,7 @@ int main(int argc, char **argv)
 				output.isHit = isHit;
 				experiment.saveOutput(output);
 			}
-			passed = passed && experiment.hasPassed();
+			passed = experiment.hasPassed() && passed;
 		}
 	}
 
@@ -71,7 +79,7 @@ int main(int argc, char **argv)
 				output.resultIndex = resultIndex;;
 				experiment.saveOutput(output);
 			}
-			passed = passed && experiment.hasPassed();
+			passed = experiment.hasPassed() && passed;
 		}
 	}
 
@@ -90,7 +98,43 @@ int main(int argc, char **argv)
 				}
 				experiment.saveOutput(output);
 			}
-			passed = passed && experiment.hasPassed();
+			passed = experiment.hasPassed() && passed;
+		}
+	}
+
+	if(validateGASP){
+		auto gaspValidation = Experimentation<GASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
+		auto experiments = gaspValidation.experiments;
+		for(auto& experiment : experiments){
+			for(int i = 0; i < experiment.getNumOperations(); i++){
+				auto input = experiment.getNextInput();
+				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+				PrefetcherValidationOutput output;
+				prefetchWithGASP(input.instructionPointer, input.memoryAddress, addressesToPrefetch);
+				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+					output.addressesToPrefetch[k] = addressesToPrefetch[k];
+				}
+				experiment.saveOutput(output);
+			}
+			passed = experiment.hasPassed() && passed;
+		}
+	}
+
+	if(validateSGASP){
+		auto sgaspValidation = Experimentation<SGASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
+		auto experiments = sgaspValidation.experiments;
+		for(auto& experiment : experiments){
+			for(int i = 0; i < experiment.getNumOperations(); i++){
+				auto input = experiment.getNextInput();
+				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+				PrefetcherValidationOutput output;
+				prefetchWithSGASP(input.memoryAddress, addressesToPrefetch);
+				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+					output.addressesToPrefetch[k] = addressesToPrefetch[k];
+				}
+				experiment.saveOutput(output);
+			}
+			passed = experiment.hasPassed() && passed;
 		}
 	}
 

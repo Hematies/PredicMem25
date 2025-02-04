@@ -101,7 +101,7 @@ void parseSVMInOutLine(string line, SVMValidationInput& input, SVMValidationOutp
 
 }
 
-void parseGASPInOutLine(string line, PrefetchingValidationInput& input, PrefetchingValidationOutput& output, bool isSGASP){
+void parseGASPInOutLine(string line, PrefetcherValidationInput& input, PrefetcherValidationOutput& output, bool isSGASP){
     auto chains = split(line, ";");
     string inputLine = chains[0], outputLine = chains[1];
     vector<string> inputElements = split(inputLine, ","), outputElements = split(outputLine, ",");
@@ -112,7 +112,7 @@ void parseGASPInOutLine(string line, PrefetchingValidationInput& input, Prefetch
 
     // Output:
     for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-        output.addressesToPrefetch[i] = (class_t) std::stol(outputElements[i]);
+        output.addressesToPrefetch[i] = (block_address_t) std::stol(outputElements[i]);
     }
 
 }
@@ -161,8 +161,8 @@ void GASPSoftValidation::readTraceFile(string filePath){
     auto lines = traceReader.readAllLines();
 
     for(auto& line : lines){
-        PrefetchingValidationInput input;
-        PrefetchingValidationOutput output;
+        PrefetcherValidationInput input;
+        PrefetcherValidationOutput output;
         parseGASPInOutLine(line, input, output, false);
         inputs.push_back(input);
         outputs.push_back(output);
@@ -174,8 +174,8 @@ void SGASPSoftValidation::readTraceFile(string filePath){
     auto lines = traceReader.readAllLines();
 
     for(auto& line : lines){
-    	PrefetchingValidationInput input;
-		PrefetchingValidationOutput output;
+    	PrefetcherValidationInput input;
+		PrefetcherValidationOutput output;
 		parseGASPInOutLine(line, input, output, true);
 		inputs.push_back(input);
 		outputs.push_back(output);

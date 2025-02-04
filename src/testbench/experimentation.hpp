@@ -375,7 +375,7 @@ public:
 		double matchRate = ((double) numMatches) / numPredictions;
 		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
 
-		// bool res = matchRate > this->matchingThreshold;
+		bool res = matchRate > this->matchingThreshold;
 		// bool res = abs(hitDifference) < 0.05;
 
 		std::cout << "SVM results match rate: " << std::to_string(matchRate) << std::endl;
@@ -388,12 +388,12 @@ public:
 
 };
 
-struct PrefetchingValidationInput{
+struct PrefetcherValidationInput{
 	address_t instructionPointer;
 	block_address_t memoryAddress;
 };
 
-struct PrefetchingValidationOutput{
+struct PrefetcherValidationOutput{
 	block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
 };
 
@@ -408,8 +408,8 @@ bool arePrefetchingOutputsEqual(output_t &output1, output_t &output2){
 
 class PrefetchingSoftValidation : public Experiment{
 protected:
-    vector<PrefetchingValidationInput> inputs;
-    vector<PrefetchingValidationOutput> outputs;
+    vector<PrefetcherValidationInput> inputs;
+    vector<PrefetcherValidationOutput> outputs;
     int i = 0;
     double matchingThreshold;
     int numPrefetches = 0;
@@ -427,22 +427,24 @@ public:
 		numPrefetches = 0;
 	}
 
-    PrefetchingValidationInput getNextInput(){
+    PrefetcherValidationInput getNextInput(){
 		auto input = inputs[i];
 		return input;
 	}
 
-	void saveOutput(PrefetchingValidationOutput output){
+	void saveOutput(PrefetcherValidationOutput output){
 		auto input = inputs[i];
 		auto target = outputs[i];
 
 		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 			// Only counting true positives over all predictions (precision):
-			if(target.addressesToPrefetch[k] == NUM_CLASSES){
+			if(target.addressesToPrefetch[k] == 0){
 				break;
 			}
 			else {
 				numMatches += target.addressesToPrefetch[k] == output.addressesToPrefetch[k];
+				// std::cout << "Target prefetch = " << std::to_string(target.addressesToPrefetch[k]) << std::endl;
+				// std::cout << "Predicted prefetch = " << std::to_string(output.addressesToPrefetch[k]) << std::endl;
 				numPrefetches++;
 			}
 		}
