@@ -23,26 +23,26 @@ DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, 
 	return res;
 }
 
-InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
+InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> entry,
 		bool performRead, bool& isHit){
 #pragma HLS PIPELINE
 
 
-	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_lru_t>
+			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_lru_t>
+				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
 // #pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
 // #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 factor=2 block
 // #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 // #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=inputBufferEntriesMatrix.entries
 #pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
-	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
+	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_lru_t> inputBuffer;
 	// #pragma HLS DEPENDENCE false variable=inputBuffer
 
 
-	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res;
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> res;
 	/*
 	if(performRead){
 		res = inputBuffer.read(inputBufferEntriesMatrixCopy.entries, addr, isHit);
