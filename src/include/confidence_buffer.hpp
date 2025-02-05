@@ -32,8 +32,10 @@ ConfidenceBuffer<confidence_t, block_address_t>::read(
     ConfidenceBufferEntry<confidence_t, block_address_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
     ib_index_t index, ib_way_t way){
     #pragma HLS INLINE
-    #pragma HLS ARRAY_RESHAPE variable=entries dim=0 complete
-
+#pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
+#pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
+// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
+#pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
     return entries[index][way];
 }
 
@@ -42,7 +44,10 @@ void ConfidenceBuffer<confidence_t, block_address_t>::write(
     ConfidenceBufferEntry<confidence_t, block_address_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
     ib_index_t index, ib_way_t way, ConfidenceBufferEntry<confidence_t, block_address_t>& entry){
     #pragma HLS INLINE
-    #pragma HLS ARRAY_RESHAPE variable=entries dim=0 complete
+#pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
+#pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
+// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
+#pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
     entries[index][way] = entry;
 }

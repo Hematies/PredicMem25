@@ -32,13 +32,19 @@ public:
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
 	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
 	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
+	// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 	#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 		static ConfidenceBufferEntriesMatrix<ib_confidence_t, block_address_t>
 			confidenceBufferEntriesMatrix = initConfidenceBufferEntries<ib_confidence_t, block_address_t>();
-	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=0 complete
+	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=2 complete
+	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=3 complete
+	// #pragma HLS ARRAY_PARTITION variable=confidenceBufferEntriesMatrix.entries dim=0 complete
+	#pragma HLS BIND_STORAGE variable=confidenceBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
+
+	#pragma HLS DEPENDENCE array false variable=confidenceBufferEntriesMatrix.entries
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
 		static SVMWholeMatrix<svm_weight_t> svmMatrixCopy = initSVMData<svm_weight_t>();
