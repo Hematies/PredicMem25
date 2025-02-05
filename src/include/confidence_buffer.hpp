@@ -9,6 +9,12 @@ struct ConfidenceBufferEntry{
 };
 
 template<typename confidence_t, typename block_address_t>
+struct ConfidenceBufferEntriesMatrix {
+		ConfidenceBufferEntry<confidence_t, block_address_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
+		ConfidenceBufferEntriesMatrix(){}
+};
+
+template<typename confidence_t, typename block_address_t>
 class ConfidenceBuffer{
     public:
 	ConfidenceBufferEntry<confidence_t, block_address_t> read(
