@@ -90,24 +90,6 @@ public:
 			// Continue if there has been a hit:
 			if (isInputBufferHit) {
 
-
-				// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
-				if (confidenceBufferEntry.lastPredictedAddress == memoryAddress) {
-					if (confidenceBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
-						confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
-					else
-						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
-				}
-				else {
-					if (confidenceBufferEntry.confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
-						confidenceBufferEntry.confidence = 0;
-					else
-						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
-				}
-
-				if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
-					performPrefetch = true;
-
 				// 3) Compute the resulting delta and its class:
 				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
 				bool dummyIsHit;
@@ -130,20 +112,37 @@ public:
 				inputBufferEntry.tag = tag;
 				inputBufferEntry.valid = true;
 				inputBufferEntry.lruCounter = 1;
-				confidenceBufferEntry.confidence = 0;
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 	#pragma HLS UNROLL
 					inputBufferEntry.sequence[i] = NUM_CLASSES;
 					sequence[i] = NUM_CLASSES;
 				}
 			}
-			// 3.5) Update the input buffer with the entry:
+			// 2) Update the input buffer with the entry:
 			inputBufferEntry.lastAddress = memoryAddress;
 			bool isInputBufferHitDummy;
 			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
 
 			if(isInputBufferHit){
+				// 3) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
+				if (confidenceBufferEntry.lastPredictedAddress == memoryAddress) {
+					if (confidenceBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
+						confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
+					else
+						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+				}
+				else {
+					if (confidenceBufferEntry.confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
+						confidenceBufferEntry.confidence = 0;
+					else
+						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
+				}
+
+				if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
+					performPrefetch = true;
+
+
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
 				prefetchDegree = confidenceLookUpTable.table[confidenceBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
@@ -151,6 +150,9 @@ public:
 						prefetchDegree == 0? 1 : prefetchDegree);
 			}
 			else{
+				// 3) Reset the confidence:
+				confidenceBufferEntry.confidence = 0;
+
 				// 4) Predict with the SVM:
 				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
 			}
