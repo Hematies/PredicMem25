@@ -30,15 +30,18 @@ protected:
 public:
 	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> read(
 		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-		address_t address, bool& isHit);
+		address_t address, bool& isHit,
+		index_t& index, way_t& way);
 	// InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 	void write(
 		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-		address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry);
+		address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
+		index_t& index, way_t& way);
 
 	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> operator()(
 			InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit);
+			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way);
 
 };
 
@@ -118,7 +121,8 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lr
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
 InputBufferEntry<tag_t, block_address_t, class_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
-read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit) {
+read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit,
+index_t& index, way_t& way) {
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
@@ -129,7 +133,7 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SET
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
-	index_t index = inputBufferAddress % (1 << numIndexBits);
+	index = inputBufferAddress % (1 << numIndexBits);
 	isHit = false;
 
 
@@ -140,7 +144,7 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SET
 	}
 
 
-	way_t way = this->queryWay(set, index, tag);
+	way = this->queryWay(set, index, tag);
 
 
 	if (way != (way_t)IB_NUM_WAYS) {
@@ -159,7 +163,8 @@ template<typename address_t, typename index_t, typename way_t, typename tag_t, t
 void
 InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
 write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry) {
+	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
+	index_t& index, way_t& way) {
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
 
@@ -173,7 +178,7 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SE
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
-	index_t index = inputBufferAddress % (1 << numIndexBits);
+	index = inputBufferAddress % (1 << numIndexBits);
 
 	/*
 	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
@@ -185,7 +190,7 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SE
 
 
 	way_t leastRecentWay = this->getLeastRecentWay(entries, index);
-	way_t way = this->queryWay(entries, index, tag);
+	way = this->queryWay(entries, index, tag);
 
 
 	if (way == IB_NUM_WAYS) {
@@ -220,7 +225,8 @@ InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
 operator()(
 			InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit){
+			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way){
 
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
@@ -240,7 +246,7 @@ operator()(
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
-	index_t index = address % (1 << numIndexBits);
+	index = address % (1 << numIndexBits);
 
 
 	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
@@ -254,7 +260,7 @@ operator()(
 
 
 	way_t leastRecentWay = this->getLeastRecentWay(set, index);
-	way_t way = this->queryWay(set, index, tag);
+	way = this->queryWay(set, index, tag);
 
 	isHit = way != IB_NUM_WAYS;
 

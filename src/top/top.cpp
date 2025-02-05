@@ -43,16 +43,9 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffe
 
 
 	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> res;
-	/*
-	if(performRead){
-		res = inputBuffer.read(inputBufferEntriesMatrixCopy.entries, addr, isHit);
-	}
-	else{
-		inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries, addr, entry);
-		res = entry;
-	}
-	*/
-	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit);
+	ib_index_t index;
+	ib_way_t way;
+	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit, index, way);
 	return res;
 }
 
