@@ -87,21 +87,23 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
-		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
+		bool nop
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
 	GASP<GASP_TYPES> gasp = GASP<GASP_TYPES>();
-	gasp(instructionPointer, memoryAddress, addressesToPrefetch);
+	if(!nop) gasp(instructionPointer, memoryAddress, addressesToPrefetch);
 }
 
 void prefetchWithSGASP(block_address_t memoryAddress,
-		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
+		bool nop
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
-	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
 }
 
 

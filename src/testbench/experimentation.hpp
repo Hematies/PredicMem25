@@ -391,6 +391,7 @@ public:
 struct PrefetcherValidationInput{
 	address_t instructionPointer;
 	block_address_t memoryAddress;
+	ap_uint<64> cycle;
 };
 
 struct PrefetcherValidationOutput{
@@ -415,6 +416,7 @@ protected:
     int numPrefetches = 0;
     int numMatches = 0;
 public:
+    int maxNumNopCycles = 10;
 	PrefetchingSoftValidation(){}
 	PrefetchingSoftValidation(string filePath, double matchingThreshold = 0.8){
         readTraceFile(filePath);
@@ -464,9 +466,7 @@ public:
 
 	}
 
-    void readTraceFile(string filePath){
-    	// Pass...
-    }
+    void readTraceFile(string filePath);
 };
 
 class GASPSoftValidation : public PrefetchingSoftValidation{
