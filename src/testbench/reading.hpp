@@ -109,6 +109,7 @@ void parseGASPInOutLine(string line, PrefetcherValidationInput& input, Prefetche
     // Input:
     input.instructionPointer = isSGASP? (address_t) 0 : (address_t) std::stol(inputElements[0]);
     input.memoryAddress = (block_address_t) std::stol(inputElements[1]);
+    input.cycle = (ap_uint<64>) std::stol(inputElements[2]);
 
     // Output:
     for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){

@@ -12,11 +12,11 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
-		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
 
 void prefetchWithSGASP(block_address_t memoryAddress,
-		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
 
 
