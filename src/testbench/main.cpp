@@ -115,14 +115,14 @@ int main(int argc, char **argv)
 				PrefetcherValidationOutput output;
 
 				while(cycle < nextCycle){
-					prefetchWithGASP(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
+					prefetchWithGASPWithNop(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
 												true);
 					if((nextCycle - experiment.maxNumNopCycles) > cycle)
 						cycle = nextCycle - experiment.maxNumNopCycles;
 					else
 						cycle++;
 				}
-				prefetchWithGASP(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
+				prefetchWithGASPWithNop(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
 												false);
 				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 					output.addressesToPrefetch[k] = addressesToPrefetch[k];
@@ -145,13 +145,13 @@ int main(int argc, char **argv)
 				PrefetcherValidationOutput output;
 
 				while(cycle < nextCycle){
-					prefetchWithSGASP(input.memoryAddress, addressesToPrefetch, true);
+					prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, true);
 					if((nextCycle - experiment.maxNumNopCycles) > cycle)
 						cycle = nextCycle - experiment.maxNumNopCycles;
 					else
 						cycle++;
 				}
-				prefetchWithSGASP(input.memoryAddress, addressesToPrefetch, false);
+				prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, false);
 
 				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 					output.addressesToPrefetch[k] = addressesToPrefetch[k];
