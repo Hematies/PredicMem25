@@ -119,11 +119,14 @@ void prefetchWithSGASPWithAXI(axi_data_t *inputAddress,
 	// memoryBlockAddress = memoryBlockAddress_ | 0x0;
 
 	*inputAddress = outputAddress[(address_t)inputAddress];
-	gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
+	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
+		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
 
-	for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-		prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
+		for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+			prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
+		}
 	}
+
 }
 
 
