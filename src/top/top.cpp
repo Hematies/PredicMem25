@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../include/global.hpp"
 #include <hls_stream.h>
+#include <ap_axi_sdata.h>
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
@@ -102,6 +103,29 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSGASPWithAXI(axi_data_t *inputAddress,
+		axi_data_t *outputAddress, axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE m_axi port=outputAddress depth=4 offset=direct
+#pragma HLS INTERFACE mode=s_axilite port=inputAddress depth=4
+#pragma HLS PIPELINE
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+
+	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
+	// memoryBlockAddress = ((address_t)inputAddress);//  >> BLOCK_SIZE_LOG2;
+	address_t memoryBlockAddress_ = ((address_t)inputAddress);//  >> BLOCK_SIZE_LOG2;
+	memoryBlockAddress_ = memoryBlockAddress_ >> BLOCK_SIZE_LOG2;
+	// memoryBlockAddress = memoryBlockAddress_.range(NUM_BLOCK_ADDRESS_BITS - 1, 0);
+	// memoryBlockAddress = memoryBlockAddress_ | 0x0;
+
+	*inputAddress = outputAddress[(address_t)inputAddress];
+	gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
+
+	for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+		prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
+	}
 }
 
 
