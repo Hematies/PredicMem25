@@ -3,7 +3,7 @@
 #include <cmath>
 
 // Memory configuration:
-#define NUM_ADDRESS_BITS 64
+#define NUM_ADDRESS_BITS 32
 #define BLOCK_SIZE_LOG2 6
 #define BLOCK_SIZE (1 << BLOCK_SIZE_LOG2)
 #define NUM_BLOCK_ADDRESS_BITS (NUM_ADDRESS_BITS - BLOCK_SIZE_LOG2)
