@@ -24,9 +24,33 @@ constexpr InputBufferEntriesMatrix<tag_t, block_address_t, class_t, confidence_t
 			res.entries[i][j].lruCounter = 0;
 			res.entries[i][j].valid = 0;
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
-				res.entries[i][j].sequence[k] = NUM_CLASSES;
+				res.entries[i][j].sequence[k] = NUM_CLASSES_INCLUDING_NULL; // NUM_CLASSES
 			}
 
+		}
+	}
+	return res;
+}
+
+template<typename tag_t, typename block_address_t, typename class_t, typename burst_length_t, typename confidence_t, typename lru_t>
+constexpr BurstInputBufferEntriesMatrix<tag_t, block_address_t, class_t, burst_length_t, confidence_t, lru_t>
+	initBurstInputBufferEntries(){
+	BurstInputBufferEntriesMatrix<tag_t, block_address_t, class_t, burst_length_t, confidence_t, lru_t> res;
+	for(int i = 0; i < IB_NUM_SETS; i++){
+		for(int j = 0; j < IB_NUM_WAYS; j++){
+			res.entries[i][j].valid = false;
+			res.entries[i][j].tag = 0;
+			res.entries[i][j].lastAddress = 0;
+			res.entries[i][j].confidence = 0;
+			res.entries[i][j].lastPredictedAddress = 0;
+			res.entries[i][j].lruCounter = 0;
+			res.entries[i][j].valid = 0;
+			for(int k = 0; k < SEQUENCE_LENGTH; k++){
+				res.entries[i][j].sequence[k] = NUM_CLASSES_INCLUDING_NULL;
+			}
+			for(int k = 0; k < SEQUENCE_LENGTH; k++){
+				res.entries[i][j].burstLengthSequence[k] = NUM_CLASSES_INCLUDING_NULL;
+			}
 		}
 	}
 	return res;

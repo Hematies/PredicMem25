@@ -8,8 +8,10 @@
 #include "dictionary.hpp"
 #include "global.hpp"
 #include "input_buffer.hpp"
+#include "burst_input_buffer.hpp"
 #include "svm.hpp"
 
 #include "init_data.hpp"
 
 #include "gasp.hpp"
+#include "bgasp.hpp"
