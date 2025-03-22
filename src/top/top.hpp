@@ -19,6 +19,9 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		);
 
+void prefetchWithSGASPWithAXI(axi_data_t *inputAddress,
+		axi_data_t *outputAddress);
+
 void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
@@ -26,6 +29,5 @@ void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memor
 void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
-
 
 
