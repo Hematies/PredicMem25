@@ -2,8 +2,7 @@
 #include "../include/global.hpp"
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
-#include <stdio.h>
-#include <string.h>
+#include "hls_burst_maxi.h"
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
@@ -106,10 +105,10 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 }
 
 void prefetchWithSGASPWithAXI(address_t inputAddress,
-		axi_data_t *outputAddress,
+		axi_data_t *readPort,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		){
-#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=outputAddress offset=direct
+#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
@@ -120,22 +119,44 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
 
 		for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-			prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
+			prefetchedData[i] = readPort[((address_t)blockAddressesToPrefetch[i]) << BLOCK_SIZE_LOG2];
 		}
+	}
+
+}
+
+void prefetchWithAXIBurst(hls::burst_maxi<axi_data_t> readPort,
+	axi_data_t& prefetchedData, block_address_t prefetchBlockAddress, burst_length_t prefetchBurstLength){
+	#pragma HLS PIPELINE
+
+	address_t prefetchAddress = ((address_t)prefetchBlockAddress) << BLOCK_SIZE_LOG2;
+	bool performPrefetch = prefetchAddress != 0;
+	burst_length_in_words_t totalBurstLength =
+			((((burst_length_in_words_t)1) << prefetchBurstLength) << BLOCK_SIZE_LOG2) >> AXI_DATA_SIZE_BYTES_LOG2;
+
+	if(!performPrefetch) totalBurstLength = 0;
+
+	readPort.read_request(prefetchAddress, totalBurstLength);
+		
+	for(burst_length_in_words_t i = 0; i < totalBurstLength; i++){
+	#pragma HLS PIPELINE  II=1
+		prefetchedData = readPort.read();
 	}
 
 }
 
 void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		burst_length_t burstLength,
-		axi_data_t *outputAddress,
+		hls::burst_maxi<axi_data_t> readPort,
 		axi_data_t& prefetchedData
 		){
-#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=outputAddress offset=direct
-#pragma HLS PIPELINE
+#pragma HLS INTERFACE mode_ap_ctrl_chain port=return
+#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
+#pragma HLS DATAFLOW
+
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
 	burst_length_t prefetchBurstLength = 0;
-	burst_length_in_bytes_t totalBurstLength = 0;
+	burst_length_in_words_t totalBurstLength = 0;
 	bool performPrefetch = false;
 
 	axi_data_t buffer[1 << ((NUM_CLASSES - 1) + BLOCK_SIZE_LOG2 - AXI_DATA_SIZE_BYTES_LOG2)];
@@ -143,30 +164,12 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 
 	block_address_t prefetchAddress_;
 	address_t prefetchAddress, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 
-	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
-		bgasp(memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress, burstLength,
-				prefetchAddress_, prefetchBurstLength);
-		prefetchAddress = ((address_t)prefetchAddress_) << BLOCK_SIZE_LOG2;
-		performPrefetch = prefetchAddress != 0;
-		totalBurstLength =
-					((((burst_length_in_bytes_t)1) << prefetchBurstLength) << BLOCK_SIZE_LOG2) >> AXI_DATA_SIZE_BYTES_LOG2;
-	}
+	bgasp(regionAddress, memoryBlockAddress, burstLength,
+			prefetchAddress_, prefetchBurstLength);
 
-
-	if(!performPrefetch) totalBurstLength = 0;
-
-	/*
-	for(burst_length_in_bytes_t i = 0; i < totalBurstLength; i++){
-#pragma HLS LOOP_TRIPCOUNT max=256 min=0
-#pragma HLS PIPELINE  II=1
-		prefetchedData = outputAddress[prefetchAddress[i]];
-	}
-*/
-
-	memcpy(buffer, (const axi_data_t*)&outputAddress[prefetchAddress], totalBurstLength);
-	prefetchedData = buffer[0];
-
+	prefetchWithAXIBurst(readPort, prefetchedData, prefetchAddress_, prefetchBurstLength);
 }
 
 
