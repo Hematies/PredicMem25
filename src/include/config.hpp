@@ -18,6 +18,8 @@
 
 // Interface configuration:
 #define AXI_DATA_SIZE_BITS 32
+#define AXI_DATA_SIZE_BYTES 4
+#define AXI_DATA_SIZE_BYTES_LOG2 2
 
 
 // Prefetching configuration:

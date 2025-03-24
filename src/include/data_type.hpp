@@ -20,3 +20,4 @@ typedef ap_uint<DICTIONARY_LFU_CONFIDENCE_LOG2> dic_confidence_t;
 typedef ap_int<NUM_SVM_WEIGHT_BITS> svm_weight_t;
 typedef ap_int<NUM_DISTANCE_BITS> svm_distance_t;
 typedef ap_uint<NUM_CLASSES_LOG2> burst_length_t;
+typedef ap_uint<(NUM_CLASSES - 1) + BLOCK_SIZE_LOG2> burst_length_in_bytes_t;

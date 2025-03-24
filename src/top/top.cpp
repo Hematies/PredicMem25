@@ -2,6 +2,8 @@
 #include "../include/global.hpp"
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
+#include <stdio.h>
+#include <string.h>
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
@@ -104,32 +106,66 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 }
 
 void prefetchWithSGASPWithAXI(address_t inputAddress,
-		burst_length_t burstLength,
 		axi_data_t *outputAddress,
-		// axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
-		axi_data_t& prefetchAddress, burst_length_t& prefetchBurstLength
+		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		){
 #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=outputAddress offset=direct
 #pragma HLS PIPELINE
-	// GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
-	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
-	// block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
-	block_address_t prefetchAddress_;
+	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
 	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
 
 	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
-		// gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
-		bgasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, burstLength,
-				prefetchAddress_, prefetchBurstLength);
-		prefetchAddress = ((axi_data_t)prefetchAddress_) << BLOCK_SIZE_LOG2;
+		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
 
-		/*
 		for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
 			prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
 		}
-		*/
 	}
+
+}
+
+void prefetchWithBSGASPWithAXI(address_t inputAddress,
+		burst_length_t burstLength,
+		axi_data_t *outputAddress,
+		axi_data_t& prefetchedData
+		){
+#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=outputAddress offset=direct
+#pragma HLS PIPELINE
+	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
+	burst_length_t prefetchBurstLength = 0;
+	burst_length_in_bytes_t totalBurstLength = 0;
+	bool performPrefetch = false;
+
+	axi_data_t buffer[1 << ((NUM_CLASSES - 1) + BLOCK_SIZE_LOG2 - AXI_DATA_SIZE_BYTES_LOG2)];
+
+
+	block_address_t prefetchAddress_;
+	address_t prefetchAddress, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+
+	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
+		bgasp(memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress, burstLength,
+				prefetchAddress_, prefetchBurstLength);
+		prefetchAddress = ((address_t)prefetchAddress_) << BLOCK_SIZE_LOG2;
+		performPrefetch = prefetchAddress != 0;
+		totalBurstLength =
+					((((burst_length_in_bytes_t)1) << prefetchBurstLength) << BLOCK_SIZE_LOG2) >> AXI_DATA_SIZE_BYTES_LOG2;
+	}
+
+
+	if(!performPrefetch) totalBurstLength = 0;
+
+	/*
+	for(burst_length_in_bytes_t i = 0; i < totalBurstLength; i++){
+#pragma HLS LOOP_TRIPCOUNT max=256 min=0
+#pragma HLS PIPELINE  II=1
+		prefetchedData = outputAddress[prefetchAddress[i]];
+	}
+*/
+
+	memcpy(buffer, (const axi_data_t*)&outputAddress[prefetchAddress], totalBurstLength);
+	prefetchedData = buffer[0];
 
 }
 
