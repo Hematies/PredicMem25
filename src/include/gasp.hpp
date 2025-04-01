@@ -49,7 +49,7 @@ public:
 		static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 	#pragma HLS DEPENDENCE false variable=dictionary
 
-		static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+		static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 	#pragma HLS DEPENDENCE false variable=svm
 
 	#pragma HLS PIPELINE

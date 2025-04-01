@@ -19,5 +19,11 @@ typedef ap_int<NUM_DELTA_BITS> delta_t;
 typedef ap_uint<DICTIONARY_LFU_CONFIDENCE_LOG2> dic_confidence_t;
 typedef ap_int<NUM_SVM_WEIGHT_BITS> svm_weight_t;
 typedef ap_int<NUM_DISTANCE_BITS> svm_distance_t;
-typedef ap_uint<NUM_CLASSES_LOG2> burst_length_t;
-typedef ap_uint<(NUM_CLASSES - 1) + BLOCK_SIZE_LOG2> burst_length_in_words_t;
+typedef ap_uint<AXI_BURST_LENGTH_LOG2> burst_length_t;
+typedef ap_uint<AXI_BURST_SIZE_BITFIELD_LOG2> burst_size_t;
+typedef ap_uint<AXI_BURST_LENGTH_LOG2> burst_length_t;
+typedef ap_uint<AXI_BURST_LENGTH_LOG2 + AXI_BURST_SIZE_LOG2> burst_size_and_length_t;
+typedef ap_uint<AXI_BURST_BLOCK_LOG2> block_burst_length_t;
+typedef ap_uint<AXI_MAX_BURST_BLOCK_LOG2> prefetch_block_burst_length_t;
+typedef ap_uint<AXI_MAX_BURST_BLOCK_LOG2 + BLOCK_SIZE_LOG2> burst_length_in_words_t;
+

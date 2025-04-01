@@ -7,7 +7,7 @@ struct BurstInputBufferEntry {
 	tag_t tag;
 	block_address_t lastAddress;
 	class_t sequence[SEQUENCE_LENGTH];
-	class_t burstLengthSequence[SEQUENCE_LENGTH];
+	burst_length_t burstLengthSequence[SEQUENCE_LENGTH];
 	confidence_t confidence;
 	block_address_t lastPredictedAddress;
 	burst_length_t lastPredictedBurstLength;

@@ -71,5 +71,19 @@ constexpr SVMWholeMatrix<weight_t> initSVMData(){
 	return res;
 }
 
+template<typename weight_t>
+constexpr BurstSVMWholeMatrix<weight_t> initBurstSVMData(){
+	BurstSVMWholeMatrix<weight_t> res;
+	for(int c = 0; c < NUM_BURST_CLASSES; c++){
+		res.intercepts[c] = 0;
+		for(int i = 0; i < SEQUENCE_LENGTH; i++){
+			for(int j = 0; j < NUM_BURST_CLASSES_INCLUDING_NULL; j++){
+				res.weightMatrices[c].weights[i][j] = 0;
+			}
+		}
+	}
+	return res;
+}
+
 
 

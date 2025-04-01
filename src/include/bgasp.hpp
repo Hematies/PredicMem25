@@ -1,11 +1,11 @@
 #pragma once
 #include "global.hpp"
 
-#define BGASP_TYPES address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, burst_length_t, ib_confidence_t, ib_lru_t, \
+#define BGASP_TYPES address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, prefetch_block_burst_length_t, ib_confidence_t, ib_lru_t, \
 	 dic_index_t, delta_t,  dic_confidence_t, \
 	 svm_weight_t, svm_distance_t
 
-#define BSGASP_TYPES region_address_t, ib_index_t, ib_way_t, ib_region_tag_t, block_address_t, class_t, burst_length_t, ib_confidence_t, ib_lru_t, \
+#define BSGASP_TYPES region_address_t, ib_index_t, ib_way_t, ib_region_tag_t, block_address_t, class_t, prefetch_block_burst_length_t, ib_confidence_t, ib_lru_t, \
 	 dic_index_t, delta_t, dic_confidence_t, \
 	 svm_weight_t, svm_distance_t
 
@@ -19,7 +19,8 @@ protected:
 public:
 
 	void operator()(address_t inputBufferAddress, block_address_t memoryAddress, burst_length_t burstLength,
-			block_address_t& outputAddress, burst_length_t& outputBurstLength){
+			block_address_t& outputAddress, burst_length_t& outputBurstLength
+			){
 		static LookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>
 			confidenceLookUpTable = fillUniformLookUpTable<ib_confidence_t, MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD + 1>(1, MAX_PREFETCHING_DEGREE);
 
@@ -42,8 +43,8 @@ public:
 	#pragma HLS ARRAY_PARTITION variable=svmMatrixCopy.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=svmMatrix.intercepts complete
 
-		static SVMWholeMatrix<svm_weight_t> burstSvmMatrix = initSVMData<svm_weight_t>();
-		static SVMWholeMatrix<svm_weight_t> burstSvmMatrixCopy = initSVMData<svm_weight_t>();
+		static BurstSVMWholeMatrix<svm_weight_t> burstSvmMatrix = initBurstSVMData<svm_weight_t>();
+		static BurstSVMWholeMatrix<svm_weight_t> burstSvmMatrixCopy = initBurstSVMData<svm_weight_t>();
 	#pragma HLS ARRAY_PARTITION variable=burstSvmMatrix.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=burstSvmMatrixCopy.weightMatrices complete
 	#pragma HLS ARRAY_PARTITION variable=burstSvmMatrix.intercepts complete
@@ -54,10 +55,10 @@ public:
 		static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 	#pragma HLS DEPENDENCE false variable=dictionary
 
-		static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+		static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 	#pragma HLS DEPENDENCE false variable=svm
 
-		static SVM<svm_weight_t, burst_length_t, svm_distance_t> burstSvm;
+		static SVM<svm_weight_t, burst_length_t, svm_distance_t, NUM_BURST_CLASSES, NUM_BURST_CLASSES_INCLUDING_NULL> burstSvm;
 	#pragma HLS DEPENDENCE false variable=svm
 
 	#pragma HLS PIPELINE
