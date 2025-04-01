@@ -167,7 +167,7 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		hls::burst_maxi<axi_data_t> readPort,
 		hls::stream<axi_data_t>& prefetchedData
 		){
-/#pragma HLS TOP name=prefetchWithBSGASPWithAXI
+#pragma HLS TOP name=prefetchWithBSGASPWithAXI
 #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
 #pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=direct
 #pragma HLS DATAFLOW
