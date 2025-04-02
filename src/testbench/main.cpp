@@ -7,7 +7,8 @@
 using namespace std;
 
 
-string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
+// string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
+string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp/";
 string inputBufferTracesDirName = "inputBufferTraces/";
 string dictionaryTracesDirName = "dictionaryTraces/";
 string svmTracesDirName = "svmTraces/";

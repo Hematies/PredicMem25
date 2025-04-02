@@ -1,8 +1,8 @@
 #include <iostream>
-#include "../include/global.hpp"
+#include "top.hpp"
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
-#include "hls_burst_maxi.h"
+
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
@@ -167,7 +167,7 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		hls::burst_maxi<axi_data_t> readPort,
 		hls::stream<axi_data_t>& prefetchedData
 		){
-#pragma HLS TOP name=prefetchWithBSGASPWithAXI
+// #pragma HLS TOP name=prefetchWithBSGASPWithAXI
 #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
 #pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=direct
 #pragma HLS DATAFLOW
@@ -213,10 +213,12 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
 		bool nop
 		){
+#pragma HLS TOP name=prefetchWithSGASPWithNop
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
-	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2,
+			memoryAddress, addressesToPrefetch);
 }
 
 
