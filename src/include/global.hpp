@@ -8,6 +8,7 @@
 #include "dictionary.hpp"
 #include "global.hpp"
 #include "input_buffer.hpp"
+#include "forwarding_buffer.hpp"
 #include "svm.hpp"
 
 #include "init_data.hpp"

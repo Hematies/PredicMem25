@@ -36,6 +36,11 @@ public:
 
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
+	static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, ib_confidence_t>
+		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
+	#pragma HLS ARRAY_RESHAPE variable=forwardingBufferEntriesMatrix.entries complete
+
+	// #pragma HLS DEPENDENCE array false variable=forwardingBufferEntriesMatrix.entries
 
 		static SVMWholeMatrix<svm_weight_t> svmMatrix = initSVMData<svm_weight_t>();
 		static SVMWholeMatrix<svm_weight_t> svmMatrixCopy = initSVMData<svm_weight_t>();
