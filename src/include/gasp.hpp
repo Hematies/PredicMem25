@@ -34,7 +34,7 @@ public:
 	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
 	#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
-	// #pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
+	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 	static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, ib_confidence_t>
 		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
@@ -150,10 +150,24 @@ public:
 					}
 				}
 
+				// 6) Update the input buffer with the entry:
+				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+					#pragma HLS UNROLL
+					inputBufferEntry.sequence[i] = updatedSequence[i];
+				}
+
+				inputBufferEntry.tag = tag;
+				inputBufferEntry.valid = true;
+				inputBufferEntry.lastAddress = memoryAddress;
+				// inputBufferEntry.lastPredictedAddress = predictedAddress;
+				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+				bool isInputBufferHitDummy;
+				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
+
 
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
-				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, inputBufferEntry.sequence, dictionaryClass, predictedClasses,
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
 						1);
 			}
 			// If there has been a miss, prepare a blank new input buffer entry:
@@ -165,10 +179,28 @@ public:
 					updatedSequence[i] = NUM_CLASSES;
 				}
 				inputBufferEntry.confidence = 0;
+
+
+				// 6) Update the input buffer with the entry:
+				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+					#pragma HLS UNROLL
+					inputBufferEntry.sequence[i] = updatedSequence[i];
+				}
+
+
+				inputBufferEntry.tag = tag;
+				inputBufferEntry.valid = true;
+				inputBufferEntry.lastAddress = memoryAddress;
+				// inputBufferEntry.lastPredictedAddress = predictedAddress;
+				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+				bool isInputBufferHitDummy;
+				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
+
 				// 4) Predict with the SVM:
 				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, sequence);
 
 			}
+
 
 			// 5) Get the finally predicted address:
 			dic_index_t dummyIndex;
@@ -222,19 +254,6 @@ public:
 				}
 			}
 
-			// 6) Update the input buffer with the entry:
-			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-				#pragma HLS UNROLL
-				inputBufferEntry.sequence[i] = updatedSequence[i];
-			}
-
-			inputBufferEntry.tag = tag;
-			inputBufferEntry.valid = true;
-			inputBufferEntry.lastAddress = memoryAddress;
-			inputBufferEntry.lastPredictedAddress = predictedAddress;
-			// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
-			bool isInputBufferHitDummy;
-			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy);
 		}
 	}
 
