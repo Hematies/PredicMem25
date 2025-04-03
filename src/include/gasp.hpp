@@ -63,7 +63,7 @@ public:
 	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
-		ib_tag_t tag = memoryAddress >> numIndexBits;
+		ib_tag_t tag = inputBufferAddress >> numIndexBits;
 
 		// Skip operation if the previous access is equal to the current:
 		if (inputBufferEntry.lastAddress != memoryAddress) {
