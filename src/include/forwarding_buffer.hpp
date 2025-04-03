@@ -7,8 +7,6 @@ struct ForwardingBufferEntry {
 	address_t inputBufferAddress;
 	block_address_t lastAddress;
 	class_t sequence[SEQUENCE_LENGTH];
-	confidence_t confidence;
-	block_address_t lastPredictedAddress;
 	ForwardingBufferEntry(){}
 };
 
@@ -25,7 +23,7 @@ class ForwardingBuffer {
 public:
 	ForwardingBufferEntry<address_t, block_address_t, class_t, confidence_t> read(
 		ForwardingBufferEntry<address_t, block_address_t, class_t, confidence_t> entries[FORWARDING_DEPTH],
-		address_t& address, bool& isHit){
+		address_t& address, forwarding_index_t& currentSlot, bool& isHit){
 		#pragma HLS INLINE
 
 		ForwardingBufferEntry<address_t, block_address_t, class_t, confidence_t> res;
@@ -36,6 +34,7 @@ public:
 			if(entries[i].valid && entries[i].inputBufferAddress == address){
 				isHit = true;
 				res = entries[i];
+				currentSlot = i;
 				break;
 			}
 		}
@@ -45,24 +44,28 @@ public:
 
 	void write(
 		ForwardingBufferEntry<address_t, block_address_t, class_t, confidence_t> entries[FORWARDING_DEPTH],
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>& inputBufferEntry,
-		address_t& address, forwarding_index_t& nextSlot{
+		block_address_t lastAddress, class_t sequence[SEQUENCE_LENGTH],
+		address_t& address, forwarding_index_t& currentSlot, forwarding_index_t& nextSlot) {
 		#pragma HLS INLINE
 		
 		forwarding_index_t nextSlot_ = nextSlot; 
-		nextSlot = nextSlot == (FORWARDING_DEPTH - 1)? 0 : nextSlot + 1;
+		if(nextSlot == (forwarding_index_t)(FORWARDING_DEPTH - 1)){
+			nextSlot = 0;
+		}
+		else{
+			nextSlot++;
+		}
 		ForwardingBufferEntry<address_t, block_address_t, class_t, confidence_t> newEntry;
 		newEntry.valid = true;
 		newEntry.inputBufferAddress = address;
-		newEntry.lastAddress = inputBufferEntry.lastAddress;
+		newEntry.lastAddress = lastAddress;
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
 			#pragma HLS UNROLL
-			newEntry.sequence[k] = inputBufferEntry.sequence[k];
+			newEntry.sequence[k] = sequence[k];
 		}
-		newEntry.confidence = inputBufferEntry.confidence;
-		newEntry.lastPredictedAddress = inputBufferEntry.lastPredictedAddress;
 		entries[nextSlot_] = newEntry;
 		
+		currentSlot = nextSlot_;
 	}
 
 };

@@ -2,6 +2,9 @@
 #include "const_expr.hpp"
 #include <cmath>
 
+// C-sim debug:
+#define CSIM_DEBUG_no
+
 // Memory configuration:
 #define NUM_ADDRESS_BITS 32
 #define BLOCK_SIZE_LOG2 6

@@ -41,8 +41,6 @@ constexpr ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, con
 		res.entries[i].valid = false;
 		res.entries[i].inputBufferAddress = 0;
 		res.entries[i].lastAddress = 0;
-		res.entries[i].confidence = 0;
-		res.entries[i].lastPredictedAddress = 0;
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
 			res.entries[i].sequence[k] = NUM_CLASSES;
 		}
