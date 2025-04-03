@@ -6,6 +6,7 @@
 
 using namespace std;
 
+
 string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
 string inputBufferTracesDirName = "inputBufferTraces/";
 string dictionaryTracesDirName = "dictionaryTraces/";
@@ -106,11 +107,23 @@ int main(int argc, char **argv)
 		auto gaspValidation = Experimentation<GASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
 		auto experiments = gaspValidation.experiments;
 		for(auto& experiment : experiments){
+			unsigned long long cycle = 0L;
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
+				unsigned long long nextCycle = input.cycle;
 				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
 				PrefetcherValidationOutput output;
-				prefetchWithGASP(input.instructionPointer, input.memoryAddress, addressesToPrefetch);
+
+				while(cycle < nextCycle){
+					prefetchWithGASPWithNop(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
+												true);
+					if((nextCycle - experiment.maxNumNopCycles) > cycle)
+						cycle = nextCycle - experiment.maxNumNopCycles;
+					else
+						cycle++;
+				}
+				prefetchWithGASPWithNop(input.instructionPointer, input.memoryAddress, addressesToPrefetch,
+												false);
 				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 					output.addressesToPrefetch[k] = addressesToPrefetch[k];
 				}
@@ -124,11 +137,22 @@ int main(int argc, char **argv)
 		auto sgaspValidation = Experimentation<SGASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
 		auto experiments = sgaspValidation.experiments;
 		for(auto& experiment : experiments){
+			unsigned long long cycle = 0L;
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
+				unsigned long long nextCycle = input.cycle;
 				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
 				PrefetcherValidationOutput output;
-				prefetchWithSGASP(input.memoryAddress, addressesToPrefetch);
+
+				while(cycle < nextCycle){
+					prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, true);
+					if((nextCycle - experiment.maxNumNopCycles) > cycle)
+						cycle = nextCycle - experiment.maxNumNopCycles;
+					else
+						cycle++;
+				}
+				prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, false);
+
 				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 					output.addressesToPrefetch[k] = addressesToPrefetch[k];
 				}

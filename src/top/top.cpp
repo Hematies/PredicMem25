@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../include/global.hpp"
 #include <hls_stream.h>
+#include <ap_axi_sdata.h>
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
 	#pragma HLS PIPELINE
@@ -76,8 +77,6 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 
 
 
-
-
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		){
@@ -94,6 +93,47 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSGASPWithAXI(address_t inputAddress,
+		axi_data_t *outputAddress, axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=outputAddress offset=direct
+#pragma HLS PIPELINE
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+
+	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
+	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
+
+	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
+		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
+
+		for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+			prefetchedData[i] = outputAddress[blockAddressesToPrefetch[i] << BLOCK_SIZE_LOG2];
+		}
+	}
+
+}
+
+
+void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
+		bool nop
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	GASP<GASP_TYPES> gasp = GASP<GASP_TYPES>();
+	if(!nop) gasp(instructionPointer, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSGASPWithNop(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
+		bool nop
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
 }
 
 

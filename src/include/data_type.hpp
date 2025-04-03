@@ -3,6 +3,7 @@
 #include "config.hpp"
 #include "ap_int.h"
 
+typedef ap_uint<AXI_DATA_SIZE_BITS> axi_data_t;
 typedef ap_uint<NUM_ADDRESS_BITS> address_t;
 typedef ap_uint<NUM_REGION_ADDRESS_BITS> region_address_t;
 typedef ap_uint<IB_NUM_SETS_LOG2> ib_index_t;
