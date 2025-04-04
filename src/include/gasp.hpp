@@ -76,8 +76,6 @@ public:
 			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntryDummy, true, isInputBufferHit,
 			index, way);
 
-		ConfidenceBufferEntry<ib_confidence_t, block_address_t> confidenceBufferEntry = 
-			confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
 	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
@@ -129,8 +127,37 @@ public:
 			bool isInputBufferHitDummy;
 			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
+			prefetchDegree = 1;
+			if(isInputBufferHit){
+				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
+				// on the calculated prefetching degree (>= 1):
+				// prefetchDegree = confidenceLookUpTable.table[confidenceBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
+					1);	
+					// prefetchDegree == 0? 1 : prefetchDegree);
+			}
+			else{
+				// 4) Predict with the SVM:
+				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
+			}
+
+			// 5) Get the finally predicted address:
+			dic_index_t dummyIndex;
+			delta_t predictedDelta;
+
+			predictedDelta = dictionaryEntriesMatrix.entries[(int)predictedClasses[0]].delta;
+			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
+
+
+			ConfidenceBufferEntry<ib_confidence_t, block_address_t> confidenceBufferEntry;
 
 			if(isInputBufferHit){
+				confidenceBufferEntry = 
+						confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
+				// confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
+				confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+
+				/*
 				// 3) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
 				if (confidenceBufferEntry.lastPredictedAddress == memoryAddress) {
 					if (confidenceBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
@@ -144,33 +171,31 @@ public:
 					else
 						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 				}
-
+				*/
 				if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
 					performPrefetch = true;
 
+				// 6) Update the confidence buffer with the entry:
+				// confidenceBufferEntry.lastPredictedAddress = predictedAddress;
+				// confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
-				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
-				// on the calculated prefetching degree (>= 1):
-				prefetchDegree = confidenceLookUpTable.table[confidenceBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
-						prefetchDegree == 0? 1 : prefetchDegree);
 			}
 			else{
 				// 3) Reset the confidence:
 				confidenceBufferEntry.confidence = 0;
 
-				// 4) Predict with the SVM:
-				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
+				// 6) Update the confidence buffer with the entry:
+				//confidenceBufferEntry.lastPredictedAddress = predictedAddress;
+				//confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 			}
+			
+			
+			// 6) Update the confidence buffer with the entry:
+			confidenceBufferEntry.lastPredictedAddress = predictedAddress;
+			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
 
-			// 5) Get the finally predicted address:
-			dic_index_t dummyIndex;
-			delta_t predictedDelta;
-
-			predictedDelta = dictionaryEntriesMatrix.entries[(int)predictedClasses[0]].delta;
-			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
-
+			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){
 				block_address_t addressesToPrefetch_[MAX_PREFETCHING_DEGREE];
 				block_address_t prevAddress = predictedAddress;
@@ -196,10 +221,6 @@ public:
 					addressesToPrefetch[i] = 0;
 				}
 			}
-
-			// 6) Update the confidence buffer with the entry:
-			confidenceBufferEntry.lastPredictedAddress = predictedAddress;
-			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 		}
 	}
 };
