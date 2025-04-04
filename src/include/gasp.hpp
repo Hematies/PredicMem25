@@ -150,30 +150,36 @@ public:
 
 
 			ConfidenceBufferEntry<ib_confidence_t, block_address_t> confidenceBufferEntry;
+			confidenceBufferEntry =
+					confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
+			bool addressHit = confidenceBufferEntry.lastPredictedAddress == memoryAddress;
 
-			if(isInputBufferHit){
-				confidenceBufferEntry = 
-						confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
-				// confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
-				confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+			if(isInputBufferHit
+					&& predictedAddress){ // Dummy evaluation just to force the scheduling to delay the confidence update
+				// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 
-				/*
 				// 3) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
-				if (confidenceBufferEntry.lastPredictedAddress == memoryAddress) {
+				if (addressHit) {
+
 					if (confidenceBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
 						confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
 					else
 						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+
+					// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 				}
 				else {
+
 					if (confidenceBufferEntry.confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
 						confidenceBufferEntry.confidence = 0;
 					else
 						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
+
+					// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 				}
-				*/
-				if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
-					performPrefetch = true;
+
+				// if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
+				//	performPrefetch = true;
 
 				// 6) Update the confidence buffer with the entry:
 				// confidenceBufferEntry.lastPredictedAddress = predictedAddress;
@@ -188,7 +194,9 @@ public:
 				//confidenceBufferEntry.lastPredictedAddress = predictedAddress;
 				//confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 			}
-			
+
+			performPrefetch = isInputBufferHit && confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
+
 			
 			// 6) Update the confidence buffer with the entry:
 			confidenceBufferEntry.lastPredictedAddress = predictedAddress;

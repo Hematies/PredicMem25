@@ -36,7 +36,10 @@ ConfidenceBuffer<confidence_t, block_address_t>::read(
 #pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
 // #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
-    return entries[index][way];
+
+	ConfidenceBufferEntry<confidence_t, block_address_t> res;
+    res = entries[index][way];
+    return res;
 }
 
 template<typename confidence_t, typename block_address_t>
