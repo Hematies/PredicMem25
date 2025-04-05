@@ -136,5 +136,23 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
 }
 
+void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
+	block_address_t& prefetchAddress,
+	bool nop
+	){
+	#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+	#pragma HLS DATAFLOW
+
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	block_address_t predictedAddress = 0;
+	ib_index_t index;
+	ib_way_t way;
+	bool isInputBufferHit = false;
+
+
+	gasp.phase1(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, predictedAddress, index, way, nop, isInputBufferHit);
+	gasp.phase2(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, predictedAddress, prefetchAddress, index, way, nop, isInputBufferHit);
+}
+
 
 
