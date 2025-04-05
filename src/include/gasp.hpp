@@ -43,6 +43,12 @@ public:
 	static forwarding_index_t forwardingBufferNextSlot = 0;
 	forwarding_index_t forwardingBufferCurrentSlot = 0;
 
+	static ConfidenceForwardingBufferEntriesMatrix<address_t, ib_confidence_t, block_address_t>
+			confidenceForwardingBufferEntriesMatrix = initConfidenceForwardingBufferEntries<address_t, ib_confidence_t, block_address_t>();
+		#pragma HLS ARRAY_RESHAPE variable=confidenceForwardingBufferEntriesMatrix.entries complete
+		static conf_forwarding_index_t confidenceForwardingBufferNextSlot = 0;
+		conf_forwarding_index_t confidenceForwardingBufferCurrentSlot = 0;
+
 	// #pragma HLS DEPENDENCE array false variable=forwardingBufferEntriesMatrix.entries
 		static ConfidenceBufferEntriesMatrix<ib_confidence_t, block_address_t>
 			confidenceBufferEntriesMatrix = initConfidenceBufferEntries<ib_confidence_t, block_address_t>();
@@ -67,6 +73,9 @@ public:
 
 		static ConfidenceBuffer<ib_confidence_t, block_address_t> confidenceBuffer;
 	#pragma HLS DEPENDENCE false variable=confidenceBuffer
+
+		static ConfidenceForwardingBuffer<address_t, ib_confidence_t, block_address_t> confidenceForwardingBuffer;
+	#pragma HLS DEPENDENCE false variable=confidenceForwardingBuffer
 
 		static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 	#pragma HLS DEPENDENCE false variable=dictionary
@@ -195,12 +204,16 @@ public:
 					updatedSequence[i] = NUM_CLASSES;
 				}
 
+				/* HABRIA QUE PONER ESTO AQUI
+				 * forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, inputBufferAddress,
+						forwardingBufferCurrentSlot, forwardingBufferNextSlot);
+				 */
+
 				// 6) Update the input buffer with the entry:
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 					#pragma HLS UNROLL
 					inputBufferEntry.sequence[i] = updatedSequence[i];
 				}
-
 
 				inputBufferEntry.tag = tag;
 				inputBufferEntry.valid = true;
@@ -227,42 +240,72 @@ public:
 			ConfidenceBufferEntry<ib_confidence_t, block_address_t> confidenceBufferEntry;
 			confidenceBufferEntry =
 					confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
-			bool addressHit = confidenceBufferEntry.lastPredictedAddress == memoryAddress;
+
+			// 2.5) Confidence forwarding buffer is read:
+			bool isConfidenceForwardingBufferHit;
+			ConfidenceForwardingBufferEntry<address_t, ib_confidence_t, block_address_t> confidenceForwardingBufferEntry;
+
+			ib_confidence_t confidence;
+			block_address_t lastPredictedAddress;
+
 
 			if(isInputBufferHit
 					&& predictedAddress){ // Dummy evaluation just to force the scheduling to delay the confidence update
 
+				confidenceForwardingBufferEntry = confidenceForwardingBuffer.read(confidenceForwardingBufferEntriesMatrix.entries, inputBufferAddress,
+						confidenceForwardingBufferCurrentSlot, isConfidenceForwardingBufferHit);
+				if(isConfidenceForwardingBufferHit){
+					confidence = confidenceForwardingBufferEntry.confidence;
+					lastPredictedAddress = confidenceForwardingBufferEntry.lastPredictedAddress;
+				}
+				else{
+					confidence = confidenceBufferEntry.confidence;
+					lastPredictedAddress = confidenceBufferEntry.lastPredictedAddress;
+				}
+
+				bool addressHit = lastPredictedAddress == memoryAddress;
+
 				// 3) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
 				if (addressHit) {
 
-					if (confidenceBufferEntry.confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
-						confidenceBufferEntry.confidence = MAX_PREDICTION_CONFIDENCE;
+					if (confidence >= (MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_INCREASE))
+						confidence = MAX_PREDICTION_CONFIDENCE;
 					else
-						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
+						confidence += PREDICTION_CONFIDENCE_INCREASE;
 
 				}
 				else {
 
-					if (confidenceBufferEntry.confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
-						confidenceBufferEntry.confidence = 0;
+					if (confidence <= (-PREDICTION_CONFIDENCE_DECREASE))
+						confidence = 0;
 					else
-						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
+						confidence += PREDICTION_CONFIDENCE_DECREASE;
 
+				}
+
+				if(!isConfidenceForwardingBufferHit){
+					confidenceForwardingBuffer.write(confidenceForwardingBufferEntriesMatrix.entries, confidence, predictedAddress, inputBufferAddress,
+							confidenceForwardingBufferCurrentSlot, confidenceForwardingBufferNextSlot);
+				}
+				else{
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = confidence;
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedAddress;
 				}
 
 			}
 			else{
 				// 3) Reset the confidence:
-				confidenceBufferEntry.confidence = 0;
+				confidence = 0;
 			}
 
-			performPrefetch = isInputBufferHit && confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
 
-			
 			// 6) Update the confidence buffer with the entry:
+
+			confidenceBufferEntry.confidence = confidence;
 			confidenceBufferEntry.lastPredictedAddress = predictedAddress;
 			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
+			performPrefetch = isInputBufferHit && confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
 
 			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){

@@ -62,7 +62,7 @@
 // Forwarding buffer configuration:
 #define FORWARDING_DEPTH 4
 #define FORWARDING_DEPTH_LOG2 bitsNeeded(FORWARDING_DEPTH)
-#define CONF_FORWARDING_DEPTH 2
+#define CONF_FORWARDING_DEPTH 4
 #define CONF_FORWARDING_DEPTH_LOG2 bitsNeeded(FORWARDING_DEPTH)
 
 

@@ -126,6 +126,7 @@ public:
 		}
 		ConfidenceForwardingBufferEntry<address_t, confidence_t, block_address_t> newEntry;
 		newEntry.valid = true;
+		newEntry.inputBufferAddress = address;
 		newEntry.confidence = confidence;
 		newEntry.lastPredictedAddress = lastPredictedAddress;
 		entries[nextSlot_] = newEntry;
