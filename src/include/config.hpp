@@ -2,8 +2,11 @@
 #include "const_expr.hpp"
 #include <cmath>
 
+// C-sim debug:
+#define CSIM_DEBUG_no
+
 // Memory configuration:
-#define NUM_ADDRESS_BITS 32
+#define NUM_ADDRESS_BITS 64
 #define BLOCK_SIZE_LOG2 6
 #define BLOCK_SIZE (1 << BLOCK_SIZE_LOG2)
 #define NUM_BLOCK_ADDRESS_BITS (NUM_ADDRESS_BITS - BLOCK_SIZE_LOG2)
@@ -25,12 +28,8 @@
 #define PREDICTION_CONFIDENCE_THRESHOLD 7
 #define PREDICTION_CONFIDENCE_INCREASE 1
 #define PREDICTION_CONFIDENCE_DECREASE -4
-
 #define MAX_PREDICTION_CONFIDENCE_LOG2 bitsNeeded(MAX_PREDICTION_CONFIDENCE)
-
 #define MAX_PREFETCHING_DEGREE 1
-
-
 
 // Dictionary configuration:
 #define NUM_CLASSES 7
@@ -59,5 +58,11 @@
 #define IB_NUM_REGION_TAG_BITS (NUM_REGION_ADDRESS_BITS - IB_NUM_SETS_LOG2)
 #define IB_NUM_LRU_COUNTER_BITS 1
 #define IB_MAX_LRU_COUNTER ((1 << IB_NUM_LRU_COUNTER_BITS) - 1)
+
+// Forwarding buffer configuration:
+#define FORWARDING_DEPTH 4
+#define FORWARDING_DEPTH_LOG2 bitsNeeded(FORWARDING_DEPTH)
+#define CONF_FORWARDING_DEPTH 2
+#define CONF_FORWARDING_DEPTH_LOG2 bitsNeeded(FORWARDING_DEPTH)
 
 

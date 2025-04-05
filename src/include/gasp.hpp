@@ -37,6 +37,13 @@ public:
 
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
+	static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, ib_confidence_t>
+		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
+	#pragma HLS ARRAY_RESHAPE variable=forwardingBufferEntriesMatrix.entries complete
+	static forwarding_index_t forwardingBufferNextSlot = 0;
+	forwarding_index_t forwardingBufferCurrentSlot = 0;
+
+	// #pragma HLS DEPENDENCE array false variable=forwardingBufferEntriesMatrix.entries
 		static ConfidenceBufferEntriesMatrix<ib_confidence_t, block_address_t>
 			confidenceBufferEntriesMatrix = initConfidenceBufferEntries<ib_confidence_t, block_address_t>();
 	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=2 complete
@@ -55,6 +62,9 @@ public:
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_lru_t> inputBuffer;
 	#pragma HLS DEPENDENCE false variable=inputBuffer
 
+		static ForwardingBuffer<address_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> forwardingBuffer;
+	#pragma HLS DEPENDENCE false variable=forwardingBuffer
+
 		static ConfidenceBuffer<ib_confidence_t, block_address_t> confidenceBuffer;
 	#pragma HLS DEPENDENCE false variable=confidenceBuffer
 
@@ -65,7 +75,7 @@ public:
 	#pragma HLS DEPENDENCE false variable=svm
 
 	#pragma HLS PIPELINE
-		int prefetchDegree = 0;
+		int prefetchDegree = 1;
 
 		// 1) Input buffer is read:
 		bool isInputBufferHit;
@@ -81,65 +91,130 @@ public:
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 		ib_tag_t tag = inputBufferAddress >> numIndexBits;
 
+		// 1.5) Forwarding buffer is read:
+		bool isForwardingBufferHit;
+		ForwardingBufferEntry<address_t, block_address_t, class_t, ib_confidence_t> forwardingBufferEntry =
+			forwardingBuffer.read(forwardingBufferEntriesMatrix.entries, inputBufferAddress, 
+				forwardingBufferCurrentSlot, isForwardingBufferHit);
+
+		block_address_t lastAddress;
+		class_t updatedSequence[SEQUENCE_LENGTH];
+		class_t sequence[SEQUENCE_LENGTH];
+		bool resetLruCounter = false;
+
+		// If the forwarding buffer is hit, we obtain the data from it. Else, we allocate a new entry and take the data from the input buffer:
+		if(isForwardingBufferHit){
+			lastAddress = forwardingBufferEntry.lastAddress;
+			for(int k = 0; k < SEQUENCE_LENGTH; k++){
+				#pragma HLS UNROLL
+				sequence[k] = forwardingBufferEntry.sequence[k];
+			}
+		}
+
+		else{
+
+			lastAddress = inputBufferEntry.lastAddress;
+			for(int k = 0; k < SEQUENCE_LENGTH; k++){
+				#pragma HLS UNROLL
+				sequence[k] = inputBufferEntry.sequence[k];
+			}
+
+		}
+		
+
 		// Skip operation if the previous access is equal to the current:
 		if (inputBufferEntry.lastAddress != memoryAddress) {
 			class_t predictedClasses[MAX_PREFETCHING_DEGREE];
 
-
 			bool performPrefetch = false;
 			
-			class_t sequence[SEQUENCE_LENGTH];
-			class_t dictionaryClass;
-
-			// Continue if there has been a hit:
-			if (isInputBufferHit) {
+			if(isInputBufferHit) {
+				/*
+				if(true){
+					lastAddress = inputBufferEntry.lastAddress;
+					for(int k = 0; k < SEQUENCE_LENGTH; k++){
+						#pragma HLS UNROLL
+						sequence[k] = inputBufferEntry.sequence[k];
+					}
+				}
+				*/
 
 				// 3) Compute the resulting delta and its class:
-				delta_t delta = (delta_t)memoryAddress - (delta_t)inputBufferEntry.lastAddress;
+				delta_t delta = (delta_t)memoryAddress - (delta_t)lastAddress;
+				class_t dictionaryClass;
 				bool dummyIsHit;
 				DictionaryEntry < delta_t, dic_confidence_t > dictionaryEntry = dictionary.write(
 						dictionaryEntriesMatrix.entries, delta, dictionaryClass, dummyIsHit);
-
-				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-				#pragma HLS UNROLL
-					sequence[i] = inputBufferEntry.sequence[i];
-				}
 				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
-				#pragma HLS UNROLL
-					inputBufferEntry.sequence[i] = inputBufferEntry.sequence[i + 1];
+					#pragma HLS UNROLL
+					updatedSequence[i] = sequence[i + 1];
 				}
-				inputBufferEntry.sequence[SEQUENCE_LENGTH - 1] = dictionaryClass;
+				updatedSequence[SEQUENCE_LENGTH - 1] = dictionaryClass;
 
+
+				// 3.5 Update the forwarding buffer to include the new sequence and lastAddress: 
+
+				if(!isForwardingBufferHit){
+					forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, inputBufferAddress,
+						forwardingBufferCurrentSlot, forwardingBufferNextSlot); 
+				}
+				else{
+					forwardingBufferEntriesMatrix.entries[forwardingBufferCurrentSlot].lastAddress = memoryAddress;
+					for(int k = 0; k < SEQUENCE_LENGTH; k++){
+						#pragma HLS UNROLL
+						forwardingBufferEntriesMatrix.entries[forwardingBufferCurrentSlot].sequence[k] = updatedSequence[k];
+					}
+				}
+
+				// 6) Update the input buffer with the entry:
+				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+					#pragma HLS UNROLL
+					inputBufferEntry.sequence[i] = updatedSequence[i];
+				}
+
+				inputBufferEntry.tag = tag;
+				inputBufferEntry.valid = true;
+				inputBufferEntry.lastAddress = memoryAddress;
+				// inputBufferEntry.lastPredictedAddress = predictedAddress;
+				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+				bool isInputBufferHitDummy;
+				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
+
+
+				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
+				// on the calculated prefetching degree (>= 1):
+				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
+						1);
 			}
 			// If there has been a miss, prepare a blank new input buffer entry:
 			else {
-				inputBufferEntry.tag = tag;
-				inputBufferEntry.valid = true;
 				inputBufferEntry.lruCounter = 1;
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-	#pragma HLS UNROLL
-					inputBufferEntry.sequence[i] = NUM_CLASSES;
+				#pragma HLS UNROLL
 					sequence[i] = NUM_CLASSES;
+					updatedSequence[i] = NUM_CLASSES;
 				}
-			}
-			// 2) Update the input buffer with the entry:
-			inputBufferEntry.lastAddress = memoryAddress;
-			bool isInputBufferHitDummy;
-			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
-			prefetchDegree = 1;
-			if(isInputBufferHit){
-				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
-				// on the calculated prefetching degree (>= 1):
-				// prefetchDegree = confidenceLookUpTable.table[confidenceBufferEntry.confidence - PREDICTION_CONFIDENCE_THRESHOLD];
-				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
-					1);	
-					// prefetchDegree == 0? 1 : prefetchDegree);
-			}
-			else{
+				// 6) Update the input buffer with the entry:
+				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
+					#pragma HLS UNROLL
+					inputBufferEntry.sequence[i] = updatedSequence[i];
+				}
+
+
+				inputBufferEntry.tag = tag;
+				inputBufferEntry.valid = true;
+				inputBufferEntry.lastAddress = memoryAddress;
+				// inputBufferEntry.lastPredictedAddress = predictedAddress;
+				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
+				bool isInputBufferHitDummy;
+				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
+
 				// 4) Predict with the SVM:
-				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, inputBufferEntry.sequence);
+				predictedClasses[0] = svm.predict(svmMatrixCopy.weightMatrices, svmMatrixCopy.intercepts, sequence);
+
 			}
+
 
 			// 5) Get the finally predicted address:
 			dic_index_t dummyIndex;
@@ -148,7 +223,7 @@ public:
 			predictedDelta = dictionaryEntriesMatrix.entries[(int)predictedClasses[0]].delta;
 			block_address_t predictedAddress = ((delta_t)memoryAddress + predictedDelta);
 
-
+			// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
 			ConfidenceBufferEntry<ib_confidence_t, block_address_t> confidenceBufferEntry;
 			confidenceBufferEntry =
 					confidenceBuffer.read(confidenceBufferEntriesMatrix.entries, index, way);
@@ -156,7 +231,6 @@ public:
 
 			if(isInputBufferHit
 					&& predictedAddress){ // Dummy evaluation just to force the scheduling to delay the confidence update
-				// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 
 				// 3) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
 				if (addressHit) {
@@ -166,7 +240,6 @@ public:
 					else
 						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 
-					// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_INCREASE;
 				}
 				else {
 
@@ -175,24 +248,12 @@ public:
 					else
 						confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 
-					// confidenceBufferEntry.confidence += PREDICTION_CONFIDENCE_DECREASE;
 				}
-
-				// if (confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD)
-				//	performPrefetch = true;
-
-				// 6) Update the confidence buffer with the entry:
-				// confidenceBufferEntry.lastPredictedAddress = predictedAddress;
-				// confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
 			}
 			else{
 				// 3) Reset the confidence:
 				confidenceBufferEntry.confidence = 0;
-
-				// 6) Update the confidence buffer with the entry:
-				//confidenceBufferEntry.lastPredictedAddress = predictedAddress;
-				//confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 			}
 
 			performPrefetch = isInputBufferHit && confidenceBufferEntry.confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
@@ -229,6 +290,8 @@ public:
 					addressesToPrefetch[i] = 0;
 				}
 			}
+
 		}
 	}
+
 };

@@ -44,6 +44,37 @@ constexpr ConfidenceBufferEntriesMatrix<confidence_t, block_address_t>
 }
 
 
+template<typename address_t, typename block_address_t, typename class_t, typename confidence_t>
+constexpr ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, confidence_t>
+	initForwardingBufferEntries(){
+	ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, confidence_t> res;
+	for(int i = 0; i < FORWARDING_DEPTH; i++){
+		res.entries[i].valid = false;
+		res.entries[i].inputBufferAddress = 0;
+		res.entries[i].lastAddress = 0;
+		for(int k = 0; k < SEQUENCE_LENGTH; k++){
+			res.entries[i].sequence[k] = NUM_CLASSES;
+		}
+
+	}
+	return res;
+}
+
+
+template<typename address_t, typename confidence_t, typename block_address_t>
+constexpr ConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t>
+	initConfidenceForwardingBufferEntries(){
+	ConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t> res;
+	for(int i = 0; i < FORWARDING_DEPTH; i++){
+		res.entries[i].valid = false;
+		res.entries[i].inputBufferAddress = 0;
+		res.entries[i].lastPredictedAddress = 0;
+		res.entries[i].confidence = 0;
+	}
+	return res;
+}
+
+
 template<typename weight_t>
 constexpr SVMWholeMatrix<weight_t> initSVMData(){
 	SVMWholeMatrix<weight_t> res;
