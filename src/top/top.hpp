@@ -30,4 +30,8 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
 
+void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
+	block_address_t& prefetchAddress,
+	bool nop
+	);
 

@@ -141,21 +141,20 @@ int main(int argc, char **argv)
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
 				unsigned long long nextCycle = input.cycle;
-				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+				block_address_t addressToPrefetch;
 				PrefetcherValidationOutput output;
 
 				while(cycle < nextCycle){
-					prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, true);
+					prefetchWithSGASPWithNopWithDataflow(input.memoryAddress, addressToPrefetch, true);
 					if((nextCycle - experiment.maxNumNopCycles) > cycle)
 						cycle = nextCycle - experiment.maxNumNopCycles;
 					else
 						cycle++;
 				}
-				prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, false);
+				prefetchWithSGASPWithNopWithDataflow(input.memoryAddress, addressToPrefetch, false);
 
-				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
-					output.addressesToPrefetch[k] = addressesToPrefetch[k];
-				}
+				output.addressesToPrefetch[0] = addressToPrefetch;
+
 				experiment.saveOutput(output);
 			}
 			passed = experiment.hasPassed() && passed;

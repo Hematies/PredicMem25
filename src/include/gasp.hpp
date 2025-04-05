@@ -61,6 +61,9 @@ public:
 
 		#pragma HLS PIPELINE
 
+		class_t updatedSequence[SEQUENCE_LENGTH];
+		class_t sequence[SEQUENCE_LENGTH];
+
 		if(!nop){
 			// 1) Input buffer is read:
 			InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> inputBufferEntryDummy;
@@ -213,7 +216,7 @@ public:
 		
 	}
 
-	phase2(address_t inputBufferAddress, block_address_t memoryAddress,
+	void phase2(address_t inputBufferAddress, block_address_t memoryAddress,
 		block_address_t predictedAddress, block_address_t& prefetchAddress,
 		ib_index_t index, ib_way_t way, bool nop, bool isInputBufferHit){
 		
@@ -307,7 +310,6 @@ public:
 				confidence = 0;
 			}
 
-
 			// 6) Update the confidence buffer with the entry:
 
 			confidenceBufferEntry.confidence = confidence;
@@ -318,32 +320,12 @@ public:
 
 			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){
-				block_address_t addressesToPrefetch_[MAX_PREFETCHING_DEGREE];
-				block_address_t prevAddress = predictedAddress;
-				addressesToPrefetch_[0] = predictedAddress;
-				for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
-	#pragma HLS UNROLL
-					if(i < prefetchDegree){
-						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[(int)predictedClasses[i]].delta;
-						block_address_t addr = (delta_t)prevAddress + predictedDelta_;
-						addressesToPrefetch_[i] = addr;
-						prevAddress = addr;
-					}
-				}
-				for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-					if(i < prefetchDegree){
-						addressesToPrefetch[i] = addressesToPrefetch_[i];
-					}
-				}
+				prefetchAddress = predictedAddress;
 			}
 			else{
-				for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-					#pragma HLS UNROLL
-					addressesToPrefetch[i] = 0;
-				}
+				prefetchAddress = 0;
 			}
 
-			prefetchAddress = addressesToPrefetch[0];
 		}
 		else{
 			prefetchAddress = 0;
