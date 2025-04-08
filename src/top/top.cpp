@@ -24,36 +24,28 @@ DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, 
 	return res;
 }
 
-InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
+InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> entry,
 		bool performRead, bool& isHit){
 #pragma HLS PIPELINE
 
 
-	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>
-				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t>();
-// #pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
-// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=2 factor=2 block
-// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
-// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=inputBufferEntriesMatrix.entries
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_lru_t>
+			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
+	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_lru_t>
+				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
+#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
+#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
+#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
 #pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
-	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> inputBuffer;
+	static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_lru_t> inputBuffer;
 	// #pragma HLS DEPENDENCE false variable=inputBuffer
 
 
-	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> res;
-	/*
-	if(performRead){
-		res = inputBuffer.read(inputBufferEntriesMatrixCopy.entries, addr, isHit);
-	}
-	else{
-		inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries, addr, entry);
-		res = entry;
-	}
-	*/
-	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit);
+	InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> res;
+	ib_index_t index;
+	ib_way_t way;
+	res = inputBuffer(inputBufferEntriesMatrix.entries, addr, entry, performRead, isHit, index, way);
 	return res;
 }
 
@@ -83,7 +75,32 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 	// output[0] = svm.predict(weight_matrices, intercepts, input);
 }
 
+void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE],
+		bool nop){
 
+#pragma HLS PIPELINE
+	#pragma HLS INTERFACE ap_fifo port=output
+
+	#pragma HLS ARRAY_PARTITION variable=input complete
+
+	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
+	static WeightMatrix<svm_weight_t> weight_matrices_copy[NUM_CLASSES];
+	// #pragma HLS SHARED variable=weight_matrices->weights
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+
+	static svm_weight_t intercepts[NUM_CLASSES];
+	static svm_weight_t intercepts_copy[NUM_CLASSES];
+	// #pragma HLS ARRAY_PARTITION variable=intercepts complete
+
+	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+
+	if(!nop)
+		svm.recursivelyPredictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target, output, MAX_PREFETCHING_DEGREE);
+	// svm.fit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
+	// output[0] = svm.predictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
+	// output[0] = svm.predict(weight_matrices, intercepts, input);
+}
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
@@ -142,6 +159,25 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 	if(!nop) gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
+	block_address_t& prefetchAddress,
+	bool nop
+	){
+#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+	#pragma HLS DATAFLOW
+
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	block_address_t predictedAddress = 0;
+	ib_index_t index;
+	ib_way_t way;
+	bool isInputBufferHit = false;
+	address_t regionId = memoryAddress >> REGION_BLOCK_SIZE_LOG2;
+
+	gasp.phase1(regionId, memoryAddress, predictedAddress, index, way, nop, isInputBufferHit);
+	gasp.phase2(regionId, memoryAddress, predictedAddress, prefetchAddress, index, way, nop, isInputBufferHit);
+
 }
 
 

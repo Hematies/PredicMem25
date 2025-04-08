@@ -45,8 +45,6 @@ void parseInputBufferInOutLine(string line, InputBufferValidationInput& input, I
     for(int i = 0; i < SEQUENCE_LENGTH; i++){
         input.entry.sequence[i] = (class_t) std::stoi(inputElements[i + 4]);
     }    
-    input.entry.confidence = (ib_confidence_t) std::stoi(inputElements[4 + SEQUENCE_LENGTH]);
-    input.entry.lastPredictedAddress = (block_address_t) std::stol(inputElements[5 + SEQUENCE_LENGTH]);
     input.entry.lruCounter = (ib_lru_t) std::stoi(inputElements[6 + SEQUENCE_LENGTH]);
     input.performRead = std::stoi(inputElements[7 + SEQUENCE_LENGTH]);
 
@@ -57,8 +55,6 @@ void parseInputBufferInOutLine(string line, InputBufferValidationInput& input, I
     for(int i = 0; i < SEQUENCE_LENGTH; i++){
         output.entry.sequence[i] = (class_t) std::stoi(outputElements[i + 3]);
     }    
-    output.entry.confidence = (ib_confidence_t) std::stoi(outputElements[3 + SEQUENCE_LENGTH]);
-    output.entry.lastPredictedAddress = (block_address_t) std::stol(outputElements[4 + SEQUENCE_LENGTH]);
     output.entry.lruCounter = (ib_lru_t) std::stoi(outputElements[5 + SEQUENCE_LENGTH]);
     output.isHit = std::stoi(outputElements[6 + SEQUENCE_LENGTH]);
 

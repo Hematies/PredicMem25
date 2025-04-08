@@ -1,52 +1,53 @@
 #pragma once
 #include "global.hpp"
 
-template<typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
+template<typename tag_t, typename block_address_t, typename class_t, typename lru_t>
 struct InputBufferEntry {
 	bool valid;
 	tag_t tag;
 	block_address_t lastAddress;
 	class_t sequence[SEQUENCE_LENGTH];
-	confidence_t confidence;
-	block_address_t lastPredictedAddress;
 	lru_t lruCounter;
 	InputBufferEntry(){}
 };
 
 
-template<typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
+template<typename tag_t, typename block_address_t, typename class_t, typename lru_t>
 struct InputBufferEntriesMatrix {
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
+		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
 		InputBufferEntriesMatrix(){}
 };
 
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
 class InputBuffer {
 protected:
 
-	void updateLRU(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way);
-	way_t getLeastRecentWay(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS], index_t index);
-	way_t queryWay(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS], index_t index, tag_t tag);
+	void updateLRU(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way);
+	way_t getLeastRecentWay(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS], index_t index);
+	way_t queryWay(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS], index_t index, tag_t tag);
 
 public:
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> read(
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-		address_t address, bool& isHit);
-	// InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> read(
+		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+		address_t address, bool& isHit,
+		index_t& index, way_t& way);
+	// InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 	void write(
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-		address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry);
+		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+		address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
+		index_t& index, way_t& way);
 
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> operator()(
-			InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry, bool performRead, bool& isHit);
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> operator()(
+			InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way);
 
 };
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>
-	::updateLRU(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way)
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>
+	::updateLRU(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way)
 {
 #pragma HLS INLINE
 	bool areAllWaysSaturated = true;
@@ -81,9 +82,9 @@ void InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, con
 	}
 }
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>
-::getLeastRecentWay(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS], index_t index)
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>
+::getLeastRecentWay(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS], index_t index)
 {
 #pragma HLS INLINE
 	way_t res = 0;
@@ -98,9 +99,9 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 	return res;
 }
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::queryWay(
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS],
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::queryWay(
+		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS],
 		index_t index, tag_t tag)
 {
 	#pragma HLS INLINE
@@ -118,31 +119,32 @@ way_t InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, co
 	return res;
 }
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
-read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit) {
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+InputBufferEntry<tag_t, block_address_t, class_t, lru_t> InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
+read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit,
+index_t& index, way_t& way) {
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res = 
-		InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> res = 
+		InputBufferEntry<tag_t, block_address_t, class_t, lru_t>();
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
-	index_t index = inputBufferAddress % (1 << numIndexBits);
+	index = inputBufferAddress % (1 << numIndexBits);
 	isHit = false;
 
 
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS];
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
 	for(int w = 0; w < IB_NUM_WAYS; w++){
 #pragma HLS UNROLL
 		set[w] = entries[index][w];
 	}
 
 
-	way_t way = this->queryWay(set, index, tag);
+	way = this->queryWay(set, index, tag);
 
 
 	if (way != (way_t)IB_NUM_WAYS) {
@@ -156,12 +158,13 @@ read(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entr
 }
 
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-// InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+// InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 void
-InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
-write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry) {
+InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
+write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
+	index_t& index, way_t& way) {
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
 
@@ -175,10 +178,10 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> ent
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
-	index_t index = inputBufferAddress % (1 << numIndexBits);
+	index = inputBufferAddress % (1 << numIndexBits);
 
 	/*
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS];
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
 	for(int w = 0; w < IB_NUM_WAYS; w++){
 	#pragma HLS UNROLL
 		set[w] = entries[index][w];
@@ -187,7 +190,7 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> ent
 
 
 	way_t leastRecentWay = this->getLeastRecentWay(entries, index);
-	way_t way = this->queryWay(entries, index, tag);
+	way = this->queryWay(entries, index, tag);
 
 
 	if (way == IB_NUM_WAYS) {
@@ -217,12 +220,13 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> ent
 }
 
 
-template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename confidence_t, typename lru_t>
-InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>
-InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, confidence_t, lru_t>::
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
+InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
+InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
 operator()(
-			InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
-			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> entry, bool performRead, bool& isHit){
+			InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+			address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way){
 
 #pragma HLS INLINE
 // #pragma HLS PIPELINE
@@ -234,18 +238,18 @@ operator()(
 // #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> res =
-			InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t>();
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> res =
+			InputBufferEntry<tag_t, block_address_t, class_t, lru_t>();
 
 // #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 // #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
-	index_t index = address % (1 << numIndexBits);
+	index = address % (1 << numIndexBits);
 
 
-	InputBufferEntry<tag_t, block_address_t, class_t, confidence_t, lru_t> set[IB_NUM_WAYS];
+	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
 #pragma HLS ARRAY_PARTITION variable=set complete dim=0
 #pragma HLS DEPENDENCE array false variable=set
 	for(int w = 0; w < IB_NUM_WAYS; w++){
@@ -256,7 +260,7 @@ operator()(
 
 
 	way_t leastRecentWay = this->getLeastRecentWay(set, index);
-	way_t way = this->queryWay(set, index, tag);
+	way = this->queryWay(set, index, tag);
 
 	isHit = way != IB_NUM_WAYS;
 
@@ -271,8 +275,6 @@ operator()(
 		}
 
 		// entries[index][way].lastAddress = entry.lastAddress;
-		// entries[index][way].confidence = entry.confidence;
-		// entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
 
 		// entries[index][way].valid = true;
 		entry.valid = true;
@@ -283,17 +285,18 @@ operator()(
 
 		this->updateLRU(set, index, way);
 
+
+		for(int w = 0; w < IB_NUM_WAYS; w++){
+			#pragma HLS UNROLL
+			entries[index][w] = set[w];
+		}
+
 	}
 	else{
 		if(isHit){
 			res = set[way];
 		}
 	}
-
-	for(int w = 0; w < IB_NUM_WAYS; w++){
-		#pragma HLS UNROLL
-		entries[index][w] = set[w];
-		}
 
 	return res;
 }
