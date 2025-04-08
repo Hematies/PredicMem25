@@ -57,19 +57,17 @@ public:
 
 struct InputBufferValidationInput{
     address_t inputBufferAddr; 
-    InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry;
+    InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> entry;
 	bool performRead;
 };
 
 struct InputBufferValidationOutput{
-    InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry;
+    InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> entry;
     bool isHit;
 };
 
 bool areInputBufferOutputsEqual(InputBufferValidationOutput &output1, InputBufferValidationOutput &output2){
-    return output1.entry.confidence == output2.entry.confidence
-        && output1.entry.lastAddress == output2.entry.lastAddress
-        && output1.entry.lastPredictedAddress == output2.entry.lastPredictedAddress
+    return output1.entry.lastAddress == output2.entry.lastAddress
         && output1.entry.lruCounter == output2.entry.lruCounter
         && output1.entry.sequence == output2.entry.sequence
         && output1.entry.tag == output2.entry.tag
@@ -273,6 +271,7 @@ public:
 struct SVMValidationInput{
     class_t input[SEQUENCE_LENGTH]; 
     class_t target;
+	ap_uint<64> cycle;
 };
 
 struct SVMValidationOutput{
@@ -332,7 +331,9 @@ protected:
     int numHits = 0;
     int numTargetHits = 0;
 	int numPredictions = 0;
+
 public:
+	int maxNumNopCycles = 10;
     SVMSoftValidation(){}
     SVMSoftValidation(string filePath, double matchingThreshold = 0.85){
         type = ExperimentType::SVM_SOFT_VALIDATION;

@@ -5,12 +5,14 @@
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit);
 
-InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> entry,
+InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffer(address_t addr, InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> entry,
 		bool performRead, bool& isHit);
 
 
 void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE]);
 
+void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE],
+		bool nop);
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
@@ -40,4 +42,8 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
 
+void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
+	block_address_t& prefetchAddress,
+	bool nop
+	);
 
