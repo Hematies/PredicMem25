@@ -75,7 +75,32 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 	// output[0] = svm.predict(weight_matrices, intercepts, input);
 }
 
+void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE],
+		bool nop){
 
+#pragma HLS PIPELINE
+	#pragma HLS INTERFACE ap_fifo port=output
+
+	#pragma HLS ARRAY_PARTITION variable=input complete
+
+	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
+	static WeightMatrix<svm_weight_t> weight_matrices_copy[NUM_CLASSES];
+	// #pragma HLS SHARED variable=weight_matrices->weights
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
+	// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
+
+	static svm_weight_t intercepts[NUM_CLASSES];
+	static svm_weight_t intercepts_copy[NUM_CLASSES];
+	// #pragma HLS ARRAY_PARTITION variable=intercepts complete
+
+	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+
+	if(!nop)
+		svm.recursivelyPredictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target, output, MAX_PREFETCHING_DEGREE);
+	// svm.fit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
+	// output[0] = svm.predictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
+	// output[0] = svm.predict(weight_matrices, intercepts, input);
+}
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]

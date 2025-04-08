@@ -10,6 +10,8 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffe
 
 void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE]);
 
+void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE],
+		bool nop);
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]

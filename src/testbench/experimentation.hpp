@@ -271,6 +271,7 @@ public:
 struct SVMValidationInput{
     class_t input[SEQUENCE_LENGTH]; 
     class_t target;
+	ap_uint<64> cycle;
 };
 
 struct SVMValidationOutput{
@@ -330,7 +331,9 @@ protected:
     int numHits = 0;
     int numTargetHits = 0;
 	int numPredictions = 0;
+
 public:
+	int maxNumNopCycles = 10;
     SVMSoftValidation(){}
     SVMSoftValidation(string filePath, double matchingThreshold = 0.85){
         type = ExperimentType::SVM_SOFT_VALIDATION;

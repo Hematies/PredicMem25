@@ -7,7 +7,9 @@
 using namespace std;
 
 
-string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
+// string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
+// string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp/";
+string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp_high_confidence/";
 string inputBufferTracesDirName = "inputBufferTraces/";
 string dictionaryTracesDirName = "dictionaryTraces/";
 string svmTracesDirName = "svmTraces/";
@@ -89,14 +91,29 @@ int main(int argc, char **argv)
 		auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + string("svmTraceHeader.txt"));
 		auto experiments = svmValidation.experiments;
 		for(auto& experiment : experiments){
+			unsigned long long cycle = 0L;
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
+				unsigned long long nextCycle = input.cycle;
 				class_t outputClasses[MAX_PREFETCHING_DEGREE];
 				SVMValidationOutput output;
 				operateSVM(input.input, input.target, outputClasses);
 				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 					output.output[k] = outputClasses[k];
 				}
+				while(cycle < nextCycle){
+					operateSVMWithNop(input.input, input.target, outputClasses,
+												true);
+					if((nextCycle - experiment.maxNumNopCycles) > cycle)
+						cycle = nextCycle - experiment.maxNumNopCycles;
+					else
+						cycle++;
+				}
+				operateSVMWithNop(input.input, input.target, outputClasses,
+												false);
+				for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+									output.output[k] = outputClasses[k];
+								}
 				experiment.saveOutput(output);
 			}
 			passed = experiment.hasPassed() && passed;
