@@ -34,7 +34,7 @@ public:
 
 		#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
-		static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, ib_confidence_t>
+		static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t>
 		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
 		#pragma HLS ARRAY_RESHAPE variable=forwardingBufferEntriesMatrix.entries complete
 		static forwarding_index_t forwardingBufferNextSlot = 0;
@@ -78,7 +78,7 @@ public:
 
 			// 1.5) Forwarding buffer is read:
 			bool isForwardingBufferHit;
-			ForwardingBufferEntry<address_t, block_address_t, class_t, ib_confidence_t> forwardingBufferEntry =
+			ForwardingBufferEntry<address_t, block_address_t, class_t> forwardingBufferEntry =
 				forwardingBuffer.read(forwardingBufferEntriesMatrix.entries, inputBufferAddress, 
 					forwardingBufferCurrentSlot, isForwardingBufferHit);
 
@@ -419,7 +419,7 @@ public:
 
 		// 1.5) Forwarding buffer is read:
 		bool isForwardingBufferHit;
-		ForwardingBufferEntry<address_t, block_address_t, class_t, ib_confidence_t> forwardingBufferEntry =
+		ForwardingBufferEntry<address_t, block_address_t, class_t> forwardingBufferEntry =
 			forwardingBuffer.read(forwardingBufferEntriesMatrix.entries, inputBufferAddress, 
 				forwardingBufferCurrentSlot, isForwardingBufferHit);
 
