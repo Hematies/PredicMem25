@@ -11,6 +11,7 @@
 #include "forwarding_buffer.hpp"
 #include "confidence_buffer.hpp"
 #include "burst_input_buffer.hpp"
+#include "burst_confidence_buffer.hpp"
 #include "svm.hpp"
 
 #include "init_data.hpp"

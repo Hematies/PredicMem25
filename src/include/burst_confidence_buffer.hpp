@@ -17,7 +17,7 @@ struct BurstConfidenceBufferEntriesMatrix {
 };
 
 template<typename confidence_t, typename block_address_t, typename burst_length_t>
-class BurstConfidence{
+class BurstConfidenceBuffer{
     public:
 	BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> read(
 		BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
@@ -30,7 +30,7 @@ class BurstConfidence{
 
 template<typename confidence_t, typename block_address_t, typename burst_length_t>
 BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> 
-BurstConfidence<confidence_t, block_address_t, burst_length_t>::read(
+BurstConfidenceBuffer<confidence_t, block_address_t, burst_length_t>::read(
     BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
     ib_index_t index, ib_way_t way){
     #pragma HLS INLINE
@@ -45,7 +45,7 @@ BurstConfidence<confidence_t, block_address_t, burst_length_t>::read(
 }
 
 template<typename confidence_t, typename block_address_t, typename burst_length_t>
-void BurstConfidence<confidence_t, block_address_t, burst_length_t>::write(
+void BurstConfidenceBuffer<confidence_t, block_address_t, burst_length_t>::write(
     BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
     ib_index_t index, ib_way_t way, BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t>& entry){
     #pragma HLS INLINE
