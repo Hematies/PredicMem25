@@ -25,7 +25,7 @@ struct BurstForwardingBufferEntry {
 	block_address_t lastAddress;
 	class_t sequence[SEQUENCE_LENGTH];
 	burst_length_t burstLengthSequence[SEQUENCE_LENGTH];
-	ForwardingBufferEntry(){}
+	BurstForwardingBufferEntry(){}
 };
 
 
@@ -67,7 +67,7 @@ struct BurstConfidenceForwardingBufferEntry {
 template<typename address_t, typename confidence_t, typename block_address_t, typename burst_length_t>
 struct BurstConfidenceForwardingBufferEntriesMatrix {
 	BurstConfidenceForwardingBufferEntry<address_t, confidence_t, block_address_t, burst_length_t> entries[FORWARDING_DEPTH];
-	BUrstConfidenceForwardingBufferEntriesMatrix(){}
+	BurstConfidenceForwardingBufferEntriesMatrix(){}
 };
 
 

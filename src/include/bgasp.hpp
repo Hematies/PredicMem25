@@ -112,15 +112,15 @@ public:
 
 		// 1.5) Forwarding buffer is read:
 		bool isForwardingBufferHit;
-		BurstForwardingBufferEntry<address_t, block_address_t, class_t, burst_length_t> burstForwardingBufferEntry =
+		BurstForwardingBufferEntry<address_t, block_address_t, class_t, burst_length_t> forwardingBufferEntry =
 			forwardingBuffer.read(forwardingBufferEntriesMatrix.entries, inputBufferAddress, 
 				forwardingBufferCurrentSlot, isForwardingBufferHit);
 
 		block_address_t lastAddress;
 		class_t updatedSequence[SEQUENCE_LENGTH];
 		class_t sequence[SEQUENCE_LENGTH];
-		class_t burstUpdatedSequence[SEQUENCE_LENGTH];
-		class_t burstSequence[SEQUENCE_LENGTH];
+		burst_length_t burstUpdatedSequence[SEQUENCE_LENGTH];
+		burst_length_t burstSequence[SEQUENCE_LENGTH];
 		bool resetLruCounter = false;
 
 		// If the forwarding buffer is hit, we obtain the data from it. Else, we allocate a new entry and take the data from the input buffer:
@@ -129,7 +129,7 @@ public:
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
 				#pragma HLS UNROLL
 				sequence[k] = forwardingBufferEntry.sequence[k];
-				burstSequence[k] = forwardingBufferEntry.burstSequence[k]
+				burstSequence[k] = forwardingBufferEntry.burstLengthSequence[k];
 			}
 		}
 
@@ -139,7 +139,7 @@ public:
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
 				#pragma HLS UNROLL
 				sequence[k] = inputBufferEntry.sequence[k];
-				burstSequence[k] = inputBufferEntry.burstSequence[k]
+				burstSequence[k] = inputBufferEntry.burstLengthSequence[k];
 			}
 
 		}
@@ -164,13 +164,9 @@ public:
 				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
 					#pragma HLS UNROLL
 					updatedSequence[i] = sequence[i + 1];
+					burstUpdatedSequence[i] = burstSequence[i + 1];
 				}
 				updatedSequence[SEQUENCE_LENGTH - 1] = dictionaryClass;
-
-				for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {
-					#pragma HLS UNROLL
-					updatedBurstSequence[i] = burstSequence[i + 1];
-				}
 				burstUpdatedSequence[SEQUENCE_LENGTH - 1] = burstLength;
 
 
@@ -185,7 +181,7 @@ public:
 					for(int k = 0; k < SEQUENCE_LENGTH; k++){
 						#pragma HLS UNROLL
 						forwardingBufferEntriesMatrix.entries[forwardingBufferCurrentSlot].sequence[k] = updatedSequence[k];
-						forwardingBufferEntriesMatrix.entries[forwardingBufferCurrentSlot].burstSequence[k] = burstUpdatedSequence[k];
+						forwardingBufferEntriesMatrix.entries[forwardingBufferCurrentSlot].burstLengthSequence[k] = burstUpdatedSequence[k];
 					}
 				}
 

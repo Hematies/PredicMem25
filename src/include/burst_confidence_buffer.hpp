@@ -13,7 +13,7 @@ struct BurstConfidenceBufferEntry{
 template<typename confidence_t, typename block_address_t, typename burst_length_t>
 struct BurstConfidenceBufferEntriesMatrix {
 		BurstConfidenceBufferEntry<confidence_t, block_address_t, burst_length_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
-		ConfidenceBufferEntriesMatrix(){}
+		BurstConfidenceBufferEntriesMatrix(){}
 };
 
 template<typename confidence_t, typename block_address_t, typename burst_length_t>

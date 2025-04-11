@@ -35,7 +35,7 @@ public:
 		#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
 		static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t>
-		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
+		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t>();
 		#pragma HLS ARRAY_RESHAPE variable=forwardingBufferEntriesMatrix.entries complete
 		static forwarding_index_t forwardingBufferNextSlot = 0;
 		forwarding_index_t forwardingBufferCurrentSlot = 0;
@@ -50,13 +50,13 @@ public:
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_lru_t> inputBuffer;
 		#pragma HLS DEPENDENCE false variable=inputBuffer
 
-		static ForwardingBuffer<address_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> forwardingBuffer;
+		static ForwardingBuffer<address_t, ib_tag_t, block_address_t, class_t, ib_lru_t> forwardingBuffer;
 		#pragma HLS DEPENDENCE false variable=forwardingBuffer
 
 		static Dictionary<dic_index_t, delta_t, dic_confidence_t> dictionary;
 		#pragma HLS DEPENDENCE false variable=dictionary
 
-		static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+		static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 		#pragma HLS DEPENDENCE false variable=svm
 
 		#pragma HLS PIPELINE
@@ -353,8 +353,8 @@ public:
 
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
 
-	static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, ib_confidence_t>
-		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t, ib_confidence_t>();
+	static ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t>
+		forwardingBufferEntriesMatrix = initForwardingBufferEntries<address_t, block_address_t, class_t>();
 	#pragma HLS ARRAY_RESHAPE variable=forwardingBufferEntriesMatrix.entries complete
 	static forwarding_index_t forwardingBufferNextSlot = 0;
 	forwarding_index_t forwardingBufferCurrentSlot = 0;
@@ -385,7 +385,7 @@ public:
 		static InputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_lru_t> inputBuffer;
 	#pragma HLS DEPENDENCE false variable=inputBuffer
 
-		static ForwardingBuffer<address_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t> forwardingBuffer;
+		static ForwardingBuffer<address_t, ib_tag_t, block_address_t, class_t, ib_lru_t> forwardingBuffer;
 	#pragma HLS DEPENDENCE false variable=forwardingBuffer
 
 		static ConfidenceBuffer<ib_confidence_t, block_address_t> confidenceBuffer;

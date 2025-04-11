@@ -84,8 +84,8 @@ void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t o
 
 	#pragma HLS ARRAY_PARTITION variable=input complete
 
-	static WeightMatrix<svm_weight_t> weight_matrices[NUM_CLASSES];
-	static WeightMatrix<svm_weight_t> weight_matrices_copy[NUM_CLASSES];
+	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices[NUM_CLASSES];
+	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices_copy[NUM_CLASSES];
 	// #pragma HLS SHARED variable=weight_matrices->weights
 	// #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 	// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights complete
@@ -94,7 +94,7 @@ void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t o
 	static svm_weight_t intercepts_copy[NUM_CLASSES];
 	// #pragma HLS ARRAY_PARTITION variable=intercepts complete
 
-	static SVM<svm_weight_t, class_t, svm_distance_t> svm;
+	static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 
 	if(!nop)
 		svm.recursivelyPredictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target, output, MAX_PREFETCHING_DEGREE);

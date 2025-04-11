@@ -44,10 +44,10 @@ constexpr ConfidenceBufferEntriesMatrix<confidence_t, block_address_t>
 }
 
 
-template<typename address_t, typename block_address_t, typename class_t, typename confidence_t>
-constexpr ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, confidence_t>
+template<typename address_t, typename block_address_t, typename class_t>
+constexpr ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t>
 	initForwardingBufferEntries(){
-	ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t, confidence_t> res;
+	ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t> res;
 	for(int i = 0; i < FORWARDING_DEPTH; i++){
 		res.entries[i].valid = false;
 		res.entries[i].inputBufferAddress = 0;
@@ -125,17 +125,17 @@ constexpr BurstForwardingBufferEntriesMatrix<address_t, block_address_t, class_t
 			res.entries[i].sequence[k] = NUM_CLASSES_INCLUDING_NULL;
 		}
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
-			res.entries[i].burstSequence[k] = NUM_BURST_CLASSES_INCLUDING_NULL;
+			res.entries[i].burstLengthSequence[k] = NUM_BURST_CLASSES_INCLUDING_NULL;
 		}
 	}
 	return res;
 }
 
 
-template<typename address_t, typename confidence_t, typename block_address_t>
-constexpr ConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t>
+template<typename address_t, typename confidence_t, typename block_address_t, typename burst_length_t>
+constexpr BurstConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t, burst_length_t>
 	initBurstConfidenceForwardingBufferEntries(){
-	ConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t> res;
+	BurstConfidenceForwardingBufferEntriesMatrix<address_t, confidence_t, block_address_t, burst_length_t> res;
 	for(int i = 0; i < FORWARDING_DEPTH; i++){
 		res.entries[i].valid = false;
 		res.entries[i].inputBufferAddress = 0;
