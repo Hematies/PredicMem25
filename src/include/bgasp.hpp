@@ -121,6 +121,7 @@ public:
 
 			// Skip operation if the previous access is equal to the current:
 			nop = inputBufferEntry.lastAddress == memoryAddress;
+
 			if (!nop) {
 				class_t predictedClasses[MAX_PREFETCHING_DEGREE];
 				burst_length_t predictedBurstLengths[MAX_PREFETCHING_DEGREE];
@@ -233,7 +234,7 @@ public:
 		}		
 	}
 
-	void phase2(address_t inputBufferAddress, block_address_t memoryAddress,
+	void phase2(address_t inputBufferAddress, block_address_t memoryAddress, burst_length_t burstLength,
 		block_address_t predictedAddress, burst_length_t predictedBurstLength, 
 		block_address_t& prefetchAddress, burst_length_t& prefetchBurstLength,
 		ib_index_t index, ib_way_t way, bool nop, bool isInputBufferHit){
@@ -351,7 +352,7 @@ public:
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = confidence;
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedAddress;
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = burstConfidence;
-					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedBurstLengths[0];
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedBurstLength;
 				}
 
 			}
