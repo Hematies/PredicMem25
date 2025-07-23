@@ -249,6 +249,55 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 
 }
 
+void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
+	burst_size_t burstSize,
+	burst_length_t burstLength,
+	hls::burst_maxi<axi_data_t> readPort,
+	hls::stream<axi_data_t>& prefetchedData
+	){
+	// #pragma HLS TOP name=prefetchWithBSGASPWithAXI
+	#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+	#pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=direct
+	#pragma HLS DATAFLOW
+
+	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
+	prefetch_block_burst_length_t predictedBurstLength, prefetchBurstLength = 0;
+	bool performPrefetch = false;
+
+	axi_data_t buffer[1 << ((NUM_CLASSES - 1) + BLOCK_SIZE_LOG2 - AXI_DATA_SIZE_BYTES_LOG2)];
+
+	block_address_t predictedAddress, prefetchAddress_, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	address_t prefetchAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
+	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
+	prefetch_block_burst_length_t blockBurstLength =
+			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+					(prefetch_block_burst_length_t)blockBurstLength_;
+	burst_length_in_words_t totalBurstLength;
+
+	block_address_t predictedAddress = 0;
+	ib_index_t index;
+	ib_way_t way;
+	bool isInputBufferHit = false;
+	bool nop = false;
+
+
+	bgasp.phase1(regionAddress, memoryBlockAddress, blockBurstLength,
+		predictedAddress, predictedBurstLength,
+		index, way, nop, isInputBufferHit);
+
+	bgasp.phase2(regionAddress, memoryBlockAddress,
+		predictedAddress, predictedBurstLength, 
+		prefetchAddress_, prefetchBurstLength,
+		index, way, nop, isInputBufferHit)
+
+	computeBurst(prefetchAddress_, prefetchBurstLength,
+			prefetchAddress, totalBurstLength);
+	prefetchWithAXIBurst(readPort, prefetchedData, prefetchAddress, totalBurstLength);
+
+}
+
 
 void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE],
