@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../include/global.hpp"
 #include <hls_stream.h>
+#include "hls_burst_maxi.h"
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit);
 
@@ -21,8 +22,17 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		);
 
-void prefetchWithSGASPWithAXI(axi_data_t *inputAddress,
-		axi_data_t *outputAddress);
+void prefetchWithSGASPWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
+		);
+
+void prefetchWithBSGASPWithAXI(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		hls::burst_maxi<axi_data_t> readPort,
+		hls::stream<axi_data_t>& prefetchedData
+		);
 
 void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop

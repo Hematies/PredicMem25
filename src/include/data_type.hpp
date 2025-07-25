@@ -42,3 +42,11 @@ typedef ap_int<NUM_DISTANCE_BITS> svm_distance_t;
 typedef ap_uint<FORWARDING_DEPTH_LOG2> forwarding_index_t;
 typedef ap_uint<CONF_FORWARDING_DEPTH_LOG2> conf_forwarding_index_t;
 #endif
+typedef ap_uint<AXI_BURST_LENGTH_BITS> burst_length_t;
+typedef ap_uint<AXI_BURST_SIZE_BITFIELD_LOG2> burst_size_t;
+typedef ap_uint<AXI_BURST_LENGTH_BITS> burst_length_t;
+typedef ap_uint<AXI_BURST_LENGTH_BITS + AXI_BURST_SIZE_BITS> burst_size_and_length_t;
+typedef ap_uint<AXI_BLOCK_BURST_LENGTH_LOG2> block_burst_length_t;
+typedef ap_uint<AXI_MAX_BURST_BLOCK_LOG2> prefetch_block_burst_length_t;
+typedef ap_uint<AXI_MAX_BURST_BLOCK_LOG2 + BLOCK_SIZE_LOG2 - WORD_BYTES_SIZE_LOG2> burst_length_in_words_t;
+
