@@ -34,6 +34,13 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		hls::stream<axi_data_t>& prefetchedData
 		);
 
+void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		hls::burst_maxi<axi_data_t> readPort,
+		hls::stream<axi_data_t>& prefetchedData
+		);
+
 void prefetchWithGASPWithNop(address_t instructionPointer, block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE], bool nop
 		);
@@ -43,7 +50,23 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		);
 
 void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
-	block_address_t& prefetchAddress,
-	bool nop
-	);
+		block_address_t& prefetchAddress,
+		bool nop
+		);
+
+void prefetchWithBSGASPWithNop(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		address_t& prefetchAddress,
+		burst_length_in_words_t& totalBurstLength,
+		bool nop
+		);
+
+void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		address_t& prefetchAddress,
+		burst_length_in_words_t& totalBurstLength,
+		bool nop
+		);
 
