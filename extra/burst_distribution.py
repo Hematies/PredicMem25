@@ -41,8 +41,6 @@ class BurstDistributionHandler:
                                           >> self.config.block_size_log2
         mapping = [(region_field_indexing(a), a >> self.config.block_size_log2)
                    for a in addresses]
-        mapping = [(0, a)
-                   for a in addresses]
         res = {}
         for k, a in mapping:
             if not k in res.keys():
