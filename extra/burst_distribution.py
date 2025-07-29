@@ -37,8 +37,8 @@ class BurstDistributionHandler:
         return deltas
 
     def __get_region_block_address_sequence_mapping(self, addresses):
-        region_field_indexing = lambda a: (a % self.config.region_size) \
-                                          >> self.config.block_size_log2
+        region_field_indexing = lambda a: a \
+                                          >> (self.config.block_size_log2 + self.config.region_block_size_log2)
         mapping = [(region_field_indexing(a), a >> self.config.block_size_log2)
                    for a in addresses]
         res = {}
@@ -150,6 +150,23 @@ class BurstDistributionHandler:
                     model.add_edge(self_distributions[i], self_distributions[j], probabilities[j] * scale_factor)
 
         return model, cathegories_map
+
+    def fit_hmm_models_and_generate_bursts_sequences(self, addresses):
+        region_field_indexing = lambda a: a \
+                                          >> (self.config.block_size_log2 + self.config.region_block_size_log2)
+        address_region_list = [(address, region_field_indexing(address)) for address in addresses]
+        region_model_table = self.fit_hmm_models(addresses)
+        region_sequence_table = {}
+        for region, model_and_cathegories_map in region_model_table.items():
+            num_accesses = len([address for address, region_ in address_region_list if region == region_])
+            model, cathegories_map = model_and_cathegories_map
+            sequence = self.generate_burst_sequences(model, cathegories_map, num_accesses)
+            region_sequence_table[region] = sequence
+        bursts = []
+        for address, region in address_region_list:
+            bursts.append(region_sequence_table[region].pop(0))
+        return bursts
+
 
     def fit_hmm_models(self, addresses):
         mapping = self.__get_region_block_address_sequence_mapping(addresses)

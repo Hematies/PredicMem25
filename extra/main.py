@@ -1,16 +1,31 @@
-# This is a sample Python script.
+import argparse
 
-# Press Mayús+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from burst_distribution import BurstDistributionHandler
+from config import Config
+from trace import TraceHandler
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    parser = argparse.ArgumentParser(
+        prog='BGASP burst values generator')
+    parser.add_argument('-i', '--input', help='Path to the input trace file',
+                        type=str, required=True)
+    parser.add_argument('-o', '--output', help='Path to the output trace file',
+                        type=str, required=True)
+    parser.add_argument('-a', '--address_index', help='Memory address index in trace line',
+                        type=int, required=False, default=1)
+    parser.add_argument('-b', '--burst_index', help='Burst value index in trace line',
+                        type=int, required=False, default=-1)
+    args = parser.parse_args()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    input_file_path, output_file_path = args.input, args.output
+    address_index, burst_index = args.address_index, args.burst_index
+
+    trace_handler = TraceHandler(input_file_path, output_file_path, address_index, burst_index)
+    addresses = trace_handler.read_memory_addresses()
+
+    config = Config()
+    handler = BurstDistributionHandler(config)
+    bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses)
+
+    trace_handler.insert_bursts_and_export(bursts)
+    print("The end!")
