@@ -375,6 +375,7 @@ public:
 
 	bool hasPassed(){
 		double matchRate = ((double) numMatches) / numPredictions;
+		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
 
 		bool res = matchRate > this->matchingThreshold;
 		// bool res = abs(hitDifference) < 0.05;
@@ -519,6 +520,8 @@ protected:
 	int numPredictions = 0;
 
 public:
+    int maxNumNopCycles = 10;
+
 	BSGASPSoftValidation(){}
 	BSGASPSoftValidation(string filePath, double matchingThreshold = 0.8, double precisionThreshold = 0.8){
 		// type = ExperimentType::BSGASP_SOFT_VALIDATION;

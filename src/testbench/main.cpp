@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
 				unsigned long long nextCycle = input.cycle;
-				block_address_t addressToPrefetch;
+				address_t addressToPrefetch;
 				prefetch_block_burst_length_t blockBurstLength;
 				BurstPrefetchingValidationOutput output;
 
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 					prefetchWithBSGASPWithNopWithDataflowForTesting(input.memoryAddress, 
 						input.burstLength,
 						addressToPrefetch, 
-						blockBurstLength
+						blockBurstLength,
 						true);
 					if((nextCycle - experiment.maxNumNopCycles) > cycle)
 						cycle = nextCycle - experiment.maxNumNopCycles;

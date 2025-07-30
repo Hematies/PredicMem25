@@ -155,7 +155,7 @@ void computeBurst(block_address_t prefetchBlockAddress, prefetch_block_burst_len
 			(((burst_length_in_words_t)prefetchBurstLength) << BLOCK_SIZE_LOG2) >> AXI_DATA_SIZE_BYTES_LOG2;
 
 	if(!performPrefetch) totalBurstLength = 0;
-	else totalBurstLength = totalBurstLength == 0? 1 : totalBurstLength;
+	else totalBurstLength = totalBurstLength == 0? (burst_length_in_words_t) 1 : totalBurstLength;
 }
 
 
