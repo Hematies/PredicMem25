@@ -70,3 +70,9 @@ void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
 		bool nop
 		);
 
+void prefetchWithBSGASPWithNopWithDataflowForTesting(address_t inputAddress,
+	block_burst_length_t inputBlockBurstLength,
+	address_t& prefetchAddress,
+	prefetch_block_burst_length_t& outputBlockBurstLength,
+	bool nop
+	);
