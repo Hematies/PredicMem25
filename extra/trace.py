@@ -22,8 +22,8 @@ class TraceHandler:
 
     def insert_bursts_and_export(self, bursts):
         input_file = open(self.input_file_path, "r")
-        input_file.close()
         input_lines = input_file.readlines()
+        input_file.close()
 
         output_lines = []
 

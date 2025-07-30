@@ -72,6 +72,9 @@ class BurstDistributionHandler:
         deltas = [delta for delta in deltas if delta != 0]
         bursts = self.__deltas_to_bursts(deltas)
 
+        if len(bursts) <= 0:
+            return None
+
         cathegories = [burst - 1 for burst in bursts]
         unique, counts = np.unique(cathegories, return_counts=True)
         bins_map = dict(zip(unique, counts))
@@ -159,8 +162,11 @@ class BurstDistributionHandler:
         region_sequence_table = {}
         for region, model_and_cathegories_map in region_model_table.items():
             num_accesses = len([address for address, region_ in address_region_list if region == region_])
-            model, cathegories_map = model_and_cathegories_map
-            sequence = self.generate_burst_sequences(model, cathegories_map, num_accesses)
+            if not model_and_cathegories_map is None:
+                model, cathegories_map = model_and_cathegories_map
+                sequence = self.generate_burst_sequences(model, cathegories_map, num_accesses)
+            else:
+                sequence = [1 for i in range(0, num_accesses)]
             region_sequence_table[region] = sequence
         bursts = []
         for address, region in address_region_list:
