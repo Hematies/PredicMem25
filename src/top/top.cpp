@@ -199,8 +199,8 @@ void prefetchWithBSGASP(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 
 
@@ -231,8 +231,8 @@ void prefetchWithBSGASPWithDataflow(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 
 	block_address_t predictedAddress = 0;
@@ -275,8 +275,8 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 	burst_length_in_words_t totalBurstLength;
 
@@ -312,8 +312,8 @@ void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 	burst_length_in_words_t totalBurstLength;
 
@@ -401,8 +401,8 @@ void prefetchWithBSGASPWithNop(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 
 	if(!nop){
@@ -439,8 +439,8 @@ void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
 	prefetch_block_burst_length_t blockBurstLength =
-			(blockBurstLength_ >> AXI_MAX_BURST_BLOCK_LOG2) != 0?
-					(((prefetch_block_burst_length_t)1) << AXI_MAX_BURST_BLOCK_LOG2) :
+			(blockBurstLength_ >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
 					(prefetch_block_burst_length_t)blockBurstLength_;
 
 	block_address_t predictedAddress = 0;
@@ -464,6 +464,52 @@ void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
 	else{
 		prefetchAddress = 0;
 		totalBurstLength = 0;
+	}	
+}
+
+void prefetchWithBSGASPWithNopWithDataflowForTesting(address_t inputAddress,
+	block_burst_length_t inputBlockBurstLength,
+	address_t& prefetchAddress,
+	prefetch_block_burst_length_t& outputBlockBurstLength,
+	bool nop
+	){
+	// #pragma HLS TOP name=prefetchWithBSGASPWithAXI
+	#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+	#pragma HLS DATAFLOW
+
+	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
+	prefetch_block_burst_length_t predictedBurstLength, prefetchBurstLength = 0;
+	bool performPrefetch = false;
+
+
+	block_address_t prefetchAddress_, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
+	prefetch_block_burst_length_t blockBurstLength =
+			(inputBlockBurstLength >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
+					(prefetch_block_burst_length_t)inputBlockBurstLength;
+
+	block_address_t predictedAddress = 0;
+	ib_index_t index;
+	ib_way_t way;
+	bool isInputBufferHit = false;
+
+	bgasp.phase1(regionAddress, memoryBlockAddress, blockBurstLength,
+		predictedAddress, predictedBurstLength,
+		index, way, nop, isInputBufferHit);
+
+	bgasp.phase2(regionAddress, memoryBlockAddress, blockBurstLength,
+		predictedAddress, predictedBurstLength,
+		prefetchAddress_, prefetchBurstLength,
+		index, way, nop, isInputBufferHit);
+
+	if (!nop){
+		prefetchAddress = ((address_t)prefetchAddress_) << BLOCK_SIZE_LOG2;
+		outputBlockBurstLength = prefetchBurstLength;
+	}
+	else{
+		prefetchAddress = 0;
+		outputBlockBurstLength = 0;
 	}	
 }
 

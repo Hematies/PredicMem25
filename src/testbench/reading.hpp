@@ -114,6 +114,28 @@ void parseGASPInOutLine(string line, PrefetcherValidationInput& input, Prefetche
 
 }
 
+void parseBSGASPInOutLine(string line, 
+    BurstPrefetchingValidationInput& burstPrefetchingInput,
+    BurstPrefetchingValidationOutput& burstPrefetchingOutput
+){
+    auto chains = split(line, ";");
+    string inputLine = chains[0], outputLine = chains[1];
+    vector<string> inputElements = split(inputLine, ","), outputElements = split(outputLine, ",");
+
+    // Input:
+    burstPrefetchingInput.instructionPointer = (address_t) 0;
+    burstPrefetchingInput.memoryAddress = (block_address_t) std::stol(inputElements[1]);
+    burstPrefetchingInput.cycle = (ap_uint<64>) std::stol(inputElements[2]);
+    burstPrefetchingInput.burstLength = (block_burst_length_t) std::stoi(inputElements[3]);
+
+    // Output:
+    for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+        burstPrefetchingOutput.addressesToPrefetch[i] = (block_address_t) std::stol(outputElements[i]);
+    }
+    burstPrefetchingOutput.nextBurstLength = (block_burst_length_t) std::stoi(outputElements[MAX_PREFETCHING_DEGREE]);
+
+}
+
 void InputBufferValidation::readTraceFile(string filePath){
     auto traceReader = TraceReader(filePath);
     auto lines = traceReader.readAllLines();
@@ -176,6 +198,19 @@ void SGASPSoftValidation::readTraceFile(string filePath){
 		parseGASPInOutLine(line, input, output, true);
 		inputs.push_back(input);
 		outputs.push_back(output);
+    }
+}
+
+void BSGASPSoftValidation::readTraceFile(string filePath){
+    auto traceReader = TraceReader(filePath);
+    auto lines = traceReader.readAllLines();
+
+    for(auto& line : lines){
+        BurstPrefetchingValidationInput burstPrefetchingInput;
+        BurstPrefetchingValidationOutput burstPrefetchingOutput;
+		parseBSGASPInOutLine(line, burstPrefetchingInput, burstPrefetchingOutput);
+		inputs.push_back(burstPrefetchingInput);
+		outputs.push_back(burstPrefetchingOutput);
     }
 }
 

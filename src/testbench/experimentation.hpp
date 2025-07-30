@@ -30,7 +30,8 @@ enum ExperimentType {
   SVM_VALIDATION,
   SVM_SOFT_VALIDATION,
   GASP_SOFT_VALIDATION,
-  SGASP_SOFT_VALIDATION
+  SGASP_SOFT_VALIDATION,
+  BSGASP_SOFT_VALIDATION
 }; 
 
 
@@ -374,7 +375,6 @@ public:
 
 	bool hasPassed(){
 		double matchRate = ((double) numMatches) / numPredictions;
-		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
 
 		bool res = matchRate > this->matchingThreshold;
 		// bool res = abs(hitDifference) < 0.05;
@@ -491,6 +491,94 @@ public:
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
     }
+	void readTraceFile(string filePath);
+};
+
+struct BurstPrefetchingValidationInput{
+	address_t instructionPointer;
+	block_address_t memoryAddress;
+	ap_uint<64> cycle;
+	block_burst_length_t burstLength;
+};
+
+struct BurstPrefetchingValidationOutput{
+	block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+	block_burst_length_t nextBurstLength;
+};
+
+class BSGASPSoftValidation : public Experiment{
+protected:
+    vector<BurstPrefetchingValidationInput> inputs;
+    vector<BurstPrefetchingValidationOutput> outputs;
+    int i = 0;
+    double matchingThreshold;
+	double precisionThreshold;
+    int numPrefetches = 0;
+    int numMatches = 0;
+	int numHits = 0;
+	int numPredictions = 0;
+
+public:
+	BSGASPSoftValidation(){}
+	BSGASPSoftValidation(string filePath, double matchingThreshold = 0.8, double precisionThreshold = 0.8){
+		// type = ExperimentType::BSGASP_SOFT_VALIDATION;
+		this->filePath = filePath;
+		type = ExperimentType::BSGASP_SOFT_VALIDATION;
+        readTraceFile(filePath);
+        numOperations = inputs.size();
+        this->matchingThreshold = matchingThreshold;
+		this->precisionThreshold = precisionThreshold;
+    }
+	void reset(){
+    	i = 0;
+		numMatches = 0;
+		numPrefetches = 0;
+		numHits = 0;
+		numPredictions = 0;
+	}
+
+    BurstPrefetchingValidationInput getNextInput(){
+		auto input = inputs[i];
+		return input;
+	}
+
+	void saveOutput(BurstPrefetchingValidationOutput output){
+		auto input = inputs[i];
+		auto target = outputs[i];
+		
+		numHits += target.nextBurstLength == output.nextBurstLength;
+		numPredictions++;
+
+		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
+			// Only counting true positives over all predictions (precision):
+			if(target.addressesToPrefetch[k] == 0){
+				break;
+			}
+			else {
+				numMatches += target.addressesToPrefetch[k] == output.addressesToPrefetch[k];
+				// std::cout << "Target prefetch = " << std::to_string(target.addressesToPrefetch[k]) << std::endl;
+				// std::cout << "Predicted prefetch = " << std::to_string(output.addressesToPrefetch[k]) << std::endl;
+				numPrefetches++;
+			}
+		}
+
+		i++;
+	}
+
+	bool hasPassed(){
+		double matchRate = ((double) numMatches) / numPrefetches;
+
+		double precision = ((double) numHits) / precisionThreshold;
+
+		bool res = matchRate > this->matchingThreshold && precision > this->precisionThreshold;
+
+		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
+		std::cout << "Burst prediction results precision: " << std::to_string(precision) << std::endl;
+		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+
+		return res;
+
+	}
 	void readTraceFile(string filePath);
 };
 
