@@ -15,7 +15,7 @@ def basic_test():
         model, cathegories_map = model_and_cathegories_map
         sequence = handler.generate_burst_sequences(model, cathegories_map, 100)
 
-    bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses=addresses)
+    bursts, next_bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses=addresses)
     print("")
 
 
@@ -30,9 +30,9 @@ def trace_test():
 
     config = Config()
     handler = BurstDistributionHandler(config)
-    bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses)
+    bursts, next_bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses)
 
-    trace_handler.insert_bursts_and_export(bursts)
+    trace_handler.insert_bursts_and_export(bursts, next_bursts)
     print("The end!")
 
 

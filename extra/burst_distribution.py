@@ -168,10 +168,14 @@ class BurstDistributionHandler:
             else:
                 sequence = [1 for i in range(0, num_accesses)]
             region_sequence_table[region] = sequence
-        bursts = []
+        bursts, next_bursts = [], []
         for address, region in address_region_list:
             bursts.append(region_sequence_table[region].pop(0))
-        return bursts
+            if len(region_sequence_table[region]) > 0:
+                next_bursts.append(region_sequence_table[region][0])
+            else:
+                next_bursts.append(bursts[-1])
+        return bursts, next_bursts
 
 
     def fit_hmm_models(self, addresses):
