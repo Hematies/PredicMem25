@@ -283,7 +283,7 @@ public:
 			ib_confidence_t confidence;
 			block_address_t lastPredictedAddress;
 			ib_confidence_t burstConfidence;
-			block_address_t lastPredictedBurst;
+			burst_length_t lastPredictedBurst;
 
 
 			if(isInputBufferHit){ // Dummy evaluation just to force the scheduling to delay the confidence update

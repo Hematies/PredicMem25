@@ -189,7 +189,7 @@ int main(int argc, char **argv)
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
 				unsigned long long nextCycle = input.cycle;
-				address_t addressToPrefetch;
+				block_address_t addressToPrefetch;
 				prefetch_block_burst_length_t blockBurstLength;
 				BurstPrefetchingValidationOutput output;
 

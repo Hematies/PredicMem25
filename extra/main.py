@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     config = Config()
     handler = BurstDistributionHandler(config)
-    bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses)
+    bursts, next_bursts = handler.fit_hmm_models_and_generate_bursts_sequences(addresses)
 
-    trace_handler.insert_bursts_and_export(bursts)
+    trace_handler.insert_bursts_and_export(bursts, next_bursts)
     print("The end!")

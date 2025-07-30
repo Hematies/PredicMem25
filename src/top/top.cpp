@@ -467,9 +467,9 @@ void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
 	}	
 }
 
-void prefetchWithBSGASPWithNopWithDataflowForTesting(address_t inputAddress,
+void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlockAddress,
 	block_burst_length_t inputBlockBurstLength,
-	address_t& prefetchAddress,
+	block_address_t& prefetchAddress,
 	prefetch_block_burst_length_t& outputBlockBurstLength,
 	bool nop
 	){
@@ -482,12 +482,12 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(address_t inputAddress,
 	bool performPrefetch = false;
 
 
-	block_address_t prefetchAddress_, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	block_address_t prefetchAddress_;
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	prefetch_block_burst_length_t blockBurstLength =
-			(inputBlockBurstLength >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
+			((inputBlockBurstLength-1) >> AXI_MAX_BLOCK_BURST_LENGTH_LOG2) != 0?
 					(((prefetch_block_burst_length_t)1) << AXI_MAX_BLOCK_BURST_LENGTH_LOG2) :
-					(prefetch_block_burst_length_t)inputBlockBurstLength;
+					(prefetch_block_burst_length_t)(inputBlockBurstLength-1);
 
 	block_address_t predictedAddress = 0;
 	ib_index_t index;
@@ -504,7 +504,7 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(address_t inputAddress,
 		index, way, nop, isInputBufferHit);
 
 	if (!nop){
-		prefetchAddress = ((address_t)prefetchAddress_) << BLOCK_SIZE_LOG2;
+		prefetchAddress = prefetchAddress_;
 		outputBlockBurstLength = prefetchBurstLength;
 	}
 	else{

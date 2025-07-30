@@ -132,7 +132,7 @@ void parseBSGASPInOutLine(string line,
     for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
         burstPrefetchingOutput.addressesToPrefetch[i] = (block_address_t) std::stol(outputElements[i]);
     }
-    burstPrefetchingOutput.nextBurstLength = (block_burst_length_t) std::stoi(outputElements[MAX_PREFETCHING_DEGREE]);
+    burstPrefetchingOutput.nextBurstLength = (block_burst_length_t) std::stoi(outputElements[8]);
 
 }
 

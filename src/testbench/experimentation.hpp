@@ -571,7 +571,7 @@ public:
 	bool hasPassed(){
 		double matchRate = ((double) numMatches) / numPrefetches;
 
-		double precision = ((double) numHits) / precisionThreshold;
+		double precision = ((double) numHits) / numPredictions;
 
 		bool res = matchRate > this->matchingThreshold && precision > this->precisionThreshold;
 
