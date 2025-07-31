@@ -191,10 +191,10 @@ public:
 					inputBufferEntry.lruCounter = 1;
 					for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 					#pragma HLS UNROLL
-						sequence[i] = NUM_CLASSES_INCLUDING_NULL;
-						updatedSequence[i] = NUM_CLASSES_INCLUDING_NULL;
-						burstSequence[i] = NUM_BURST_CLASSES_INCLUDING_NULL;
-						burstUpdatedSequence[i] = NUM_BURST_CLASSES_INCLUDING_NULL;
+						sequence[i] = NUM_CLASSES;
+						updatedSequence[i] = NUM_CLASSES;
+						burstSequence[i] = NUM_BURST_CLASSES;
+						burstUpdatedSequence[i] = NUM_BURST_CLASSES;
 					}
 
 					/* HABRIA QUE PONER ESTO AQUI
@@ -587,10 +587,10 @@ public:
 				inputBufferEntry.lruCounter = 1;
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 				#pragma HLS UNROLL
-					sequence[i] = NUM_CLASSES_INCLUDING_NULL;
-					updatedSequence[i] = NUM_CLASSES_INCLUDING_NULL;
-					burstSequence[i] = NUM_BURST_CLASSES_INCLUDING_NULL;
-					burstUpdatedSequence[i] = NUM_BURST_CLASSES_INCLUDING_NULL;
+					sequence[i] = NUM_CLASSES;
+					updatedSequence[i] = NUM_CLASSES;
+					burstSequence[i] = NUM_BURST_CLASSES;
+					burstUpdatedSequence[i] = NUM_BURST_CLASSES;
 				}
 
 				/* HABRIA QUE PONER ESTO AQUI
