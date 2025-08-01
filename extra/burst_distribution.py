@@ -100,6 +100,7 @@ class BurstDistributionHandler:
                               if cathegory in combinations_map.keys()
                               else (1 / len(all_cathegories)) * weight # / sequence_cathegory_weight
                               for cathegory, weight in zip(all_cathegories, base_weights)]
+        base_probabilities = [prob / sum(base_probabilities) for prob in base_probabilities] # Just in case...
         base_distribution = Categorical([base_probabilities])
         self_distributions = []
 
@@ -116,14 +117,16 @@ class BurstDistributionHandler:
                 probabilities = [self.self_sequence_probability
                                  if i == j else base_probabilities[j] * scale_correction
                                  for j in range(0, len(base_probabilities))]
+            probabilities = [prob / sum(probabilities) for prob in probabilities] # Just in case
             self_distributions.append(Categorical([probabilities]))
         all_distributions = [base_distribution]
         all_distributions.extend(self_distributions)
 
         model = DenseHMM(sample_length=1)
         model.add_distributions(all_distributions)
-        model.add_edge(base_distribution, base_distribution, self.base_transition_probability)
+        model.add_edge(base_distribution, base_distribution, self.self_base_transition_probability)
         model.add_edge(model.start, base_distribution, self.base_transition_probability)
+        base_distribution_outer_probs_sum = self.self_base_transition_probability
         for i, cathegory0 in zip(range(0, len(all_cathegories)), all_cathegories):
             model.add_edge(model.start, self_distributions[i],
                            (1 - self.base_transition_probability) * base_probabilities[i])
@@ -131,6 +134,7 @@ class BurstDistributionHandler:
             probability_weight_remainder_in_base_case = 1 - self.self_base_transition_probability
             scale_factor = probability_weight_remainder_in_base_case
             model.add_edge(base_distribution, self_distributions[i], base_probabilities[i] * scale_factor)
+            base_distribution_outer_probs_sum = base_distribution_outer_probs_sum + base_probabilities[i] * scale_factor
 
             model.add_edge(self_distributions[i], base_distribution, self.base_transition_probability)
             taken_probability_weight = self.base_transition_probability
@@ -151,6 +155,7 @@ class BurstDistributionHandler:
             for j, cathegory1 in zip(range(0, len(all_cathegories)), all_cathegories):
                 if i != j:
                     model.add_edge(self_distributions[i], self_distributions[j], probabilities[j] * scale_factor)
+                    taken_probability_weight = taken_probability_weight + probabilities[j] * scale_factor
 
         return model, cathegories_map
 
