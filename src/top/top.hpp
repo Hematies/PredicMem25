@@ -27,6 +27,11 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		);
 
+void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData
+		);
+
 void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		burst_size_t burstSize,
 		burst_length_t burstLength,
