@@ -3,7 +3,7 @@ import math
 
 class Config:
     def __init__(self,
-                 num_address_bits=32,
+                 num_address_bits=64,
                  block_size_log2=6,
                  region_block_size_log2=6,
                  max_block_burst_length_log2=2):
