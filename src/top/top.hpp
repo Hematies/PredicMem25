@@ -27,7 +27,19 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		);
 
+void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData
+		);
+
 void prefetchWithBSGASPWithAXI(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		hls::burst_maxi<axi_data_t> readPort,
+		hls::stream<axi_data_t>& prefetchedData
+		);
+
+void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
 		burst_size_t burstSize,
 		burst_length_t burstLength,
 		hls::burst_maxi<axi_data_t> readPort,
@@ -43,7 +55,29 @@ void prefetchWithSGASPWithNop(block_address_t memoryAddress,
 		);
 
 void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
+		block_address_t& prefetchAddress,
+		bool nop
+		);
+
+void prefetchWithBSGASPWithNop(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		address_t& prefetchAddress,
+		burst_length_in_words_t& totalBurstLength,
+		bool nop
+		);
+
+void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
+		burst_size_t burstSize,
+		burst_length_t burstLength,
+		address_t& prefetchAddress,
+		burst_length_in_words_t& totalBurstLength,
+		bool nop
+		);
+
+void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlockAddress,
+	block_burst_length_t inputBlockBurstLength,
 	block_address_t& prefetchAddress,
+	prefetch_block_burst_length_t& outputBlockBurstLength,
 	bool nop
 	);
-

@@ -30,7 +30,7 @@
 
 #define AXI_WRAP_BURST_LENGTH_LOG2 2 // Number of transfers in WRAP burst type: 2, 4, 8, 16
 #define AXI_BLOCK_BURST_LENGTH_LOG2 (AXI_BURST_LENGTH_BITS + AXI_BURST_SIZE_BITS - BLOCK_SIZE_LOG2)
-#define	AXI_MAX_BURST_BLOCK_LOG2 2
+#define	AXI_MAX_BLOCK_BURST_LENGTH_LOG2 2
 
 
 // Prefetching configuration:

@@ -22,7 +22,7 @@ constexpr InputBufferEntriesMatrix<tag_t, block_address_t, class_t, lru_t>
 			res.entries[i][j].lruCounter = 0;
 			res.entries[i][j].valid = 0;
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
-				res.entries[i][j].sequence[k] = NUM_CLASSES_INCLUDING_NULL; // NUM_CLASSES
+				res.entries[i][j].sequence[k] = NUM_CLASSES; // NUM_CLASSES
 			}
 
 		}
@@ -53,7 +53,7 @@ constexpr ForwardingBufferEntriesMatrix<address_t, block_address_t, class_t>
 		res.entries[i].inputBufferAddress = 0;
 		res.entries[i].lastAddress = 0;
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
-			res.entries[i].sequence[k] = NUM_CLASSES_INCLUDING_NULL;
+			res.entries[i].sequence[k] = NUM_CLASSES;
 		}
 
 	}
@@ -86,10 +86,10 @@ constexpr BurstInputBufferEntriesMatrix<tag_t, block_address_t, class_t, burst_l
 			res.entries[i][j].lruCounter = 0;
 			res.entries[i][j].valid = 0;
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
-				res.entries[i][j].sequence[k] = NUM_CLASSES_INCLUDING_NULL;
+				res.entries[i][j].sequence[k] = NUM_CLASSES;
 			}
 			for(int k = 0; k < SEQUENCE_LENGTH; k++){
-				res.entries[i][j].burstLengthSequence[k] = NUM_CLASSES_INCLUDING_NULL;
+				res.entries[i][j].burstLengthSequence[k] = NUM_BURST_CLASSES;
 			}
 		}
 	}
@@ -122,10 +122,10 @@ constexpr BurstForwardingBufferEntriesMatrix<address_t, block_address_t, class_t
 		res.entries[i].inputBufferAddress = 0;
 		res.entries[i].lastAddress = 0;
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
-			res.entries[i].sequence[k] = NUM_CLASSES_INCLUDING_NULL;
+			res.entries[i].sequence[k] = NUM_CLASSES;
 		}
 		for(int k = 0; k < SEQUENCE_LENGTH; k++){
-			res.entries[i].burstLengthSequence[k] = NUM_BURST_CLASSES_INCLUDING_NULL;
+			res.entries[i].burstLengthSequence[k] = NUM_BURST_CLASSES;
 		}
 	}
 	return res;

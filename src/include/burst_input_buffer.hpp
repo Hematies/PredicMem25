@@ -267,6 +267,10 @@ operator()(
 
 		this->updateLRU(set, index, way);
 
+		for(int w = 0; w < IB_NUM_WAYS; w++){
+			#pragma HLS UNROLL
+			entries[index][w] = set[w];
+		}
 	}
 	else{
 		if(isHit){
@@ -274,10 +278,6 @@ operator()(
 		}
 	}
 
-	for(int w = 0; w < IB_NUM_WAYS; w++){
-		#pragma HLS UNROLL
-		entries[index][w] = set[w];
-		}
 
 	return res;
 }
