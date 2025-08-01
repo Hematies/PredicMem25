@@ -6,7 +6,7 @@
 #define CSIM_DEBUG_no
 
 // Memory configuration:
-#define NUM_ADDRESS_BITS 64
+#define NUM_ADDRESS_BITS 32
 #define WORD_BYTES_SIZE_LOG2 2
 #define WORD_BYTES_SIZE (1 << WORD_BYTES_SIZE_LOG2)
 #define BLOCK_SIZE_LOG2 6
