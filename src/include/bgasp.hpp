@@ -149,7 +149,7 @@ public:
 					// 3.5 Update the forwarding buffer to include the new sequence and lastAddress: 
 
 					if(!isForwardingBufferHit){
-						forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, burstSequence, inputBufferAddress,
+						forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, burstUpdatedSequence, inputBufferAddress,
 							forwardingBufferCurrentSlot, forwardingBufferNextSlot); 
 					}
 					else{
@@ -206,7 +206,7 @@ public:
 					for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 						#pragma HLS UNROLL
 						inputBufferEntry.sequence[i] = updatedSequence[i];
-						inputBufferEntry.burstLengthSequence[i] = updatedSequence[i];
+						inputBufferEntry.burstLengthSequence[i] = burstUpdatedSequence[i];
 					}
 
 					inputBufferEntry.tag = tag;
@@ -351,8 +351,8 @@ public:
 				else{
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = confidence;
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedAddress;
-					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = burstConfidence;
-					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedBurstLength;
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].burstConfidence = burstConfidence;
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedBurstLength = predictedBurstLength;
 				}
 
 			}
@@ -442,6 +442,7 @@ public:
 		#pragma HLS ARRAY_PARTITION variable=burstSvmMatrix.weightMatrices complete
 		#pragma HLS ARRAY_PARTITION variable=burstSvmMatrixCopy.weightMatrices complete
 		#pragma HLS ARRAY_PARTITION variable=burstSvmMatrix.intercepts complete
+		#pragma HLS ARRAY_PARTITION variable=burstSvmMatrixCopy.intercepts complete
 
 			static BurstInputBuffer<address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, burst_length_t, ib_lru_t> inputBuffer;
 		#pragma HLS DEPENDENCE false variable=inputBuffer
@@ -545,7 +546,7 @@ public:
 				// 3.5 Update the forwarding buffer to include the new sequence and lastAddress: 
 
 				if(!isForwardingBufferHit){
-					forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, burstSequence, inputBufferAddress,
+					forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, burstUpdatedSequence, inputBufferAddress,
 						forwardingBufferCurrentSlot, forwardingBufferNextSlot); 
 				}
 				else{
@@ -602,7 +603,7 @@ public:
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 					#pragma HLS UNROLL
 					inputBufferEntry.sequence[i] = updatedSequence[i];
-					inputBufferEntry.burstLengthSequence[i] = updatedSequence[i];
+					inputBufferEntry.burstLengthSequence[i] = burstUpdatedSequence[i];
 				}
 
 				inputBufferEntry.tag = tag;
@@ -700,15 +701,15 @@ public:
 
 				if(!isConfidenceForwardingBufferHit){
 					confidenceForwardingBuffer.write(confidenceForwardingBufferEntriesMatrix.entries, confidence, predictedAddress,
-							burstConfidence, lastPredictedBurst, 
+							burstConfidence, predictedBurstLengths[0],
 							inputBufferAddress,
 							confidenceForwardingBufferCurrentSlot, confidenceForwardingBufferNextSlot);
 				}
 				else{
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = confidence;
 					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedAddress;
-					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].confidence = burstConfidence;
-					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedAddress = predictedBurstLengths[0];
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].burstConfidence = burstConfidence;
+					confidenceForwardingBufferEntriesMatrix.entries[confidenceForwardingBufferCurrentSlot].lastPredictedBurstLength = predictedBurstLengths[0];
 				}
 
 			}
@@ -723,7 +724,7 @@ public:
 			confidenceBufferEntry.confidence = confidence;
 			confidenceBufferEntry.lastPredictedAddress = predictedAddress;
 			confidenceBufferEntry.burstConfidence = burstConfidence;
-			confidenceBufferEntry.lastPredictedBurstLength = lastPredictedBurst;
+			confidenceBufferEntry.lastPredictedBurstLength = predictedBurstLengths[0];
 
 			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
@@ -736,7 +737,7 @@ public:
 				if(performBurstPrefetch)
 					outputBurstLength = predictedBurstLengths[0];
 				else
-					outputBurstLength = 1;
+					outputBurstLength = 0;
 			}
 			else{
 				outputAddress = 0;

@@ -478,6 +478,7 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 	#pragma HLS DATAFLOW
 
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
+	// GASP<SGASP_TYPES> sgasp = GASP<SGASP_TYPES>();
 	prefetch_block_burst_length_t predictedBurstLength, prefetchBurstLength = 0;
 	bool performPrefetch = false;
 
@@ -494,6 +495,7 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 	ib_way_t way;
 	bool isInputBufferHit = false;
 
+
 	bgasp.phase1(regionAddress, memoryBlockAddress, blockBurstLength,
 		predictedAddress, predictedBurstLength,
 		index, way, nop, isInputBufferHit);
@@ -503,13 +505,22 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 		prefetchAddress_, prefetchBurstLength,
 		index, way, nop, isInputBufferHit);
 
+	block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
+
 	if (!nop){
+
 		prefetchAddress = prefetchAddress_;
-		outputBlockBurstLength = prefetchBurstLength;
+		outputBlockBurstLength = prefetchBurstLength + 1;
+
+		/*
+		bgasp(regionAddress, memoryBlockAddress, blockBurstLength,
+					prefetchAddress, prefetchBurstLength);
+		outputBlockBurstLength = prefetchBurstLength + 1;
+		*/
 	}
 	else{
 		prefetchAddress = 0;
-		outputBlockBurstLength = 0;
+		outputBlockBurstLength = 1;
 	}	
 }
 

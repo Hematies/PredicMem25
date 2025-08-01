@@ -549,8 +549,10 @@ public:
 		auto input = inputs[i];
 		auto target = outputs[i];
 		
-		numHits += target.nextBurstLength == output.nextBurstLength;
-		numPredictions++;
+		if(target.addressesToPrefetch[0] != 0){
+			numHits += target.nextBurstLength == output.nextBurstLength;
+			numPredictions++;
+		}
 
 		for(int k = 0; k < MAX_PREFETCHING_DEGREE; k++){
 			// Only counting true positives over all predictions (precision):
