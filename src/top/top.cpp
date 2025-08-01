@@ -125,7 +125,6 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		){
-// #pragma HLS TOP name=prefetchWithSGASPWithAXI
 #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
@@ -140,6 +139,46 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 			prefetchedData[i] = readPort[((address_t)blockAddressesToPrefetch[i]) << BLOCK_SIZE_LOG2];
 		}
 	}
+
+}
+
+
+void prefetchWithAXI(axi_data_t *readPort,
+	axi_data_t& prefetchedData,
+	const address_t prefetchAddress
+){
+
+	#pragma HLS PIPELINE
+
+	prefetchedData = readPort[prefetchAddress];
+
+}
+
+void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData
+		){
+#pragma HLS TOP name=prefetchWithSGASPWithDataflowWithAXI
+#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
+#pragma HLS DATAFLOW
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+
+	block_address_t prefetchBlockAddress;
+	address_t memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+
+	block_address_t predictedBlockAddress = 0;
+	ib_index_t index;
+	ib_way_t way;
+	bool isInputBufferHit = false;
+	address_t regionId = memoryBlockAddress >> REGION_BLOCK_SIZE_LOG2;
+
+	bool nop = !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+
+	gasp.phase1(regionId, memoryBlockAddress, predictedBlockAddress, index, way, nop, isInputBufferHit);
+	gasp.phase2(regionId, memoryBlockAddress, predictedBlockAddress, prefetchBlockAddress, index, way, nop, isInputBufferHit);
+
+	address_t prefetchAddress = ((address_t)prefetchBlockAddress) << BLOCK_SIZE_LOG2;
+	prefetchWithAXI(readPort, prefetchedData, prefetchAddress);
 
 }
 
