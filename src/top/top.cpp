@@ -160,7 +160,9 @@ void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
 		){
 #pragma HLS TOP name=prefetchWithSGASPWithDataflowWithAXI
 #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
-#pragma HLS DATAFLOW
+#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+
+	#pragma HLS DATAFLOW
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
 	block_address_t prefetchBlockAddress;
@@ -195,6 +197,16 @@ void computeBurst(block_address_t prefetchBlockAddress, prefetch_block_burst_len
 
 	if(!performPrefetch) totalBurstLength = 0;
 	else totalBurstLength = totalBurstLength == 0? (burst_length_in_words_t) 1 : totalBurstLength;
+
+}
+
+void computeBurstWithNop(block_address_t prefetchBlockAddress, prefetch_block_burst_length_t prefetchBurstLength,
+		address_t& prefetchAddress, burst_length_in_words_t& totalBurstLength, bool nop){
+	if(!nop) computeBurst(prefetchBlockAddress, prefetchBurstLength, prefetchAddress, totalBurstLength);
+	else{
+		prefetchAddress = 0;
+		totalBurstLength = 0;
+	}
 }
 
 
@@ -429,7 +441,6 @@ void prefetchWithBSGASPWithNop(address_t inputAddress,
 		){
 // #pragma HLS TOP name=prefetchWithBSGASP
 #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
-#pragma HLS DATAFLOW
 
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
 	prefetch_block_burst_length_t prefetchBurstLength = 0;
@@ -496,14 +507,8 @@ void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
 		prefetchAddress_, prefetchBurstLength,
 		index, way, nop, isInputBufferHit);
 
-	if (!nop){
-		computeBurst(prefetchAddress_, prefetchBurstLength,
-				prefetchAddress, totalBurstLength);
-	}
-	else{
-		prefetchAddress = 0;
-		totalBurstLength = 0;
-	}	
+	computeBurstWithNop(prefetchAddress_, prefetchBurstLength,
+					prefetchAddress, totalBurstLength, nop);
 }
 
 void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlockAddress,
