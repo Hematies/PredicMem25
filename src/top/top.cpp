@@ -125,7 +125,9 @@ void prefetchWithSGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
 		){
-#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
+#pragma HLS TOP name=prefetchWithSGASPWithAXI
+
+	#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
@@ -417,6 +419,8 @@ void prefetchWithSGASPWithNopWithDataflow(block_address_t memoryAddress,
 	block_address_t& prefetchAddress,
 	bool nop
 	){
+#pragma HLS TOP name=prefetchWithSGASPWithNopWithDataflow
+
 #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
 	#pragma HLS DATAFLOW
 
