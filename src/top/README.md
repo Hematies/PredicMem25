@@ -6,7 +6,7 @@ This folder contains the top-level integration files for the **PredicMem25** pro
 
 - **top.cpp**  
   Main implementation file.  
-  It provides the entry points and orchestration for memory address and burst prediction, including hardware synthesis interfaces.  
+  It provides the top functions: entry points of the different hardware modules, working as their hardware synthesis interfaces. Each function calls functions that describe each hardware module and that are defined in the code under the `include` directory. 
   The main functions implemented are:
 
   - `DictionaryEntry operateDictionary(...)`  
@@ -22,63 +22,59 @@ This folder contains the top-level integration files for the **PredicMem25** pro
     SVM prediction with support for "nop" (no operation) control.
 
   - `void prefetchWithGASP(...)`  
-    Runs the GASP prefetcher for address prediction.
+    Runs the GASP prefetcher and returns the block address to prefetch.
+
+  - `void prefetchWithGASPWithNop(...)`  
+    GASP prefetching with "nop" control.
 
   - `void prefetchWithSGASP(...)`  
-    Runs the SGASP variant for region-based address prediction.
+    Runs the SGASP variant for spatial-based prefetching and returns the block address to prefetch.
 
-  - `void prefetchWithSGASPWithAXI(...)`  
-    Prefetches data using SGASP and AXI bus interface.
+  - `void prefetchWithSGASPWithNop(...)`  
+    Runs SGASP prefetching with "nop" control.
+
+  - `void prefetchWithSGASPWithNopWithDataflow(...)`  
+    Runs dataflow-based SGASP prefetching with "nop" control.
 
   - `void prefetchWithAXI(...)`  
     Reads data from memory using AXI interface.
 
+  - `void prefetchWithSGASPWithAXI(...)`  
+    Prefetches data using a SGASP prefetcher and a master AXI bus interface.
+
   - `void prefetchWithSGASPWithDataflowWithAXI(...)`  
-    Dataflow-oriented SGASP prefetching with AXI.
+    Prefetches data using a dataflow-based SGASP and a master AXI bus interface.
 
   - `void computeBurst(...)`  
-    Calculates burst address and length for prefetching.
+    Calculates burst address and length for burst prefetching.
 
   - `void computeBurstWithNop(...)`  
     Burst calculation with "nop" control.
 
   - `void prefetchWithAXIBurst(...)`  
-    Performs burst prefetching using AXI and HLS streams.
+    Performs burst prefetching using a given master AXI bus interface.
 
   - `void prefetchWithBSGASP(...)`  
-    Runs the BGASP prefetcher for burst-aware prediction.
-
-  - `void prefetchWithBSGASPWithDataflow(...)`  
-    Dataflow-oriented BGASP burst prediction.
-
-  - `void prefetchWithBSGASPWithAXI(...)`  
-    BGASP burst prediction with AXI interface.
-
-  - `void prefetchWithBSGASPWithDataflowWithAXI(...)`  
-    Dataflow BGASP burst prediction with AXI.
-
-  - `void prefetchWithGASPWithNop(...)`  
-    GASP prefetching with "nop" control.
-
-  - `void prefetchWithSGASPWithNop(...)`  
-    SGASP prefetching with "nop" control.
-
-  - `void prefetchWithSGASPWithNopWithDataflow(...)`  
-    Dataflow SGASP prefetching with "nop" control.
+    Runs the BSGASP variant for spatial-based burst prefetching and returns the burst of block address to prefetch.
 
   - `void prefetchWithBSGASPWithNop(...)`  
-    BGASP burst prediction with "nop" control.
+    Runs BGASP burst prefetching with "nop" control.
+
+  - `void prefetchWithBSGASPWithDataflow(...)`  
+    Runs dataflow-based BGASP burst prefetching.
+
+  - `void prefetchWithBSGASPWithAXI(...)`  
+    BGASP burst prefetching with AXI interface.
+
+  - `void prefetchWithBSGASPWithDataflowWithAXI(...)`  
+    Prefetches data using a dataflow-based BSGASP and a master AXI bus interface.
 
   - `void prefetchWithBSGASPWithNopWithDataflow(...)`  
-    Dataflow BGASP burst prediction with "nop" control.
+    Prefetches data using a dataflow-based BSGASP, a "nop" control and a master AXI bus interface.
 
   - `void prefetchWithBSGASPWithNopWithDataflowForTesting(...)`  
-    BGASP burst prediction for testing purposes.
+    Runs BGASP burst prefetching for testing purposes (work-in-progress).
 
 - **top.hpp**  
   Header file for the top-level module.  
   Declares main interfaces and includes necessary headers.
-
----
-
-The `top` directory is the entry point for running experiments and integrating all memory prediction components.

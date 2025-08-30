@@ -1,51 +1,46 @@
-# PredicMem25 - `include` Directory
+# PredicMem25 - `include` directory
 
 This folder contains the main header files for the **PredicMem25** project, which focuses on memory address and burst length prediction using buffers, dictionaries, and machine learning (SVM).
 
-## File Overview
+## Main classes and structures
 
-- **bgasp.hpp**  
-  Defines the `BGASP` class, which predicts both memory addresses and burst lengths. It integrates burst-aware input buffers, forwarding buffers, confidence buffers, and SVM-based classification for both address and burst prediction.
+- **GASP-based classes (`bgasp.hpp`, `gasp.hpp`)**  
+  Main prefetcher classes.  
+  - `BGASP`: Predicts both memory addresses and burst lengths, using burst-aware buffers and SVMs.
+  - `GASP`: Predicts only memory addresses, using standard buffers and SVMs.
 
-- **burst_confidence_buffer.hpp**  
-  Contains data structures and logic for managing confidence buffers specifically designed for burst predictions. Handles confidence values and burst-related metadata.
+- **Input buffer (`input_buffer.hpp`, `burst_input_buffer.hpp`)**  
+  - `InputBufferEntry`, `BurstInputBufferEntry`: Store sequences of classes (and burst lengths) for each buffer slot.
+  - `InputBuffer`, `BurstInputBuffer`: Manage reading, writing, and  Least Recently Used (LRU) logic for buffer entries.
 
-- **burst_input_buffer.hpp**  
-  Implements the burst input buffer, which stores sequences of burst lengths and related metadata to support burst prediction.
+- **Forwarding buffer (`forwarding_buffer.hpp`)**  
+  - `ForwardingBufferEntry`, `BurstForwardingBufferEntry`: Store recent sequences for fast access.
+  - `ForwardingBuffer`, `BurstForwardingBuffer`: Manage forwarding logic for address and burst prediction and prefetch.
 
-- **confidence_buffer.hpp**  
-  Provides structures and methods for confidence buffers used in address prediction. Manages confidence levels for predicted memory addresses.
+- **Confidence buffer (`confidence_buffer.hpp`, `burst_confidence_buffer.hpp`)**  
+  - `ConfidenceBufferEntry`, `BurstConfidenceBufferEntry`: Store confidence values for prefetches.
+  - `ConfidenceBuffer`, `BurstConfidenceBuffer`: Manage confidence updates and retrieval.
 
-- **config.hpp**  
-  Central configuration file. Defines constants, buffer sizes, number of classes, and other global parameters used throughout the project.
+- **Confidence forwarding buffer (`forwarding_buffer.hpp`)**  
+  - `ConfidenceForwardingBufferEntry`, `BurstConfidenceForwardingBufferEntry`: Store confidence and prefetching info for forwarding.
+  - `ConfidenceForwardingBuffer`, `BurstConfidenceForwardingBuffer`: Manage forwarding of confidence data.
 
-- **const_expr.hpp**  
-  Contains constant expressions and compile-time utilities to support template metaprogramming and static configuration.
+- **Dictionary (`dictionary.hpp`)**  
+  - `DictionaryEntry`, `DictionaryEntriesMatrix`: Store delta/class mappings and Least Frequently Used (LFU) confidence.
+  - `Dictionary`: Handles reading, writing, and updating LFU confidence for dictionary entries.
 
-- **data_type.hpp**  
-  Defines all custom data types used in the project, such as address types, indices, tags, classes, burst lengths, and confidence types.
+- **SVM structures (`svm.hpp`)**  
+  - `SVMWholeMatrix`, `BurstSVMWholeMatrix`: Store weights and intercepts for SVM classifiers.
+  - `SVM`: Implements training and prediction for both address delta and burst classes.
 
-- **dictionary.hpp**  
-  Implements the dictionary structure for mapping deltas (address differences) and classes, supporting both address and burst prediction logic.
+- **Configuration and data types (`config.hpp`, `data_type.hpp`)**  
+  - Defines constants, buffer sizes, and custom types (addresses, deltas, indices, classes, burst lengths, etc.).
 
-- **forwarding_buffer.hpp**  
-  Provides the forwarding buffer implementation, which caches recent sequences to accelerate prediction and reduce misses. Includes both address and burst forwarding logic.
+- **Initialization utilities (`init_data.hpp`)**  
+  - Functions to initialize buffers, dictionaries, and SVM matrices with default values.
 
-- **gasp.hpp**  
-  Defines the basic `GASP` class, which predicts only memory addresses (not bursts). Uses input buffers, forwarding buffers, dictionaries, and SVM for address prediction.
+- **Global includes (`global.hpp`)**  
+  - Aggregates all main headers and provides shared macros and definitions.
 
-- **global.hpp**  
-  Contains global definitions, macros, and shared utilities used across multiple modules.
-
-- **init_data.hpp**  
-  Provides functions for initializing matrices, buffers, and other data structures required by the prediction algorithms.
-
-- **input_buffer.hpp**  
-  Implements the input buffer for memory addresses, including logic for updating, querying, and managing address sequences.
-
-- **svm.hpp**  
-  Contains the implementation and utilities for the Support Vector Machine (SVM) classifier, used for both class and burst prediction.
-
----
-
-Each file is designed to be modular and reusable, supporting the extension and maintenance of the memory prediction system. The structure separates concerns for address and burst prediction, buffer management, configuration, and machine learning
+- **Constant expressions (`const_expr.hpp`)**  
+  - Compile-time utilities and lookup table generation.
