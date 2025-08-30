@@ -86,6 +86,7 @@ public:
     InputBufferValidation(){}
     InputBufferValidation(string filePath){
         type = ExperimentType::INPUT_BUFFER_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -125,6 +126,7 @@ public:
 
     InputBufferSoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::INPUT_BUFFER_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
@@ -191,6 +193,7 @@ public:
     DictionaryValidation(){}
     DictionaryValidation(string filePath){
         type = ExperimentType::DICTIONARY_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -229,6 +232,7 @@ public:
     DictionarySoftValidation(){}
     DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::DICTIONARY_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
         numOperations = inputs.size();
@@ -297,6 +301,7 @@ public:
     SVMValidation(){}
     SVMValidation(string filePath){
         type = ExperimentType::SVM_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -338,6 +343,7 @@ public:
     SVMSoftValidation(){}
     SVMSoftValidation(string filePath, double matchingThreshold = 0.85){
         type = ExperimentType::SVM_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         this->matchingThreshold = matchingThreshold;
         numOperations = inputs.size();
@@ -421,6 +427,7 @@ public:
     int maxNumNopCycles = 10;
 	PrefetchingSoftValidation(){}
 	PrefetchingSoftValidation(string filePath, double matchingThreshold = 0.8){
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
@@ -476,6 +483,7 @@ public:
 	GASPSoftValidation(){}
 	GASPSoftValidation(string filePath, double matchingThreshold = 0.8){
 		type = ExperimentType::GASP_SOFT_VALIDATION;
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
@@ -488,6 +496,7 @@ public:
 	SGASPSoftValidation(){}
 	SGASPSoftValidation(string filePath, double matchingThreshold = 0.8){
 		type = ExperimentType::SGASP_SOFT_VALIDATION;
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
