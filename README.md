@@ -2,9 +2,9 @@
 
 ## What is this repository?
 
-This repository contains all the C++ code of the PredicMem25 project: a hardware description of the Spatial Greedily Accurate SVM-based Prefetcher (SGASP) cache memory prefetcher in High Level Synthesis (HLS), oriented to specific-purpose. A full description of the project, its proposal and its implementation details is included in this report file, which is written in a scientific paper style.
+This repository contains all the C++ code of the PredicMem25 project: a hardware description of the Spatial Greedily Accurate SVM-based Prefetcher (SGASP) cache memory prefetcher in High Level Synthesis (HLS), oriented to specific-purpose. A full description of the project, its proposal and its implementation details is included [in this report file](report.pdf), which is written in a scientific paper style.
 
-The SGASP prefetcher (along with the GASP family of prefetchers) was originally proposed and thoroughly described in a paper that is under peer-review right now. Nevertheless, its description is also detailed in the provided report file.
+The SGASP prefetcher (along with the GASP family of prefetchers) was originally proposed and thoroughly described in a paper that is under peer-review right now. Nevertheless, its description is also detailed in the provided [report file](report.pdf).
 
 ## Why HLS?
 
@@ -16,7 +16,7 @@ All the code is stored under src/, which contains the following sub-directories:
 
 ### include/
 
-It contains all the hardware descriptions of each of the modules that are described in the report. It also contains the basic definition of the data types that are used, and the configuration of the hardware and the data types (their bitfields).
+It contains all the hardware descriptions of each of the modules that are described in [the report](report.pdf). It also contains the basic definition of the data types that are used, and the configuration of the hardware and the data types (including their bitfields).
 
 ### top/
 
@@ -26,22 +26,26 @@ It contains the descriptions of all possible top functions. A top function defin
 
 It contains the implementation of the trace-based testbench used for validating the HLS designs via either C-simulation (software) or co-simulation (software + hardware). It features a command-line interface for all requested operations.
 
+## How can I import this repository as a Vitis HLS project?
+
+This repository stores the project and solution files for importing it as a Vitis HLS project. Thus, it is as simple as opening Vitis HLS, open the directory as a project throught the option `Open project` and create a new solution that fits your platform. In this case, the Ultra96-V2 (incorporating the Zynq UltraScale+ MPSoC ZU3EG A484) was used. See https://github.com/Avnet/bdf to get its board definition file.
+
 ## How can I synthesise a hardware implementation?
 
-Any of the top functions that are described in src/top/src.cpp can be synthesisable as a hardware module. In Vitis HLS, this can be done by adding a "#pragma HLS TOP name=<function name>" under the function header, and indicating the function name as top in "Project" > "Project Settings" > "Synthesis" > "Top funcion". The module is synthesised by clicking in "Synthesis". Finally, it can exported as IP core in "Tool" > "Export as RTL".
+Any of the top functions that are described in [src/top/src.cpp](src/top/src.cpp) can be synthesisable as a hardware module. In Vitis HLS, this can be done by adding a `#pragma HLS TOP name=<function name>` under the function header, and indicating the function name as top in `Project` > `Project Settings` > `Synthesis` > `Top funcion`. The module is synthesised by clicking in `Solution` > `Run synthesis`. Finally, it can exported as IP core in `Solution` > `Export as RTL`.
 
 ## How can I validate a hardware implementation?
 
-Six different modules can be validated in the current version of PredicMem25: the input buffer, the dictionary, the SVM, the GASP prefetcher, the SGASP prefetcher and the BSGASP prefetcher. The validation of GASP and BSGASP prefetchers are in a work-in-progress-state, and thus they are not included in the report.
+Six different modules can be validated in the current version of PredicMem25: the input buffer, the dictionary, the SVM, the GASP prefetcher, the SGASP prefetcher and the BSGASP prefetcher. The validation of GASP and BSGASP prefetchers are in a work-in-progress-state, and thus they are not included in [the report](report.pdf).
 
-The file src/testbench/main.cpp file can be modified to call to a custom implementation (given as top function) of a hardware module. For example, it is possible modify the code to call a top function of SGASP based on a single pipeline design, like prefetchWithSGASPWithNopWithDataflow(). The file src/testbench/experimentation.hpp includes validation models for monitoring the functioning of the target module.
+The file [src/testbench/main.cpp](src/testbench/main.cpp) file can be modified to call to a custom implementation (given as top function) of a hardware module. For example, it is possible modify the code to call a top function of SGASP based on a single pipeline design, like `prefetchWithSGASPWithNopWithDataflow()`. The file [src/testbench/experimentation.hpp](src/testbench/experimentation.hpp) includes validation models for monitoring the functioning of the target module.
 
-A trace file has to be indicated through the command-line interface for the validation. In our work, we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md.
+A trace header file has to be indicated through the command-line interface for the validation. In our work, the header is used for locating the trace files, and we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md. In this repository, we provide the traces that were used for the experimentation shown in [the report](report.pdf).
 
-Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking "C-simulation". In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking "Co-simulation".
+Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`.
 
 ## Authorship and contact.
 
-This repository was made thanks to Pablo Sánchez (owner of this repository), Antonio Pérez, Plácido Fernández, Dagnier Curra, Santiago Díaz and Antonio Ríos. The detailed authorship and contact information is presented in the report file.
+This repository was made thanks to Pablo Sánchez (owner of this repository), Antonio Pérez, Plácido Fernández, Dagnier Curra, Santiago Díaz and Antonio Ríos. The detailed authorship and contact information is presented in [the report file](report.pdf).
 
 ## Licensing
