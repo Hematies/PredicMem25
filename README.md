@@ -10,7 +10,7 @@ The SGASP prefetcher (along with the GASP family of prefetchers) was originally 
 
 HLS is a hardware description method that exploits a high-level abstraction language (such as C++) to provide behavioral definition of the target hardware. Among the advantages that this provides, in this project we considerably leverage: (1) the ability to integrate testbenches based on complex, traced-based tests; and (2) the potential of C++ for the description of the hardware by using data structures, functions, classes, loops, etc, which greatly simplifies the design and development.
 
-## How is the repository structured?
+## How is the repository's source code structured?
 
 All the code is stored under src/, which contains the following sub-directories:
 
@@ -40,7 +40,7 @@ Six different modules can be validated in the current version of PredicMem25: th
 
 The file [src/testbench/main.cpp](src/testbench/main.cpp) file can be modified to call to a custom implementation (given as top function) of a hardware module. For example, it is possible modify the code to call a top function of SGASP based on a single pipeline design, like `prefetchWithSGASPWithNopWithDataflow()`. The file [src/testbench/experimentation.hpp](src/testbench/experimentation.hpp) includes validation models for monitoring the functioning of the target module.
 
-A trace header file has to be indicated through the command-line interface for the validation. In our work, the header is used for locating the trace files, and we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md. In this repository, we provide the traces that were used for the experimentation shown in [the report](report.pdf).
+A trace header file has to be indicated through the command-line interface for the validation. In our work, the header is used for locating the trace files, and we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md. In this repository, the directory [traces_gasp/](traces_gasp/) contains the traces that were used for the experimentation shown in [the report](report.pdf).
 
 Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`.
 
@@ -49,3 +49,13 @@ Finally, in order to run the validation, either C-simulation or co-simulation ar
 This repository was made thanks to Pablo Sánchez (owner of this repository), Antonio Pérez, Plácido Fernández, Dagnier Curra, Santiago Díaz and Antonio Ríos. The detailed authorship and contact information is presented in [the report file](report.pdf).
 
 ## Licensing
+
+MIT License
+
+Copyright (c) [2025] [Pablo Sánchez Cuevas]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

@@ -102,8 +102,6 @@ The trace types correspond with each type of validation, and are parsed followin
   - `<prefetched address[0]>, ..., <prefetched address[MAX_PREFETCHING_DEGREE-1]>`
 
 
----
-
 ### BSGASP prefetcher validation
 
 
@@ -118,6 +116,16 @@ The trace types correspond with each type of validation, and are parsed followin
   - `<prefetched address[0]>, ..., <prefetched address[MAX_PREFETCHING_DEGREE-1]>`
   - `predicted burst length`
 
+
+---
+
+## Trace directory
+
+The trace directory is the folder containing the header files, where each one corresponds to one type of validation. Each header file contains a list of trace file paths (to perform the validation with), one path per line. These paths are relative to the location of the trace directory.
+
+According to the previously outlined validation types, the possible trace files to be contained in the trace directory are the following: `inputBufferTraceHeader.txt`, `dictionaryTraceHeader.txt`, `svmTraceHeader.txt`, `prefetcherTraceHeader.txt`, `burstPrefetcherTraceHeader.txt`.
+
+`traces_sgasp/` is the trace directory used for the validation process discussed in the report file. It contains both the header and trace files, being the last one extracted through simulation in ChampSim.
 
 ---
 
