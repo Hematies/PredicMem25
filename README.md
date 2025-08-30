@@ -6,7 +6,7 @@ This repository contains all the C++ code of the PredicMem25 project: a hardware
 
 The SGASP prefetcher (along with the GASP family of prefetchers) was originally proposed and thoroughly described in a paper that is under peer-review right now. Nevertheless, its description is also detailed in the provided [report file](report.pdf).
 
-Both the SGASP and the rest of prefetchers of the GASP family are based on the memory address predictor Support Vector Machine For Address Prediction (SVM4AP), presented in the publication "Competitive Cost-effective Memory Access Predictor through Short-Term Online SVM and Dynamic Vocabularies", Sánchez-Cuevas et al., Future Generation Computer Systems, Volume 164, 2025, 107592,ISSN 0167-739X, https://doi.org/10.1016/j.future.2024.107592. (https://www.sciencedirect.com/science/article/pii/S0167739X24005569).
+Both the SGASP and the rest of prefetchers of the GASP family are based on the memory address predictor Support Vector Machine For Address Prediction (SVM4AP), presented in the publication: "Competitive Cost-effective Memory Access Predictor through Short-Term Online SVM and Dynamic Vocabularies", Sánchez-Cuevas et al., Future Generation Computer Systems, Volume 164, 2025, 107592,ISSN 0167-739X, https://doi.org/10.1016/j.future.2024.107592. (https://www.sciencedirect.com/science/article/pii/S0167739X24005569).
 
 ## Why HLS?
 
@@ -54,7 +54,7 @@ This repository was made thanks to Pablo Sánchez (owner of this repository), An
 
 MIT License
 
-Copyright (c) [2025] [Pablo Sánchez Cuevas]
+Copyright (c) 2025 Pablo Sánchez Cuevas
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
