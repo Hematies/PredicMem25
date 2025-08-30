@@ -44,7 +44,7 @@ The file [src/testbench/main.cpp](src/testbench/main.cpp) file can be modified t
 
 A trace header file has to be indicated through the command-line interface for the validation. In our work, the header is used for locating the trace files, and we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md. In this repository, the directory [traces_gasp/](traces_gasp/) contains the traces that were used for the experimentation shown in [the report](report.pdf).
 
-Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`. In both cases, the console arguments that are described in [src/testbench/README.md] have to be indicated.  
+Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`. In both cases, the console arguments that are described in [src/testbench/README.md](src/testbench/README.md) have to be indicated.  
 
 ## Authorship and contact.
 
