@@ -40,7 +40,7 @@ The trace types correspond with each type of validation, and are parsed followin
 
 ### Input buffer validation
 
-- **Fields:**  
+
  
 - **Input fields:**
   - `<input buffer address>`
@@ -62,7 +62,7 @@ The trace types correspond with each type of validation, and are parsed followin
 
 ### Dictionary validation
 
-- **Fields:**  
+
 
 - **Input fields:**
   - `<index>`
@@ -79,7 +79,7 @@ The trace types correspond with each type of validation, and are parsed followin
 
 ### SVM validation
 
-- **Fields:**  
+
 
 - **Input fields:**
   - `<input class[0]>, ..., <input class[SEQUENCE_LENGTH - 1]>` (input vector)
@@ -91,7 +91,7 @@ The trace types correspond with each type of validation, and are parsed followin
 
 ### GASP/SGASP prefetcher validation
 
-- **Fields:**  
+
 
 - **Input fields:**
   - `<instruction pointer>` (set to zero for SGASP; non-zero for GASP)
@@ -106,7 +106,7 @@ The trace types correspond with each type of validation, and are parsed followin
 
 ### BSGASP prefetcher validation
 
-- **Fields:**  
+
 
 - **Input fields:**
   - `<instruction pointer>` (set to zero for SGASP; non-zero for GASP)
