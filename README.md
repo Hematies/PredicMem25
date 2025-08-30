@@ -6,6 +6,8 @@ This repository contains all the C++ code of the PredicMem25 project: a hardware
 
 The SGASP prefetcher (along with the GASP family of prefetchers) was originally proposed and thoroughly described in a paper that is under peer-review right now. Nevertheless, its description is also detailed in the provided [report file](report.pdf).
 
+Both the SGASP and the rest of prefetchers of the GASP family are based on the memory address predictor Support Vector Machine For Address Prediction (SVM4AP), presented in the publication "Competitive Cost-effective Memory Access Predictor through Short-Term Online SVM and Dynamic Vocabularies", Sánchez-Cuevas et al., Future Generation Computer Systems, Volume 164, 2025, 107592,ISSN 0167-739X, https://doi.org/10.1016/j.future.2024.107592. (https://www.sciencedirect.com/science/article/pii/S0167739X24005569).
+
 ## Why HLS?
 
 HLS is a hardware description method that exploits a high-level abstraction language (such as C++) to provide behavioral definition of the target hardware. Among the advantages that this provides, in this project we considerably leverage: (1) the ability to integrate testbenches based on complex, traced-based tests; and (2) the potential of C++ for the description of the hardware by using data structures, functions, classes, loops, etc, which greatly simplifies the design and development.
