@@ -1,0 +1,3 @@
+imagick/prefetcherTrace.txt
+lbm/prefetcherTrace.txt
+nab/prefetcherTrace.txt

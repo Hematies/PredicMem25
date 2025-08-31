@@ -9,7 +9,8 @@ using namespace std;
 
 // string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces/";
 // string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp/";
-string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp_high_confidence/";
+// string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp_high_confidence/";
+string traceDirPath = "";
 string inputBufferTracesDirName = "inputBufferTraces/";
 string dictionaryTracesDirName = "dictionaryTraces/";
 string svmTracesDirName = "svmTraces/";
@@ -40,6 +41,15 @@ int main(int argc, char **argv)
 		else if(argument == "--validateBSGASP" || argument == "-vB"){
 			validateBSGASP = true;
 		}
+		else if(argument == "--tracePath" || argument == "-t"){
+			if((i + 1 ) >= argc){
+				cout << "No trace working directory path has been indicated\n";
+				return 1;
+			}
+			else{
+				traceDirPath = string(argv[i+1]);
+			}
+		}
 
 	}
 
@@ -49,6 +59,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	if(traceDirPath == ""){
+		cout << "No trace working directory path has been indicated\n";
+		return 1;
+	}
 
 	bool passed = true;
 
@@ -65,6 +79,7 @@ int main(int argc, char **argv)
 				output.isHit = isHit;
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}
@@ -85,6 +100,7 @@ int main(int argc, char **argv)
 				output.resultIndex = resultIndex;;
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}
@@ -119,6 +135,7 @@ int main(int argc, char **argv)
 								}
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}
@@ -149,6 +166,7 @@ int main(int argc, char **argv)
 				}
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}
@@ -177,6 +195,7 @@ int main(int argc, char **argv)
 
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}
@@ -215,6 +234,7 @@ int main(int argc, char **argv)
 
 				experiment.saveOutput(output);
 			}
+			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
 		}
 	}

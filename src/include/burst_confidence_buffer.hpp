@@ -51,7 +51,6 @@ void BurstConfidenceBuffer<confidence_t, block_address_t, burst_length_t>::write
     #pragma HLS INLINE
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
     entries[index][way] = entry;

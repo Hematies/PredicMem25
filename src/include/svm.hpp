@@ -31,8 +31,8 @@ template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_C
 class SVM {
 protected:
 
-	void fitPredictedHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t oneHotSequence[SEQUENCE_LENGTH]);// [NUM_CLASSES_INCLUDING_NULL__]);
-	void fitTargetHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t oneHotSequence[SEQUENCE_LENGTH]);// [NUM_CLASSES_INCLUDING_NULL__]);
+	void fitPredictedHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t oneHotSequence[SEQUENCE_LENGTH]);
+	void fitTargetHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t oneHotSequence[SEQUENCE_LENGTH]);
 	void encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL__]);
 	class_t predict_(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLASSES__], weight_t intercepts[NUM_CLASSES__], class_t input[SEQUENCE_LENGTH]);
 	
@@ -49,7 +49,6 @@ public:
 template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_CLASSES__, uint8_t NUM_CLASSES_INCLUDING_NULL__>
 void SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::
 encodeInOneHot(class_t classSequence[SEQUENCE_LENGTH], bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL__]) {
-// #pragma HLS INLINE
 #pragma HLS PIPELINE
 	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 	#pragma HLS UNROLL
@@ -75,7 +74,6 @@ distanceToHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weigh
 #pragma HLS DEPENDENCE array false inter variable=weight_matrix.weights
 
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 	distance_t res = -intercept;
 
 	distance_t selectedWeights[SEQUENCE_LENGTH];
@@ -84,16 +82,8 @@ distanceToHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weigh
 	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 	#pragma HLS UNROLL
 		class_t correspondingClass = sequence[i];
-		// selectedWeights[i] = selectWeight<weight_t, class_t>(weight_matrix.weights[i], correspondingClass);
 		selectedWeights[i] = weight_matrix.weights[i][correspondingClass];
 	}
-
-	/*
-	for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-#pragma HLS UNROLL
-		res += selectedWeights[i];
-	}
-	*/
 
 	distance_t weights_[SEQUENCE_LENGTH / 2];
 
@@ -128,7 +118,6 @@ predict_(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NU
 #pragma HLS ARRAY_PARTITION variable=sequence complete
 
 	#pragma HLS INLINE
-// #pragma HLS PIPELINE
 
 	class_t res = 0;
 
@@ -179,14 +168,12 @@ predict_(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NU
 template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_CLASSES__, uint8_t NUM_CLASSES_INCLUDING_NULL__>
 class_t SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::predict(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLASSES__], weight_t intercepts[NUM_CLASSES__], class_t sequence[SEQUENCE_LENGTH]) {
 	#pragma HLS INLINE
-	// #pragma HLS PIPELINE
 	return predict_(weight_matrices, intercepts, sequence);
 }
 
 template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_CLASSES__, uint8_t NUM_CLASSES_INCLUDING_NULL__>
 void SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::
-fitPredictedHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t sequence[SEQUENCE_LENGTH]){// [NUM_CLASSES_INCLUDING_NULL__]){
- // #pragma HLS INLINE
+fitPredictedHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t sequence[SEQUENCE_LENGTH]){
 	bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL__];
 	#pragma HLS ARRAY_PARTITION variable=oneHotSequence complete
 		encodeInOneHot(sequence, oneHotSequence);
@@ -204,8 +191,7 @@ fitPredictedHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& wei
 }
 template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_CLASSES__, uint8_t NUM_CLASSES_INCLUDING_NULL__>
 void SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::
-fitTargetHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t sequence[SEQUENCE_LENGTH]){// [NUM_CLASSES_INCLUDING_NULL__]){
-// #pragma HLS INLINE
+fitTargetHyperplane(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__>& weight_matrix, weight_t& intercept, class_t sequence[SEQUENCE_LENGTH]){
 	bool oneHotSequence[SEQUENCE_LENGTH][NUM_CLASSES_INCLUDING_NULL__];
 	#pragma HLS ARRAY_PARTITION variable=oneHotSequence complete
 		encodeInOneHot(sequence, oneHotSequence);
@@ -226,13 +212,11 @@ template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_C
 void SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::
 fit(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLASSES__], WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices_copy[NUM_CLASSES__], weight_t intercepts[NUM_CLASSES__], weight_t intercepts_copy[NUM_CLASSES__], class_t sequence[SEQUENCE_LENGTH], const class_t target) {
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
 #pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_2P impl=lutram latency=1
 
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
 
 #pragma HLS ARRAY_PARTITION variable=weight_matrices_copy complete
-// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
 #pragma HLS BIND_STORAGE variable=weight_matrices_copy->weights type=RAM_2P impl=lutram latency=1
 
 #pragma HLS ARRAY_PARTITION variable=intercepts_copy complete
@@ -249,37 +233,6 @@ fit(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLA
 
 	WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices_[NUM_CLASSES__];
 	weight_t intercepts_[NUM_CLASSES__];
-
-	/*
-	class_t predictedClass = predict_(weight_matrices, intercepts, sequence);
-
-	if(target != predictedClass){
-
-		for(int k = 0; k < NUM_CLASSES__; k++){
-			#pragma HLS UNROLL
-			for (int i = 0; i < SEQUENCE_LENGTH; i++) {
-				#pragma HLS UNROLL
-					if(k == predictedClass){
-						weight_matrices[k].weights[i][sequence[i]]++;
-						weight_matrices_copy[k].weights[i][sequence[i]] = weight_matrices[k].weights[i][sequence[i]];
-					}
-					else if(k == target){
-						weight_matrices[k].weights[i][sequence[i]]--;
-						weight_matrices_copy[k].weights[i][sequence[i]] = weight_matrices[k].weights[i][sequence[i]];
-				}
-			}
-			if(k == predictedClass){
-				intercepts[k]--;
-				intercepts_copy[k] = intercepts[k];
-			}
-			else if(k == target){
-				intercepts[k]++;
-				intercepts_copy[k] = intercepts[k];
-			}
-		}
-
-	}
-	*/
 
 	distance_t distances[NUM_CLASSES__];
 	#pragma HLS ARRAY_PARTITION variable=distances complete
@@ -331,9 +284,7 @@ fit(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLA
 template<typename weight_t, typename class_t, typename distance_t, uint8_t NUM_CLASSES__, uint8_t NUM_CLASSES_INCLUDING_NULL__>
 class_t SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NULL__>::
 predictAndFit(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLASSES__], WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices_copy[NUM_CLASSES__], weight_t intercepts[NUM_CLASSES__], weight_t intercepts_copy[NUM_CLASSES__], class_t input[SEQUENCE_LENGTH], class_t target) {
-	// #pragma HLS INLINE
-// #pragma HLS PIPELINE
-// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
+	
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 #pragma HLS BIND_STORAGE variable=weight_matrices->weights type=RAM_2P impl=lutram latency=1
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
@@ -360,31 +311,13 @@ void SVM<weight_t, class_t, distance_t, NUM_CLASSES__, NUM_CLASSES_INCLUDING_NUL
 recursivelyPredictAndFit(WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices[NUM_CLASSES__], WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices_copy[NUM_CLASSES__], weight_t intercepts[NUM_CLASSES__], weight_t intercepts_copy[NUM_CLASSES__], class_t input[SEQUENCE_LENGTH], class_t target,
 		class_t outputs[MAX_PREFETCHING_DEGREE], int numPredictions) {
 	#pragma HLS INLINE
-// #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
 #pragma HLS ARRAY_PARTITION variable=weight_matrices complete
-// #pragma HLS ARRAY_PARTITION variable=weight_matrices->weights dim=0 complete
 #pragma HLS ARRAY_PARTITION variable=intercepts complete
 #pragma HLS ARRAY_PARTITION variable=input complete
 #pragma HLS ARRAY_PARTITION variable=outputs complete
 #pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices
 #pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices->weights
 #pragma HLS DEPENDENCE dependent=false type=inter variable=intercepts
-// #pragma HLS PIPELINE
-
-	/*
-	WeightMatrix<weight_t, NUM_CLASSES_INCLUDING_NULL__> weight_matrices_[NUM_CLASSES__];
-		weight_t intercepts_[NUM_CLASSES__];
-#pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices_
-#pragma HLS DEPENDENCE dependent=false type=inter variable=weight_matrices_->weights
-#pragma HLS DEPENDENCE dependent=false type=inter variable=intercepts_
-		for(int k = 0; k < NUM_CLASSES__; k++){
-	#pragma HLS UNROLL
-			weight_matrices_[k] = weight_matrices[k];
-			intercepts_[k] = intercepts[k];
-		}
-		*/
-	// fit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target);
-
 
 	class_t newInput[SEQUENCE_LENGTH];
 	for (int i = 0; i < SEQUENCE_LENGTH - 1; i++) {

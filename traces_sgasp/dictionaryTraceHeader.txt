@@ -1,0 +1,3 @@
+imagick/dictionaryTrace.txt
+lbm/dictionaryTrace.txt
+nab/dictionaryTrace.txt

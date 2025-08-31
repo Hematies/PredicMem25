@@ -68,20 +68,7 @@ index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfDelta(DictionaryEn
 template<typename index_t, typename delta_t, typename confidence_t>
 index_t Dictionary<index_t, delta_t, confidence_t>::getIndexOfLeastFrequent(DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES]) {
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
-// #pragma HLS ARRAY_PARTITION variable=dictionaryEntries block dim=1 factor=4
 
-	// index_t res = NUM_CLASSES;
-	// confidence_t minConfidence = dictionaryEntries[0].confidence;
-	/*
-	loop_getIndexOfLeastFrequent :for (int i = 1; i < NUM_CLASSES; i++) {
-#pragma HLS UNROLL
-		if (dictionaryEntries[i].confidence < minConfidence) {
-			res = i;
-			minConfidence = dictionaryEntries[i].confidence;
-		}
-	}
-	*/
 	index_t indexes[NUM_CLASSES / 2];
 	confidence_t minConfidences[NUM_CLASSES / 2];
 	for (int i = 0; i < NUM_CLASSES; i+=2) {
@@ -116,7 +103,6 @@ template<typename index_t, typename delta_t, typename confidence_t>
 DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t>::read(
 		DictionaryEntry<delta_t, confidence_t> dictionaryEntries[NUM_CLASSES], bool useIndex, index_t index, delta_t delta, index_t &resultIndex,
 		bool performUpdateConfidence, bool &isHit) {
-	// #pragma HLS INLINE
 	#pragma HLS PIPELINE
 	DictionaryEntry<delta_t, confidence_t> res;
 	isHit = true;
@@ -153,7 +139,6 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 	isHit = resultIndex < NUM_CLASSES;
 	if (resultIndex < NUM_CLASSES) {
 		res = dictionaryEntries[resultIndex];
-		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
 	else {
 		resultIndex = leastFrequentIndex;
@@ -161,7 +146,6 @@ DictionaryEntry<delta_t, confidence_t> Dictionary<index_t, delta_t, confidence_t
 		res.valid = true;
 		res.confidence = DICTIONARY_LFU_INITIAL_CONFIDENCE;
 		dictionaryEntries[(int)resultIndex] = res;
-		// this->updateConfidence(dictionaryEntries, resultIndex);
 	}
 	this->updateConfidence(dictionaryEntries, resultIndex);
 

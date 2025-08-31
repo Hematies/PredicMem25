@@ -86,6 +86,7 @@ public:
     InputBufferValidation(){}
     InputBufferValidation(string filePath){
         type = ExperimentType::INPUT_BUFFER_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -125,6 +126,7 @@ public:
 
     InputBufferSoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::INPUT_BUFFER_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
@@ -155,7 +157,7 @@ public:
 
 		std::cout << "Input buffer hit rate: " << std::to_string(hitRate) << std::endl;
 		std::cout << "Target input buffer hit rate: " << std::to_string(targetHitRate) << std::endl;
-		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
 	}
@@ -191,6 +193,7 @@ public:
     DictionaryValidation(){}
     DictionaryValidation(string filePath){
         type = ExperimentType::DICTIONARY_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -229,6 +232,7 @@ public:
     DictionarySoftValidation(){}
     DictionarySoftValidation(string filePath, double hitRateDifferenceThreshold = 0.05){
         type = ExperimentType::DICTIONARY_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         this->hitRateDifferenceThreshold = hitRateDifferenceThreshold;
         numOperations = inputs.size();
@@ -260,7 +264,7 @@ public:
 
 		std::cout << "Dictionary hit rate: " << std::to_string(hitRate) << std::endl;
 		std::cout << "Target dictionary hit rate: " << std::to_string(targetHitRate) << std::endl;
-		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
 
@@ -297,6 +301,7 @@ public:
     SVMValidation(){}
     SVMValidation(string filePath){
         type = ExperimentType::SVM_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
     }
@@ -338,6 +343,7 @@ public:
     SVMSoftValidation(){}
     SVMSoftValidation(string filePath, double matchingThreshold = 0.85){
         type = ExperimentType::SVM_SOFT_VALIDATION;
+        this->filePath = filePath;
         readTraceFile(filePath);
         this->matchingThreshold = matchingThreshold;
         numOperations = inputs.size();
@@ -362,11 +368,9 @@ public:
 			if(target.output[k] == NUM_CLASSES){
 				break;
 			}
-			// else if(inputs[i].target == target.output[0]){
-				numMatches += target.output[k] == output.output[k];
+			numMatches += target.output[k] == output.output[k];
 
-				numPredictions++;
-			// }
+			numPredictions++;
 		}
 
 
@@ -378,11 +382,10 @@ public:
 		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
 
 		bool res = matchRate > this->matchingThreshold;
-		// bool res = abs(hitDifference) < 0.05;
 
 		std::cout << "SVM results match rate: " << std::to_string(matchRate) << std::endl;
 		std::cout << "SVM results precision difference: " << std::to_string(precisionDifference) << std::endl;
-		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
 
@@ -421,6 +424,7 @@ public:
     int maxNumNopCycles = 10;
 	PrefetchingSoftValidation(){}
 	PrefetchingSoftValidation(string filePath, double matchingThreshold = 0.8){
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
@@ -447,8 +451,6 @@ public:
 			}
 			else {
 				numMatches += target.addressesToPrefetch[k] == output.addressesToPrefetch[k];
-				// std::cout << "Target prefetch = " << std::to_string(target.addressesToPrefetch[k]) << std::endl;
-				// std::cout << "Predicted prefetch = " << std::to_string(output.addressesToPrefetch[k]) << std::endl;
 				numPrefetches++;
 			}
 		}
@@ -462,7 +464,7 @@ public:
 		bool res = matchRate > this->matchingThreshold;
 
 		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
-		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
 
@@ -476,6 +478,7 @@ public:
 	GASPSoftValidation(){}
 	GASPSoftValidation(string filePath, double matchingThreshold = 0.8){
 		type = ExperimentType::GASP_SOFT_VALIDATION;
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
@@ -488,6 +491,7 @@ public:
 	SGASPSoftValidation(){}
 	SGASPSoftValidation(string filePath, double matchingThreshold = 0.8){
 		type = ExperimentType::SGASP_SOFT_VALIDATION;
+		this->filePath = filePath;
         readTraceFile(filePath);
         numOperations = inputs.size();
         this->matchingThreshold = matchingThreshold;
@@ -524,7 +528,6 @@ public:
 
 	BSGASPSoftValidation(){}
 	BSGASPSoftValidation(string filePath, double matchingThreshold = 0.8, double precisionThreshold = 0.8){
-		// type = ExperimentType::BSGASP_SOFT_VALIDATION;
 		this->filePath = filePath;
 		type = ExperimentType::BSGASP_SOFT_VALIDATION;
         readTraceFile(filePath);
@@ -561,8 +564,6 @@ public:
 			}
 			else {
 				numMatches += target.addressesToPrefetch[k] == output.addressesToPrefetch[k];
-				// std::cout << "Target prefetch = " << std::to_string(target.addressesToPrefetch[k]) << std::endl;
-				// std::cout << "Predicted prefetch = " << std::to_string(output.addressesToPrefetch[k]) << std::endl;
 				numPrefetches++;
 			}
 		}
@@ -579,7 +580,7 @@ public:
 
 		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
 		std::cout << "Burst prediction results precision: " << std::to_string(precision) << std::endl;
-		// std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << "Test passed? " << std::to_string(res) << std::endl;
 
 		return res;
 
@@ -595,7 +596,7 @@ protected:
 public:
 	vector<Experiment> experiments;
     Experimentation(){}
-    Experimentation(string headerPath// , ExperimentType type
+    Experimentation(string headerPath
     		){
     	this->headerPath = headerPath;
     	auto tracePaths = this->getTracePaths();

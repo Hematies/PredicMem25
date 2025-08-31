@@ -1,0 +1,3 @@
+lbm/burstPrefetcherTrace.txt
+nab/burstPrefetcherTrace.txt
+imagick/burstPrefetcherTrace.txt

@@ -22,8 +22,6 @@
         <file name="PredicMem25/src/top/top.hpp" sc="0" tb="false" cflags="" csimflags="" blackbox="false"/>
     </files>
     <solutions xmlns="">
-        <solution name="original" status="active"/>
-        <solution name="new" status="inactive"/>
     </solutions>
 </project>
 

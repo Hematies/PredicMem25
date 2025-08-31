@@ -24,7 +24,6 @@
 #pragma once
 #include <iostream>     // std::cout
 #include <fstream>      // std::ifstream
-// #include "BuffersSimulator.h"
 #include<set>
 #include<vector>
 
@@ -80,13 +79,10 @@ public:
 	}
 
 	unsigned long countNumLines() {
-		// if (file.is_open()) file.close();
-		// file.open(filename);
 		file.clear();
 		file.seekg(0);
 		string line;
 		unsigned long res = 0;
-		// while (file.peek() != EOF)
 		while (getline(file, line))
 		{
 			if (line.compare(endLine) == 0) {
@@ -96,8 +92,6 @@ public:
 			
 				
 		}
-		// file.close();
-		// file.open(filename);
 		file.clear();
 		file.seekg(0);
 		return res;
@@ -116,16 +110,13 @@ public:
 		vector<string> res;
 
 
-		long start = 0, // currentLine, 
-			end = numLines;// end = currentLine + numLines;
+		long start = 0, end = numLines;
 
 		if (file.is_open())
 		{
 			file.clear();
-			// file.seekg(0);
 			while (getline(file, line))
 			{
-				// if ((k >= start) && (k < end)) {
 				if ((k >= end) || (line.compare(endLine) == 0)) break;
 				else 
 					if (k < end) {
@@ -136,7 +127,6 @@ public:
 
 			}
 		}
-		// file.close();
 		return res;
 	}
 

@@ -1,0 +1,3 @@
+imagick/svmTrace.txt
+lbm/svmTrace.txt
+nab/svmTrace.txt
