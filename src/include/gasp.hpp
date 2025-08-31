@@ -29,7 +29,6 @@ public:
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
 		#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
 		#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
-		// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 		#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
 		#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
@@ -71,7 +70,6 @@ public:
 				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntryDummy, true, isInputBufferHit,
 				index, way);
 
-			// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 			constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 			ib_tag_t tag = inputBufferAddress >> numIndexBits;
@@ -113,16 +111,7 @@ public:
 				bool performPrefetch = false;
 				
 				if(isInputBufferHit) {
-					/*
-					if(true){
-						lastAddress = inputBufferEntry.lastAddress;
-						for(int k = 0; k < SEQUENCE_LENGTH; k++){
-							#pragma HLS UNROLL
-							sequence[k] = inputBufferEntry.sequence[k];
-						}
-					}
-					*/
-
+					
 					// 3) Compute the resulting delta and its class:
 					delta_t delta = (delta_t)memoryAddress - (delta_t)lastAddress;
 					class_t dictionaryClass;
@@ -159,8 +148,6 @@ public:
 					inputBufferEntry.tag = tag;
 					inputBufferEntry.valid = true;
 					inputBufferEntry.lastAddress = memoryAddress;
-					// inputBufferEntry.lastPredictedAddress = predictedAddress;
-					// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
 					bool isInputBufferHitDummy;
 					inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
@@ -180,11 +167,6 @@ public:
 						updatedSequence[i] = NUM_CLASSES;
 					}
 
-					/* HABRIA QUE PONER ESTO AQUI
-					* forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, inputBufferAddress,
-							forwardingBufferCurrentSlot, forwardingBufferNextSlot);
-					*/
-
 					// 6) Update the input buffer with the entry:
 					for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 						#pragma HLS UNROLL
@@ -194,8 +176,6 @@ public:
 					inputBufferEntry.tag = tag;
 					inputBufferEntry.valid = true;
 					inputBufferEntry.lastAddress = memoryAddress;
-					// inputBufferEntry.lastPredictedAddress = predictedAddress;
-					// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
 					bool isInputBufferHitDummy;
 					inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
@@ -230,12 +210,10 @@ public:
 		static conf_forwarding_index_t confidenceForwardingBufferNextSlot = 0;
 		conf_forwarding_index_t confidenceForwardingBufferCurrentSlot = 0;
 
-		// #pragma HLS DEPENDENCE array false variable=forwardingBufferEntriesMatrix.entries
 		static ConfidenceBufferEntriesMatrix<ib_confidence_t, block_address_t>
 			confidenceBufferEntriesMatrix = initConfidenceBufferEntries<ib_confidence_t, block_address_t>();
 		#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=2 complete
 		#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=3 complete
-		// #pragma HLS ARRAY_PARTITION variable=confidenceBufferEntriesMatrix.entries dim=0 complete
 		#pragma HLS BIND_STORAGE variable=confidenceBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
 		#pragma HLS DEPENDENCE array false variable=confidenceBufferEntriesMatrix.entries
@@ -348,7 +326,6 @@ public:
 				inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
 	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
 	#pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
-	// #pragma HLS ARRAY_PARTITION variable=inputBufferEntriesMatrix.entries dim=0 complete
 	#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
 	#pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
@@ -365,12 +342,10 @@ public:
 		static conf_forwarding_index_t confidenceForwardingBufferNextSlot = 0;
 		conf_forwarding_index_t confidenceForwardingBufferCurrentSlot = 0;
 
-	// #pragma HLS DEPENDENCE array false variable=forwardingBufferEntriesMatrix.entries
 		static ConfidenceBufferEntriesMatrix<ib_confidence_t, block_address_t>
 			confidenceBufferEntriesMatrix = initConfidenceBufferEntries<ib_confidence_t, block_address_t>();
 	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=2 complete
 	#pragma HLS ARRAY_RESHAPE variable=confidenceBufferEntriesMatrix.entries dim=3 complete
-	// #pragma HLS ARRAY_PARTITION variable=confidenceBufferEntriesMatrix.entries dim=0 complete
 	#pragma HLS BIND_STORAGE variable=confidenceBufferEntriesMatrix.entries type=RAM_T2P impl=bram latency=1
 
 	#pragma HLS DEPENDENCE array false variable=confidenceBufferEntriesMatrix.entries
@@ -412,7 +387,6 @@ public:
 			inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntryDummy, true, isInputBufferHit,
 			index, way);
 
-	// #pragma HLS AGGREGATE variable=inputBufferEntry
 
 		constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 		ib_tag_t tag = inputBufferAddress >> numIndexBits;
@@ -455,16 +429,7 @@ public:
 			bool performPrefetch = false;
 			
 			if(isInputBufferHit) {
-				/*
-				if(true){
-					lastAddress = inputBufferEntry.lastAddress;
-					for(int k = 0; k < SEQUENCE_LENGTH; k++){
-						#pragma HLS UNROLL
-						sequence[k] = inputBufferEntry.sequence[k];
-					}
-				}
-				*/
-
+				
 				// 3) Compute the resulting delta and its class:
 				delta_t delta = (delta_t)memoryAddress - (delta_t)lastAddress;
 				class_t dictionaryClass;
@@ -501,8 +466,6 @@ public:
 				inputBufferEntry.tag = tag;
 				inputBufferEntry.valid = true;
 				inputBufferEntry.lastAddress = memoryAddress;
-				// inputBufferEntry.lastPredictedAddress = predictedAddress;
-				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
 				bool isInputBufferHitDummy;
 				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 
@@ -521,11 +484,6 @@ public:
 					updatedSequence[i] = NUM_CLASSES;
 				}
 
-				/* HABRIA QUE PONER ESTO AQUI
-				 * forwardingBuffer.write(forwardingBufferEntriesMatrix.entries, memoryAddress, updatedSequence, inputBufferAddress,
-						forwardingBufferCurrentSlot, forwardingBufferNextSlot);
-				 */
-
 				// 6) Update the input buffer with the entry:
 				for (int i = 0; i < SEQUENCE_LENGTH; i++) {
 					#pragma HLS UNROLL
@@ -535,8 +493,6 @@ public:
 				inputBufferEntry.tag = tag;
 				inputBufferEntry.valid = true;
 				inputBufferEntry.lastAddress = memoryAddress;
-				// inputBufferEntry.lastPredictedAddress = predictedAddress;
-				// inputBuffer.write(inputBufferEntriesMatrix.entries, inputBufferEntriesMatrixCopy.entries,inputBufferAddress, inputBufferEntry);
 				bool isInputBufferHitDummy;
 				inputBuffer(inputBufferEntriesMatrix.entries, inputBufferAddress, inputBufferEntry, false, isInputBufferHitDummy, index, way);
 

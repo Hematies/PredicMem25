@@ -1,13 +1,13 @@
 # PredicMem25 - `include` directory
 
-This folder contains the main header files for the **PredicMem25** project, which focuses on memory address and burst length prediction using buffers, dictionaries, and machine learning (SVM).
+This folder contains the main header files for the **PredicMem25** project, which focuses on memory address and burst length prediction using buffers, dictionaries, and machine learning (SVM). [The report file](report.pdf) contains a full explanation of all the implementation of this folder, except for the GASP, BSGASP and burst-related structures. These elements are in a work-in-progress state.
 
 ## Main classes and structures
 
 - **GASP-based classes (`bgasp.hpp`, `gasp.hpp`)**  
   Main prefetcher classes.  
-  - `BGASP`: Predicts both memory addresses and burst lengths, using burst-aware buffers and SVMs.
-  - `GASP`: Predicts only memory addresses, using standard buffers and SVMs.
+  - `BGASP`: Computes memory block addresses to prefetch and perdicts burst lengths, using burst-aware buffers and SVMs.
+  - `GASP`: Computes memory block addresses to prefetch, using standard buffers and SVMs.
 
 - **Input buffer (`input_buffer.hpp`, `burst_input_buffer.hpp`)**  
   - `InputBufferEntry`, `BurstInputBufferEntry`: Store sequences of classes (and burst lengths) for each buffer slot.

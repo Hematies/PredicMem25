@@ -34,7 +34,6 @@ public:
 		BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 		address_t address, bool& isHit,
 		index_t& index, way_t& way);
-	// BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t>
 	void write(
 		BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 		address_t address, BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entry,
@@ -126,7 +125,6 @@ BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> Bu
 read(BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t burstInputBufferAddress, bool& isHit,
 	index_t& index, way_t& way) {
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
@@ -153,7 +151,6 @@ read(BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_
 		res = set[way];
 		isHit = true;
 	}
-	// this->updateLRU(entries, index, way);
 
 
 	return res;
@@ -161,22 +158,17 @@ read(BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_
 
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename burst_length_t, typename lru_t>
-// BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t>
 void
 BurstInputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, burst_length_t, lru_t>::
 write(BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 	address_t burstInputBufferAddress, BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> entry,
 	index_t& index, way_t& way) {
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 
-// #pragma HLS DEPENDENCE array false RAW inter variable=entries
 
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
-// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = burstInputBufferAddress >> numIndexBits;
@@ -209,20 +201,15 @@ operator()(
 		index_t& index, way_t& way){
 
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 
-// #pragma HLS DEPENDENCE array false RAW inter variable=entries
 
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
 	BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t> res =
 			BurstInputBufferEntry<tag_t, block_address_t, class_t, burst_length_t, lru_t>();
 
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
-// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
@@ -248,20 +235,11 @@ operator()(
 
 		if (!isHit) {
 			way = leastRecentWay;
-			// entries[index][way].lruCounter = 1;
-			// entries[index][way].tag = tag;
 			entry.lruCounter = 1;
 			entry.tag = tag;
 		}
-
-		// entries[index][way].lastAddress = entry.lastAddress;
-		// entries[index][way].confidence = entry.confidence;
-		// entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
-
-		// entries[index][way].valid = true;
 		entry.valid = true;
 
-		// entries[index][way] = entry;
 		set[way] = entry;
 		res = entry;
 

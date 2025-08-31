@@ -32,7 +32,6 @@ public:
 		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 		address_t address, bool& isHit,
 		index_t& index, way_t& way);
-	// InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 	void write(
 		InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 		address_t address, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
@@ -124,7 +123,6 @@ InputBufferEntry<tag_t, block_address_t, class_t, lru_t> InputBuffer<address_t, 
 read(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t inputBufferAddress, bool& isHit,
 index_t& index, way_t& way) {
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
@@ -151,7 +149,6 @@ index_t& index, way_t& way) {
 		res = set[way];
 		isHit = true;
 	}
-	// this->updateLRU(entries, index, way);
 
 
 	return res;
@@ -159,35 +156,21 @@ index_t& index, way_t& way) {
 
 
 template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename class_t, typename lru_t>
-// InputBufferEntry<tag_t, block_address_t, class_t, lru_t>
 void
 InputBuffer<address_t, index_t, way_t, tag_t, block_address_t, class_t, lru_t>::
 write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
 	address_t inputBufferAddress, InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entry,
 	index_t& index, way_t& way) {
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
 
-// #pragma HLS DEPENDENCE array false RAW inter variable=entries
 
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
-// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = inputBufferAddress >> numIndexBits;
 	index = inputBufferAddress % (1 << numIndexBits);
-
-	/*
-	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> set[IB_NUM_WAYS];
-	for(int w = 0; w < IB_NUM_WAYS; w++){
-	#pragma HLS UNROLL
-		set[w] = entries[index][w];
-	}
-	*/
-
 
 	way_t leastRecentWay = this->getLeastRecentWay(entries, index);
 	way = this->queryWay(entries, index, tag);
@@ -195,26 +178,14 @@ write(InputBufferEntry<tag_t, block_address_t, class_t, lru_t> entries[IB_NUM_SE
 
 	if (way == IB_NUM_WAYS) {
 		way = leastRecentWay;
-		// entries[index][way].lruCounter = 1;
-		// entries[index][way].tag = tag;
 		entry.lruCounter = 1;
 		entry.tag = tag;
 	}
 
-	// entries[index][way].lastAddress = entry.lastAddress;
-	// entries[index][way].confidence = entry.confidence;
-	// entries[index][way].lastPredictedAddress = entry.lastPredictedAddress;
-
-	// entries[index][way].valid = true;
 	entry.valid = true;
 
 	entries[index][way] = entry;
-	/*
-	for(int i = 0; i < SEQUENCE_LENGTH; i++){
-#pragma HLS UNROLL
-		entries[index][way].sequence[i] = entry.sequence[i];
-	}
-	*/
+	
 	this->updateLRU(entries, index, way);
 
 }
@@ -229,20 +200,13 @@ operator()(
 			index_t& index, way_t& way){
 
 #pragma HLS INLINE
-// #pragma HLS PIPELINE
-
-// #pragma HLS DEPENDENCE array false RAW inter variable=entries
 
 #pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
 #pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
 #pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
 
 	InputBufferEntry<tag_t, block_address_t, class_t, lru_t> res =
 			InputBufferEntry<tag_t, block_address_t, class_t, lru_t>();
-
-// #pragma HLS ARRAY_PARTITION variable=entries dim=0 complete
-// #pragma HLS ARRAY_RESHAPE dim=2 factor=2 object type=block variable=entries
 
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	tag_t tag = address >> numIndexBits;
@@ -268,18 +232,12 @@ operator()(
 
 		if (!isHit) {
 			way = leastRecentWay;
-			// entries[index][way].lruCounter = 1;
-			// entries[index][way].tag = tag;
 			entry.lruCounter = 1;
 			entry.tag = tag;
 		}
 
-		// entries[index][way].lastAddress = entry.lastAddress;
-
-		// entries[index][way].valid = true;
 		entry.valid = true;
 
-		// entries[index][way] = entry;
 		set[way] = entry;
 		res = entry;
 
