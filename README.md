@@ -8,6 +8,8 @@ The SGASP prefetcher (along with the GASP family of prefetchers) was originally 
 
 Both the SGASP and the rest of prefetchers of the GASP family are based on the memory address predictor Support Vector Machine For Address Prediction (SVM4AP), presented in the publication: "Competitive Cost-effective Memory Access Predictor through Short-Term Online SVM and Dynamic Vocabularies", Sánchez-Cuevas et al., Future Generation Computer Systems, Volume 164, 2025, 107592,ISSN 0167-739X, https://doi.org/10.1016/j.future.2024.107592. (https://www.sciencedirect.com/science/article/pii/S0167739X24005569).
 
+This repository has been submitted as participation to the [AMD Open Hardware 2025](https://www.openhw.eu/) contest (team number: AOHW25_527).
+
 ## Why HLS?
 
 HLS is a hardware description method that exploits a high-level abstraction language (such as C++) to provide behavioral definition of the target hardware. Among the advantages that this provides, in this project we considerably leverage: (1) the ability to integrate testbenches based on complex, traced-based tests; and (2) the potential of C++ for the description of the hardware by using data structures, functions, classes, loops, etc, which greatly simplifies the design and development.
@@ -44,7 +46,11 @@ The file [src/testbench/main.cpp](src/testbench/main.cpp) file can be modified t
 
 A trace header file has to be indicated through the command-line interface for the validation. In our work, the header is used for locating the trace files, and we employ a trace format for each hardware module to validate. They can be checked in the documentation in src/testbench/README.md. In this repository, the directory [traces_gasp/](traces_gasp/) contains the traces that were used for the experimentation shown in [the report](report.pdf).
 
-Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`. In both cases, the console arguments that are described in [src/testbench/README.md](src/testbench/README.md) have to be indicated.  
+Finally, in order to run the validation, either C-simulation or co-simulation are the available options in Vitis HLS. The C-simulation can be started simply by clicking `Project` > `Run C simulation`. In the case of a co-simulation, the target hardware module of src/top/top.cpp has to be synthesised first, and then the process can start by clicking `Solution` > `Run C/RTL Cosimulation`. In both cases, the console arguments that are described in [src/testbench/README.md](src/testbench/README.md) have to be indicated. 
+
+## What framework was this project tested on?
+
+As discussed in the [report file](report.pdf), development, synthesis and co-simulation were carried out using Vitis HLS 2022.1, using the Ultra96V2 (which uses a Zynq UltraScale+ MPSoC ZU3EG A484) as the target platform.
 
 ## Authorship and contact.
 
