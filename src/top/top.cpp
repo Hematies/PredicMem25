@@ -108,23 +108,35 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
 }
 
-void prefetchWithSGASPWithAXI(address_t inputAddress,
+void SGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
-		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
+		axi_data_t& prefetchedData,
+		bool nop
 		){
-#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
-#pragma HLS PIPELINE
+#pragma HLS INTERFACE mode=ap_ctrl_none port=return
+#pragma HLS TOP name=SGASPWithAXI
+// #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
+	#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+
+	#pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
 	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
 	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
 
-	if(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION)){
+	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+
+	if(!nop){
 		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
 
-		for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
-			prefetchedData[i] = readPort[((address_t)blockAddressesToPrefetch[i]) << BLOCK_SIZE_LOG2];
-		}
+		address_t addressToPrefetch = (((address_t)blockAddressesToPrefetch[0]) << BLOCK_SIZE_LOG2);
+
+		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch != 0);
+
+		if(performPrefetch)
+			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
 	}
 
 }
@@ -134,20 +146,27 @@ void prefetchWithAXI(axi_data_t *readPort,
 	axi_data_t& prefetchedData,
 	const address_t prefetchAddress
 ){
-
 	#pragma HLS PIPELINE
 
-	prefetchedData = readPort[prefetchAddress];
+	bool performPrefetch = (prefetchAddress >= START_CACHEABLE_MEM_REGION) &&
+					(prefetchAddress < END_CACHEABLE_MEM_REGION) &&
+					(prefetchAddress != 0);
+	if(performPrefetch)
+		prefetchedData = readPort[prefetchAddress >> AXI_DATA_SIZE_BYTES_LOG2];
 
 }
 
-void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
+void SGASPWithDataflowWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
-		axi_data_t& prefetchedData
+		axi_data_t& prefetchedData,
+		bool nop
 		){
-#pragma HLS TOP name=prefetchWithSGASPWithDataflowWithAXI
-#pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=direct
-#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+#pragma HLS TOP name=SGASPWithDataflowWithAXI
+// #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort offset=off
+#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+
+	// #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
+#pragma HLS INTERFACE mode=ap_ctrl_none port=return
 
 	#pragma HLS DATAFLOW
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
@@ -161,7 +180,7 @@ void prefetchWithSGASPWithDataflowWithAXI(address_t inputAddress,
 	bool isInputBufferHit = false;
 	address_t regionId = memoryBlockAddress >> REGION_BLOCK_SIZE_LOG2;
 
-	bool nop = !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
 
 	gasp.phase1(regionId, memoryBlockAddress, predictedBlockAddress, index, way, nop, isInputBufferHit);
 	gasp.phase2(regionId, memoryBlockAddress, predictedBlockAddress, prefetchBlockAddress, index, way, nop, isInputBufferHit);
