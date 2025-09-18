@@ -195,19 +195,27 @@ void computeBurst(block_address_t prefetchBlockAddress, prefetch_block_burst_len
 		address_t& prefetchAddress, burst_length_in_words_t& totalBurstLength){
 #pragma HLS PIPELINE
 
-	prefetchAddress = ((address_t)prefetchBlockAddress) << BLOCK_SIZE_LOG2;
+	prefetchAddress = (((address_t)prefetchBlockAddress) << BLOCK_SIZE_LOG2);
 
-	bool performPrefetch = prefetchAddress != 0;
+	bool performPrefetch = (prefetchAddress >= START_CACHEABLE_MEM_REGION) &&
+				(prefetchAddress < END_CACHEABLE_MEM_REGION) &&
+				(prefetchAddress != 0);
+	prefetchAddress = prefetchAddress >> AXI_DATA_SIZE_BYTES_LOG2;
+
 	totalBurstLength =
 			(((burst_length_in_words_t)prefetchBurstLength) << BLOCK_SIZE_LOG2) >> AXI_DATA_SIZE_BYTES_LOG2;
 
-	if(!performPrefetch) totalBurstLength = 0;
+	if(!performPrefetch) {
+		totalBurstLength = 0;
+		prefetchAddress = 0;
+	}
 	else totalBurstLength = totalBurstLength == 0? (burst_length_in_words_t) 1 : totalBurstLength;
 
 }
 
 void computeBurstWithNop(block_address_t prefetchBlockAddress, prefetch_block_burst_length_t prefetchBurstLength,
 		address_t& prefetchAddress, burst_length_in_words_t& totalBurstLength, bool nop){
+	#pragma HLS PIPELINE
 	if(!nop) computeBurst(prefetchBlockAddress, prefetchBurstLength, prefetchAddress, totalBurstLength);
 	else{
 		prefetchAddress = 0;
@@ -222,18 +230,18 @@ void prefetchWithAXIBurst(hls::burst_maxi<axi_data_t>& readPort,
 ){
 
 	#pragma HLS PIPELINE
-
-	readPort.read_request(prefetchAddress, totalBurstLength);
-		
-	for(burst_length_in_words_t i = 0; i < totalBurstLength; i++){
-#pragma HLS LOOP_TRIPCOUNT min=0 max=64
-#pragma HLS DEPENDENCE dependent=false type=inter variable=prefetchedData
-#pragma HLS DEPENDENCE dependent=false type=intra variable=prefetchedData
-	#pragma HLS PIPELINE
-		axi_data_t data = readPort.read();
-		prefetchedData.write(data);
+	if(totalBurstLength != 0) {
+		readPort.read_request(prefetchAddress, totalBurstLength);
+			
+		for(burst_length_in_words_t i = 0; i < totalBurstLength; i++){
+	#pragma HLS LOOP_TRIPCOUNT min=0 max=64
+	#pragma HLS DEPENDENCE dependent=false type=inter variable=prefetchedData
+	#pragma HLS DEPENDENCE dependent=false type=intra variable=prefetchedData
+		#pragma HLS PIPELINE
+			axi_data_t data = readPort.read();
+			prefetchedData.write(data);
+		}
 	}
-
 }
 
 
@@ -320,7 +328,7 @@ void prefetchWithBSGASPWithAXI(address_t inputAddress,
 		){
 // #pragma HLS TOP name=prefetchWithBSGASPWithAXI
 #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
-#pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=direct
+#pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=off
 #pragma HLS DATAFLOW
 
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
@@ -355,7 +363,7 @@ void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
 	){
 	// #pragma HLS TOP name=prefetchWithBSGASPWithAXI
 	#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
-	#pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=direct
+	#pragma HLS INTERFACE mode=m_axi depth=256 latency=5 max_widen_bitwidth=512 num_read_outstanding=32 port=readPort offset=off
 	#pragma HLS DATAFLOW
 
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
