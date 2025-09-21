@@ -120,6 +120,12 @@ void SGASPWithAXI(address_t inputAddress,
 
 	#pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t> prefetchBuffer;
+
+	static PrefetchBufferEntriesMatrix<pb_tag_t> prefetchBufferEntriesMatrix = 
+		PrefetchBufferEntriesMatrix<pb_tag_t>();
+	#pragma HLS ARRAY_PARTITION variable=prefetchBufferEntriesMatrix.entries complete dim=0
+	#pragma HLS DEPENDENCE array false variable=prefetchBufferEntriesMatrix.entries
 
 	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
 	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
@@ -134,6 +140,9 @@ void SGASPWithAXI(address_t inputAddress,
 		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
 				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
 				(addressToPrefetch != 0);
+		if(performPrefetch){
+			prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
+		}
 
 		if(performPrefetch)
 			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
