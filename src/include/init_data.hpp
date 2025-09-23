@@ -177,8 +177,8 @@ constexpr BurstSVMWholeMatrix<weight_t> initBurstSVMData(){
 	return res;
 }
 
-template<typename pb_tag_t>
-constexpr PrefetchBufferEntriesMatrix<pb_tag_t>
+template<typename tag_t>
+constexpr PrefetchBufferEntriesMatrix<tag_t>
 	initPrefetchBufferEntries(){
 	PrefetchBufferEntriesMatrix<tag_t> res;
 	for(int i = 0; i < PB_NUM_SETS; i++){

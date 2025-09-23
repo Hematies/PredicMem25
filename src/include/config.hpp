@@ -82,6 +82,6 @@
 #define CONF_FORWARDING_DEPTH_LOG2 bitsNeeded(CONF_FORWARDING_DEPTH)
 
 // Prefetch buffer configuration:
-#define PB_NUM_SETS 16
-#define PB_NUM_SETS_LOG2 bitsNeeded(PB_NUM_SETS)
+#define PB_NUM_SETS_LOG2 4
+#define PB_NUM_SETS (1 << PB_NUM_SETS_LOG2)
 #define PB_NUM_TAG_BITS (NUM_BLOCK_ADDRESS_BITS - PB_NUM_SETS_LOG2)

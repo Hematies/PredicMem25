@@ -34,7 +34,7 @@ InputBufferEntry<ib_tag_t, block_address_t, class_t, ib_lru_t> operateInputBuffe
 			inputBufferEntriesMatrix = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
 	static InputBufferEntriesMatrix<ib_tag_t, block_address_t, class_t, ib_lru_t>
 				inputBufferEntriesMatrixCopy = initInputBufferEntries<ib_tag_t, block_address_t, class_t, ib_lru_t>();
-#pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
+// #pragma HLS BIND_STORAGE variable=inputBufferEntriesMatrix.entries type=ram_t2p impl=lutram latency=1
 #pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=2 complete
 #pragma HLS ARRAY_RESHAPE variable=inputBufferEntriesMatrix.entries dim=3 complete
 #pragma HLS DEPENDENCE array false variable=inputBufferEntriesMatrix.entries
@@ -120,13 +120,13 @@ void SGASPWithAXI(address_t inputAddress,
 
 	#pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
-	PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t> prefetchBuffer;
-
+	/*
+	PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t> prefetchBuffer = PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t>();
 	static PrefetchBufferEntriesMatrix<pb_tag_t> prefetchBufferEntriesMatrix = 
 		PrefetchBufferEntriesMatrix<pb_tag_t>();
-	#pragma HLS ARRAY_PARTITION variable=prefetchBufferEntriesMatrix.entries complete dim=0
+	#pragma HLS ARRAY_PARTITION variable=prefetchBufferEntriesMatrix.entries complete
 	#pragma HLS DEPENDENCE array false variable=prefetchBufferEntriesMatrix.entries
-
+	 */
 	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
 	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
 
@@ -140,9 +140,12 @@ void SGASPWithAXI(address_t inputAddress,
 		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
 				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
 				(addressToPrefetch != 0);
+
+		/*
 		if(performPrefetch){
 			prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
 		}
+		*/
 
 		if(performPrefetch)
 			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
@@ -177,7 +180,7 @@ void SGASPWithDataflowWithAXI(address_t inputAddress,
 	// #pragma HLS INTERFACE mode=ap_ctrl_chain port=return
 #pragma HLS INTERFACE mode=ap_ctrl_none port=return
 
-	#pragma HLS DATAFLOW
+	// #pragma HLS DATAFLOW
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 
 	block_address_t prefetchBlockAddress;
@@ -542,7 +545,7 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 	){
 	// #pragma HLS TOP name=prefetchWithBSGASPWithAXI
 	#pragma HLS INTERFACE mode=ap_ctrl_chain port=return
-	#pragma HLS DATAFLOW
+	// #pragma HLS DATAFLOW
 
 	BGASP<BSGASP_TYPES> bgasp = BGASP<BSGASP_TYPES>();
 	prefetch_block_burst_length_t predictedBurstLength, prefetchBurstLength = 0;
