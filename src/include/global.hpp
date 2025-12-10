@@ -19,3 +19,5 @@
 
 #include "gasp.hpp"
 #include "bgasp.hpp"
+
+#include "next_line.hpp"
