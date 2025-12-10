@@ -81,3 +81,20 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 	prefetch_block_burst_length_t& outputBlockBurstLength,
 	bool nop
 	);
+
+void nextLinePrefetcherWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData,
+		bool nop
+		);
+
+void stridePrefetcherWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData,
+		bool nop
+		);
+
+void prefetchWithStrideWithNop(block_address_t memoryAddress,
+		block_address_t& addressToPrefetch,
+		bool nop
+		);

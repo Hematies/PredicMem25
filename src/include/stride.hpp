@@ -35,8 +35,8 @@ void operator()(address_t strideTableAddress, block_address_t memoryAddress, blo
 	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
 	ib_tag_t tag = strideTableAddress >> numIndexBits;
 
+	delta_t predictedDelta = 0;
 	if (strideTableEntry.lastAddress != memoryAddress){
-		delta_t predictedDelta = 0;
 		if(isStrideTableHit) {
 			predictedDelta = (delta_t)memoryAddress - (delta_t)strideTableEntry.lastAddress;
 			addressToPrefetch = ((delta_t)memoryAddress + predictedDelta);
@@ -47,7 +47,7 @@ void operator()(address_t strideTableAddress, block_address_t memoryAddress, blo
 		strideTableEntry.lastAddress = memoryAddress;
 		strideTableEntry.delta = predictedDelta;
 		bool isStrideTableHitDummy;
-		strideTable(strideTableEntriesMatrix.entries, strideTableAddress, strideTableEntryDummy, false, isStrideTableHitDummy,
+		strideTable(strideTableEntriesMatrix.entries, strideTableAddress, strideTableEntry, false, isStrideTableHitDummy,
 				index, way);
 	}
 }

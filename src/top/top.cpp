@@ -655,3 +655,19 @@ void stridePrefetcherWithAXI(address_t inputAddress,
 }
 
 
+void prefetchWithStrideWithNop(block_address_t memoryAddress,
+		block_address_t& addressToPrefetch,
+		bool nop
+		){
+// #pragma HLS TOP name=prefetchWithSGASPWithNop
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	StridePrefetcher<STRIDE_TYPES> stride = StridePrefetcher<STRIDE_TYPES>();
+
+	if(!nop) {
+		stride(memoryAddress >> (REGION_BLOCK_SIZE_LOG2), memoryAddress, addressToPrefetch);
+	}
+}
+
+
+
