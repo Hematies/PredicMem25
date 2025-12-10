@@ -189,3 +189,20 @@ constexpr PrefetchBufferEntriesMatrix<tag_t>
 }
 
 
+template<typename tag_t, typename block_address_t, typename delta_t,typename lru_t>
+constexpr StrideTableEntriesMatrix<tag_t, block_address_t, delta_t, lru_t>
+	initStrideTableEntries(){
+	StrideTableEntriesMatrix<tag_t, block_address_t, delta_t, lru_t> res;
+	for(int i = 0; i < IB_NUM_SETS; i++){
+		for(int j = 0; j < IB_NUM_WAYS; j++){
+			res.entries[i][j].valid = false;
+			res.entries[i][j].tag = 0;
+			res.entries[i][j].lastAddress = 0;
+			res.entries[i][j].lruCounter = 0;
+			res.entries[i][j].valid = 0;
+			res.entries[i][j].delta = 0;
+		}
+	}
+	return res;
+}
+

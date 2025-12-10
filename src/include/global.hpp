@@ -14,10 +14,10 @@
 #include "burst_input_buffer.hpp"
 #include "burst_confidence_buffer.hpp"
 #include "svm.hpp"
-
+#include "stride_table.hpp"
 #include "init_data.hpp"
 
 #include "gasp.hpp"
 #include "bgasp.hpp"
-
 #include "next_line.hpp"
+#include "stride.hpp"

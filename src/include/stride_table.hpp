@@ -1,0 +1,261 @@
+#pragma once
+#include "global.hpp"
+
+template<typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+struct StrideTableEntry {
+	bool valid;
+	tag_t tag;
+	block_address_t lastAddress;
+	delta_t delta;
+	lru_t lruCounter;
+	StrideTableEntry(){}
+};
+
+
+template<typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+struct StrideTableEntriesMatrix {
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS];
+	StrideTableEntriesMatrix(){}
+};
+
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+class StrideTable {
+protected:
+
+	void updateLRU(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way);
+	way_t getLeastRecentWay(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS], index_t index);
+	way_t queryWay(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS], index_t index, tag_t tag);
+
+public:
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> read(
+		StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+		address_t address, bool& isHit,
+		index_t& index, way_t& way);
+	void write(
+			StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+		address_t address, StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entry,
+		index_t& index, way_t& way);
+
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> operator()(
+			StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+			address_t address, StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way);
+
+};
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+void StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>
+	::updateLRU(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS], index_t index, way_t way)
+{
+#pragma HLS INLINE
+	bool areAllWaysSaturated = true;
+	for (int w = 0; w < IB_NUM_WAYS; w++) {
+#pragma HLS UNROLL
+		areAllWaysSaturated = areAllWaysSaturated && (set[way].lruCounter == IB_MAX_LRU_COUNTER);
+	}
+
+	lru_t lruCounters[IB_NUM_WAYS];
+
+	for (int w = 0; w < IB_NUM_WAYS; w++) {
+#pragma HLS UNROLL
+		bool increment = w == way;
+		bool reset = areAllWaysSaturated;
+		lru_t lruCounter = set[way].lruCounter;
+		bool isSaturated = lruCounter == IB_MAX_LRU_COUNTER;
+
+		if (reset) {
+			if (!increment) lruCounter = 0;
+			else lruCounter = 1;
+		}
+		else {
+			if (increment && !isSaturated) lruCounter++;
+		}
+		lruCounters[w] = lruCounter;
+
+	}
+
+	for (int w = 0; w < IB_NUM_WAYS; w++) {
+#pragma HLS UNROLL
+		set[w].lruCounter = lruCounters[w];
+	}
+}
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+way_t StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>
+::getLeastRecentWay(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS], index_t index)
+{
+#pragma HLS INLINE
+	way_t res = 0;
+	lru_t leastRecency = IB_MAX_LRU_COUNTER;
+	for (int w = 0; w < IB_NUM_WAYS; w++) {
+#pragma HLS UNROLL
+		if (set[w].lruCounter < leastRecency) {
+			res = w;
+			leastRecency = set[w].lruCounter;
+		}
+	}
+	return res;
+}
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+way_t StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>::queryWay(
+		StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS],
+		index_t index, tag_t tag)
+{
+	#pragma HLS INLINE
+	way_t res = IB_NUM_WAYS;
+
+	for (int w = 0; w < IB_NUM_WAYS; w++) {
+#pragma HLS UNROLL
+		if ((set[w].tag == tag)  && (set[w].valid)
+				){
+			res = w;
+			// break;
+		}
+
+	}
+	return res;
+}
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>::
+read(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS], address_t StrideTableAddress, bool& isHit,
+index_t& index, way_t& way) {
+#pragma HLS INLINE
+#pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
+#pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
+
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> res =
+		StrideTableEntry<tag_t, block_address_t, delta_t, lru_t>();
+
+	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
+	tag_t tag = StrideTableAddress >> numIndexBits;
+	index = StrideTableAddress % (1 << numIndexBits);
+	isHit = false;
+
+
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS];
+	for(int w = 0; w < IB_NUM_WAYS; w++){
+#pragma HLS UNROLL
+		set[w] = entries[index][w];
+	}
+
+
+	way = this->queryWay(set, index, tag);
+
+
+	if (way != (way_t)IB_NUM_WAYS) {
+		res = set[way];
+		isHit = true;
+	}
+
+
+	return res;
+}
+
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+void
+StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>::
+write(StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+	address_t StrideTableAddress, StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entry,
+	index_t& index, way_t& way) {
+#pragma HLS INLINE
+
+
+#pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
+#pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
+
+
+	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
+	tag_t tag = StrideTableAddress >> numIndexBits;
+	index = StrideTableAddress % (1 << numIndexBits);
+
+	way_t leastRecentWay = this->getLeastRecentWay(entries, index);
+	way = this->queryWay(entries, index, tag);
+
+
+	if (way == IB_NUM_WAYS) {
+		way = leastRecentWay;
+		entry.lruCounter = 1;
+		entry.tag = tag;
+	}
+
+	entry.valid = true;
+
+	entries[index][way] = entry;
+	
+	this->updateLRU(entries, index, way);
+
+}
+
+
+template<typename address_t, typename index_t, typename way_t, typename tag_t, typename block_address_t, typename delta_t, typename lru_t>
+StrideTableEntry<tag_t, block_address_t, delta_t, lru_t>
+StrideTable<address_t, index_t, way_t, tag_t, block_address_t, delta_t, lru_t>::
+operator()(
+			StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entries[IB_NUM_SETS][IB_NUM_WAYS],
+			address_t address, StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> entry, bool performRead, bool& isHit,
+			index_t& index, way_t& way){
+
+#pragma HLS INLINE
+
+#pragma HLS ARRAY_RESHAPE variable=entries dim=2 complete
+#pragma HLS ARRAY_RESHAPE variable=entries dim=3 complete
+#pragma HLS BIND_STORAGE variable=entries type=RAM_T2P impl=bram latency=1
+
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> res =
+		StrideTableEntry<tag_t, block_address_t, delta_t, lru_t>();
+
+	constexpr auto numIndexBits = NUM_ADDRESS_BITS - IB_NUM_TAG_BITS;
+	tag_t tag = address >> numIndexBits;
+	index = address % (1 << numIndexBits);
+
+
+	StrideTableEntry<tag_t, block_address_t, delta_t, lru_t> set[IB_NUM_WAYS];
+#pragma HLS ARRAY_PARTITION variable=set complete dim=0
+#pragma HLS DEPENDENCE array false variable=set
+	for(int w = 0; w < IB_NUM_WAYS; w++){
+	#pragma HLS UNROLL
+		set[w] = entries[index][w];
+	}
+
+
+
+	way_t leastRecentWay = this->getLeastRecentWay(set, index);
+	way = this->queryWay(set, index, tag);
+
+	isHit = way != IB_NUM_WAYS;
+
+	if(!performRead){
+
+		if (!isHit) {
+			way = leastRecentWay;
+			entry.lruCounter = 1;
+			entry.tag = tag;
+		}
+
+		entry.valid = true;
+
+		set[way] = entry;
+		res = entry;
+
+		this->updateLRU(set, index, way);
+
+
+		for(int w = 0; w < IB_NUM_WAYS; w++){
+			#pragma HLS UNROLL
+			entries[index][w] = set[w];
+		}
+
+	}
+	else{
+		if(isHit){
+			res = set[way];
+		}
+	}
+
+	return res;
+}
+
