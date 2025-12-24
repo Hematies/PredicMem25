@@ -660,7 +660,7 @@ void prefetchWithStrideWithNop(block_address_t memoryAddress,
 		bool nop
 		){
 // #pragma HLS TOP name=prefetchWithSGASPWithNop
-#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS INTERFACE ap_fifo port=addressToPrefetch
 #pragma HLS PIPELINE
 	StridePrefetcher<STRIDE_TYPES> stride = StridePrefetcher<STRIDE_TYPES>();
 
