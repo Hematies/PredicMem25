@@ -588,4 +588,86 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 }
 
 
+void nextLinePrefetcherWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData,
+		bool nop
+		){
+#pragma HLS INTERFACE mode=ap_ctrl_none port=return
+// #pragma HLS TOP name=nextLinePrefetcherWithAXI
+// #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
+	#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+
+	#pragma HLS PIPELINE
+	NextLinePrefetcher<NEXT_LINE_TYPES> nextLine = NextLinePrefetcher<NEXT_LINE_TYPES>();
+
+	block_address_t memoryBlockAddress, blockAddressToPrefetch;
+	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
+
+	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+
+	if(!nop){
+		nextLine(memoryBlockAddress_, blockAddressToPrefetch);
+
+		address_t addressToPrefetch = (((address_t)blockAddressToPrefetch) << BLOCK_SIZE_LOG2);
+
+		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch != 0);
+
+		if(performPrefetch)
+			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+	}
+
+}
+
+void stridePrefetcherWithAXI(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData,
+		bool nop
+		){
+#pragma HLS INTERFACE mode=ap_ctrl_none port=return
+// #pragma HLS TOP name=stridePrefetcherWithAXI
+// #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
+#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+
+#pragma HLS PIPELINE
+	StridePrefetcher<STRIDE_TYPES> stride = StridePrefetcher<STRIDE_TYPES>();
+
+	block_address_t memoryBlockAddress, blockAddressToPrefetch;
+	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
+
+	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+
+	if(!nop){
+		stride(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressToPrefetch);
+
+		address_t addressToPrefetch = (((address_t)blockAddressToPrefetch) << BLOCK_SIZE_LOG2);
+
+		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch != 0);
+
+		if(performPrefetch)
+			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+	}
+
+}
+
+
+void prefetchWithStrideWithNop(block_address_t memoryAddress,
+		block_address_t& addressToPrefetch,
+		bool nop
+		){
+// #pragma HLS TOP name=prefetchWithSGASPWithNop
+#pragma HLS INTERFACE ap_fifo port=addressToPrefetch
+#pragma HLS PIPELINE
+	StridePrefetcher<STRIDE_TYPES> stride = StridePrefetcher<STRIDE_TYPES>();
+
+	if(!nop) {
+		stride(memoryAddress >> (REGION_BLOCK_SIZE_LOG2), memoryAddress, addressToPrefetch);
+	}
+}
+
+
 
