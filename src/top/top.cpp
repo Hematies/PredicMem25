@@ -669,16 +669,21 @@ void prefetchWithStrideWithNop(block_address_t memoryAddress,
 	}
 }
 
-void cacheFetchSniffer(address_t inputAddress, bool inputNop
+void cacheFetchSniffer(address_t inputAddress, bool inputNop,
         address_t outputAddress, bool outputNop,
         address_t& address, bool& nop
 		){
 // #pragma HLS TOP name=prefetchWithSGASPWithNop
-#pragma HLS INTERFACE mode=ap_ctrl_none port=return
-#pragma HLS TOP name=CacheFetchSniffer
-#pragma HLS PIPELINE
-	CacheFetchSniffer<address_t> sniffer = CacheFetchSniffer<address_t>();
-	sniffer(inputAddress, inputNop, outputAddress, outputNop, address, nop);
+	#pragma HLS INTERFACE mode=ap_ctrl_none port=return
+	#pragma HLS TOP name=CacheFetchSniffer
+	#pragma HLS PIPELINE
+	CacheFetchSniffer<address_t, cfs_queue_length_t> sniffer = CacheFetchSniffer<address_t, cfs_queue_length_t>();
+
+	static CacheFetchSnifferQueue<address_t> cacheFetchSnifferQueue = initCacheFetchSnifferQueue<address_t>();
+	#pragma HLS ARRAY_PARTITION variable=cacheFetchSnifferQueue.entries complete
+
+
+	sniffer(cacheFetchSnifferQueue.entries, inputAddress, inputNop, outputAddress, outputNop, address, nop);
 }
 
 

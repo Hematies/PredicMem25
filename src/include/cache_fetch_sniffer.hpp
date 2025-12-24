@@ -9,9 +9,9 @@ struct CacheFetchSnifferEntry {
 };
 
 template<typename address_t>
-struct CachFetchSnifferQueue {
+struct CacheFetchSnifferQueue {
 		CacheFetchSnifferEntry<address_t> entries[CFS_QUEUE_LENGTH];
-		CachFetchSnifferQueue(){}
+		CacheFetchSnifferQueue(){}
 };
 
 template<typename address_t, typename queue_length_t>
@@ -19,14 +19,12 @@ class CacheFetchSniffer {
 
     public:
     void operator()( 
-        address_t inputAddress, bool inputNop
+    	CacheFetchSnifferEntry<address_t> queue[CFS_QUEUE_LENGTH],
+        address_t inputAddress, bool inputNop,
         address_t outputAddress, bool outputNop,
         address_t& realOutputAddress, bool& realOutputNop
     ) {
-        #pragma HLS INLINE
-        static CachFetchSnifferQueue<address_t> cacheFetchSnifferQueue = initCachFetchSnifferQueue<address_t>();
-        #pragma HLS ARRAY_PARTITION variable=cacheFetchSnifferQueue.entries complete
-
+#pragma HLS INLINE
         realOutputAddress = 0;
         realOutputNop = true;
 
@@ -35,8 +33,8 @@ class CacheFetchSniffer {
         if(!outputNop){
             for (int i = CFS_QUEUE_LENGTH - 1; i >= 0; i--) {
                 #pragma HLS UNROLL
-                if (cacheFetchSnifferQueue.entries[i].valid && 
-                    cacheFetchSnifferQueue.entries[i].address == outputAddress) {
+                if (queue[i].valid &&
+                    queue[i].address == outputAddress) {
                     k = i;
                     realOutputNop = false;
                     break;
@@ -45,23 +43,23 @@ class CacheFetchSniffer {
             for (int i = CFS_QUEUE_LENGTH - 1; i >= 0; i--) {
                 #pragma HLS UNROLL
                 if(!realOutputNop && i >= k){
-                    cacheFetchSnifferQueue.entries[i].valid = false; // Invalidate entries after the duplicate
+                    queue[i].valid = false; // Invalidate entries after the duplicate
                 }
             }
         }
         if (!realOutputNop)
-            realOutputAddress = cacheFetchSnifferQueue.entries[k].address; // Return the duplicate address
+            realOutputAddress = queue[k].address; // Return the duplicate address
         
         // Shift the queue if a new input is provided
         if (!inputNop) {
             for (int i = CFS_QUEUE_LENGTH - 1; i >= 1; i--) {
                 #pragma HLS UNROLL
-                cacheFetchSnifferQueue.entries[i] = cacheFetchSnifferQueue.entries[i - 1];
+                queue[i] = queue[i - 1];
 
             }
             // Insert the new address
-            cacheFetchSnifferQueue.entries[0].address = inputAddress;
-            cacheFetchSnifferQueue.entries[0].valid = true;
+            queue[0].address = inputAddress;
+            queue[0].valid = true;
         }
     }
 };
