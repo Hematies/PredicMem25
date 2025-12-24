@@ -21,3 +21,5 @@
 #include "bgasp.hpp"
 #include "next_line.hpp"
 #include "stride.hpp"
+
+#include "cache_fetch_sniffer.hpp"
