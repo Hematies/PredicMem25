@@ -677,13 +677,16 @@ void cacheFetchSniffer(address_t inputAddress, bool inputNop,
 	#pragma HLS INTERFACE mode=ap_ctrl_none port=return
 	#pragma HLS TOP name=CacheFetchSniffer
 	#pragma HLS PIPELINE
-	CacheFetchSniffer<address_t, cfs_queue_length_t> sniffer = CacheFetchSniffer<address_t, cfs_queue_length_t>();
+	CacheFetchSniffer<block_address_t, cfs_queue_length_t> sniffer = CacheFetchSniffer<block_address_t, cfs_queue_length_t>();
 
-	static CacheFetchSnifferQueue<address_t> cacheFetchSnifferQueue = initCacheFetchSnifferQueue<address_t>();
+	static CacheFetchSnifferQueue<block_address_t> cacheFetchSnifferQueue = initCacheFetchSnifferQueue<block_address_t>();
 	#pragma HLS ARRAY_PARTITION variable=cacheFetchSnifferQueue.entries complete
 
-
-	sniffer(cacheFetchSnifferQueue.entries, inputAddress, inputNop, outputAddress, outputNop, address, nop);
+	block_address_t inputBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
+	block_address_t outputBlockAddress = outputAddress >> BLOCK_SIZE_LOG2;
+	block_address_t blockAddress;
+	sniffer(cacheFetchSnifferQueue.entries, inputBlockAddress, inputNop, outputBlockAddress, outputNop, blockAddress, nop);
+	address = ((address_t) blockAddress) << BLOCK_SIZE_LOG2;
 }
 
 

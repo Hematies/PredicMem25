@@ -207,10 +207,10 @@ constexpr StrideTableEntriesMatrix<tag_t, block_address_t, delta_t, lru_t>
 }
 
 
-template<typename address_t>
-constexpr CacheFetchSnifferQueue<address_t>
+template<typename block_address_t>
+constexpr CacheFetchSnifferQueue<block_address_t>
 	initCacheFetchSnifferQueue(){
-	CacheFetchSnifferQueue<address_t> res;
+	CacheFetchSnifferQueue<block_address_t> res;
 	for(int i = 0; i < CFS_QUEUE_LENGTH; i++){
 			res.entries[i].valid = false;
 			res.entries[i].address = 0;

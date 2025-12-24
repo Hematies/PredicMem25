@@ -1,28 +1,28 @@
 #pragma once
 #include "global.hpp"
 
-template<typename address_t>
+template<typename block_block_address_t>
 struct CacheFetchSnifferEntry {
-    address_t address;
+    block_address_t address;
     bool valid;
     CacheFetchSnifferEntry() : address(0), valid(false) {}
 };
 
-template<typename address_t>
+template<typename block_address_t>
 struct CacheFetchSnifferQueue {
-		CacheFetchSnifferEntry<address_t> entries[CFS_QUEUE_LENGTH];
+		CacheFetchSnifferEntry<block_address_t> entries[CFS_QUEUE_LENGTH];
 		CacheFetchSnifferQueue(){}
 };
 
-template<typename address_t, typename queue_length_t>
+template<typename block_address_t, typename queue_length_t>
 class CacheFetchSniffer {
 
     public:
     void operator()( 
-    	CacheFetchSnifferEntry<address_t> queue[CFS_QUEUE_LENGTH],
-        address_t inputAddress, bool inputNop,
-        address_t outputAddress, bool outputNop,
-        address_t& realOutputAddress, bool& realOutputNop
+    	CacheFetchSnifferEntry<block_address_t> queue[CFS_QUEUE_LENGTH],
+        block_address_t inputAddress, bool inputNop,
+        block_address_t outputAddress, bool outputNop,
+        block_address_t& realOutputAddress, bool& realOutputNop
     ) {
 #pragma HLS INLINE
         realOutputAddress = 0;
@@ -48,7 +48,7 @@ class CacheFetchSniffer {
             }
         }
         if (!realOutputNop)
-            realOutputAddress = queue[k].address; // Return the duplicate address
+            realOutputAddress = outputAddress; // Return the duplicate address
         
         // Shift the queue if a new input is provided
         if (!inputNop) {
