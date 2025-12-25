@@ -98,3 +98,8 @@ void prefetchWithStrideWithNop(block_address_t memoryAddress,
 		block_address_t& addressToPrefetch,
 		bool nop
 		);
+
+void cacheFetchSniffer(address_t inputAddress, bool inputNop,
+		address_t outputAddress, bool outputNop,
+		address_t& address, bool& nop
+		);
