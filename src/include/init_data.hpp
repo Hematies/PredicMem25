@@ -224,11 +224,10 @@ constexpr RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t>
 	RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t> res;
 	for(int confidence = 0; confidence < (MAX_PREDICTION_CONFIDENCE+1); confidence++){
 		prefetch_degree_t prefetchDegree = 0;
-
-		if(confidence < PREDICTION_CONFIDENCE_THRESHOLD)
-			prefetchDegree = 0;
 		if(PREDICTION_CONFIDENCE_THRESHOLD == MAX_PREDICTION_CONFIDENCE)
 			prefetchDegree = 1;
+		else if(confidence < PREDICTION_CONFIDENCE_THRESHOLD)
+			prefetchDegree = 0;
 		else{
 
 			double confidenceDistance = MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD;
