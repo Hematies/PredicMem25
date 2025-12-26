@@ -585,15 +585,16 @@ public:
 			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
 			performPrefetch = isInputBufferHit && confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
-			prefetchDegree = recursivePrefetchLookupTable[confidence];
+			prefetchDegree = recursivePrefetchLookupTable.entries[confidence];
 
 			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){
 				block_address_t addressesToPrefetch_[MAX_PREFETCHING_DEGREE];
 				block_address_t prevAddress = predictedAddress;
 				addressesToPrefetch_[0] = predictedAddress;
+
 				for(int i = 1; i < MAX_PREFETCHING_DEGREE; i++){
-	#pragma HLS UNROLL
+				#pragma HLS UNROLL
 					if(i < prefetchDegree){
 						delta_t predictedDelta_ = dictionaryEntriesMatrix.entries[(int)predictedClasses[i]].delta;
 						block_address_t addr = (delta_t)prevAddress + predictedDelta_;
@@ -601,7 +602,9 @@ public:
 						prevAddress = addr;
 					}
 				}
+
 				for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){
+				#pragma HLS UNROLL
 					if(i < prefetchDegree){
 						addressesToPrefetch[i] = addressesToPrefetch_[i];
 					}
