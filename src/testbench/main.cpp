@@ -239,53 +239,6 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if(true){
-		address_t address;
-		bool nop;
-		cacheFetchSniffer(
-			0xff, true,
-			0x00, true,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0xff, false,
-			0x00, true,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0xff, false,
-			0x00, true,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0x00, true,
-			0xff, false,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0xff, false,
-			0xff, false,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0x00, false,
-			0x00, false,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-		cacheFetchSniffer(
-			0xff, true,
-			0x00, true,
-			address, nop
-			);
-		printf("Address: %llu, Nop: %d\n", (unsigned long long)address, (int)nop);
-	}
-
 	cout << "Passed: " << to_string(passed) << "\n";
 	return !passed;
 
