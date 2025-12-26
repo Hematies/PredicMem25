@@ -15,6 +15,8 @@
 #include "burst_confidence_buffer.hpp"
 #include "svm.hpp"
 #include "stride_table.hpp"
+#include "cache_fetch_sniffer.hpp"
+
 #include "init_data.hpp"
 
 #include "gasp.hpp"

@@ -88,3 +88,8 @@
 #define PB_NUM_SETS_LOG2 4
 #define PB_NUM_SETS (1 << PB_NUM_SETS_LOG2)
 #define PB_NUM_TAG_BITS (NUM_BLOCK_ADDRESS_BITS - PB_NUM_SETS_LOG2)
+
+// Cache fetch sniffer configuration:
+#define CFS_QUEUE_LENGTH 8
+#define CFS_QUEUE_LENGTH_LOG2 bitsNeeded(CFS_QUEUE_LENGTH)
+#define CFS_QUEUE_LENGTH_INCLUDING_NULL_LOG2 bitsNeeded(CFS_QUEUE_LENGTH + 1)
