@@ -217,3 +217,26 @@ constexpr CacheFetchSnifferQueue<block_address_t>
 	}
 	return res;
 }
+
+template<typename ib_confidence_t, typename prefetch_degree_t>
+constexpr RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t>
+	initRecursivePrefetchLookupTable(){
+	RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t> res;
+	for(ib_confidence_t confidence = 0; confidence <= MAX_PREDICTION_CONFIDENCE; confidence++){
+			prefetch_degree_t prefetchDegree = 0;
+			if(confidence < PREDICTION_CONFIDENCE_THRESHOLD)
+				prefetchDegree = 0;
+			if(PREDICTION_CONFIDENCE_THRESHOLD == MAX_PREDICTION_CONFIDENCE)
+				prefetchDegree = 1;
+			else{
+				double confidenceDistance = MAX_PREDICTION_CONFIDENCE - PREDICTION_CONFIDENCE_THRESHOLD;
+				double degreeDistance = MAX_PREFETCHING_DEGREE - 1;
+				double relativeConfidence = ((double)(confidence - PREDICTION_CONFIDENCE_THRESHOLD)) / confidenceDistance;
+				prefetchDegree = 1 + (uint16_t)(relativeConfidence * degreeDistance);
+			}
+			
+			res.entries[i] = prefetchDegree;
+	}
+	return res;
+}
+

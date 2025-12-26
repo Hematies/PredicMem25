@@ -31,6 +31,7 @@ typedef uint64_t burst_length_in_words_t;
 typedef uint64_t pb_index_t;
 typedef uint64_t pb_tag_t;
 typedef uint64_t cfs_queue_length_t;
+typedef uint64_t prefetch_degree_t;
 #else
 typedef ap_uint<AXI_DATA_SIZE_BITS> axi_data_t;
 typedef ap_uint<NUM_ADDRESS_BITS> address_t;
@@ -59,6 +60,7 @@ typedef ap_uint<AXI_MAX_BLOCK_BURST_LENGTH_LOG2 + BLOCK_SIZE_LOG2 - WORD_BYTES_S
 typedef ap_uint<PB_NUM_SETS_LOG2> pb_index_t;  
 typedef ap_uint<PB_NUM_TAG_BITS> pb_tag_t;
 typedef ap_uint<CFS_QUEUE_LENGTH_INCLUDING_NULL_LOG2> cfs_queue_length_t;
+typedef ap_uint<PREFETCHING_DEGREE_LOG2> prefetch_degree_t;
 #endif
 
 

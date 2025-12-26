@@ -3,15 +3,15 @@
 
 #define GASP_TYPES address_t, ib_index_t, ib_way_t, ib_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t, \
 	 dic_index_t, delta_t,  dic_confidence_t, \
-	 svm_weight_t, svm_distance_t
+	 svm_weight_t, svm_distance_t, prefetch_degree_t
 
 #define SGASP_TYPES region_address_t, ib_index_t, ib_way_t, ib_region_tag_t, block_address_t, class_t, ib_confidence_t, ib_lru_t, \
 	 dic_index_t, delta_t, dic_confidence_t, \
-	 svm_weight_t, svm_distance_t
+	 svm_weight_t, svm_distance_t, prefetch_degree_t
 
 template<typename address_t, typename ib_index_t, typename ib_way_t, typename ib_tag_t, typename block_address_t, typename class_t, typename ib_confidence_t, typename ib_lru_t,
 	typename dic_index_t, typename delta_t, typename dic_confidence_t,
-	typename svm_weight_t, typename svm_distance_t>
+	typename svm_weight_t, typename svm_distance_t, typename prefetch_degree_t>
 class GASP {
 protected:
 
@@ -225,7 +225,7 @@ public:
 		#pragma HLS DEPENDENCE false variable=confidenceForwardingBuffer
 
 		#pragma HLS PIPELINE
-		int prefetchDegree = 1;
+		prefetch_degree_t prefetchDegree = 1;
 		
 		if(!nop) {
 			// 2) If the predictedAddress is equal to the current, increment the confidence (decrease otherwise):
@@ -374,9 +374,15 @@ public:
 
 		static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 	#pragma HLS DEPENDENCE false variable=svm
+	
+		static RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t> recursivePrefetchLookupTable = 
+			initRecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t>();
+	#pragma HLS ARRAY_PARTITION variable=recursivePrefetchLookupTable.entries complete
+	#pragma HLS DEPENDENCE false variable=recursivePrefetchLookupTable
+
 
 	#pragma HLS PIPELINE
-		int prefetchDegree = 1;
+		prefetch_degree_t prefetchDegree = 1;
 
 		// 1) Input buffer is read:
 		bool isInputBufferHit;
@@ -579,6 +585,7 @@ public:
 			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
 			performPrefetch = isInputBufferHit && confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
+			prefetchDegree = recursivePrefetchLookupTable[confidence];
 
 			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){

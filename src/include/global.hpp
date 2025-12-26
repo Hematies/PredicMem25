@@ -16,6 +16,7 @@
 #include "svm.hpp"
 #include "stride_table.hpp"
 #include "cache_fetch_sniffer.hpp"
+#include "recursive_prefetch.hpp"
 
 #include "init_data.hpp"
 
