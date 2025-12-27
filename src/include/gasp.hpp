@@ -155,7 +155,7 @@ public:
 					// on the calculated prefetching degree (>= 1):
 					svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, 
 						sequence, updatedSequence[SEQUENCE_LENGTH - 1], predictedClasses,
-						1);
+						MAX_PREFETCHING_DEGREE);
 
 				}
 				// If there has been a miss, prepare a blank new input buffer entry:
@@ -479,7 +479,7 @@ public:
 				// 4) Predict-then-fit with the SVM applying recursive/successive prefetching
 				// on the calculated prefetching degree (>= 1):
 				svm.recursivelyPredictAndFit(svmMatrix.weightMatrices, svmMatrixCopy.weightMatrices, svmMatrix.intercepts, svmMatrixCopy.intercepts, sequence, dictionaryClass, predictedClasses,
-						1);
+						MAX_PREFETCHING_DEGREE);
 			}
 			// If there has been a miss, prepare a blank new input buffer entry:
 			else {
