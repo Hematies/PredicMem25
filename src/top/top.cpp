@@ -171,6 +171,51 @@ void SGASPWithAXI(address_t inputAddress,
 
 }
 
+void SGASPWithAXI_03_01(address_t inputAddress,
+		axi_data_t *readPort,
+		axi_data_t& prefetchedData,
+		bool nop
+		){
+#pragma HLS INTERFACE mode=ap_ctrl_none port=return
+#pragma HLS TOP name=SGASP_IP_03_01
+// #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
+	#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+
+	#pragma HLS PIPELINE
+	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
+	/*
+	PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t> prefetchBuffer = PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t>();
+	static PrefetchBufferEntriesMatrix<pb_tag_t> prefetchBufferEntriesMatrix =
+		PrefetchBufferEntriesMatrix<pb_tag_t>();
+	#pragma HLS ARRAY_PARTITION variable=prefetchBufferEntriesMatrix.entries complete
+	#pragma HLS DEPENDENCE array false variable=prefetchBufferEntriesMatrix.entries
+	 */
+	block_address_t memoryBlockAddress, blockAddressesToPrefetch[MAX_PREFETCHING_DEGREE];
+	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
+
+	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
+
+	if(!nop){
+		gasp(memoryBlockAddress_ >> (REGION_BLOCK_SIZE_LOG2), memoryBlockAddress_, blockAddressesToPrefetch);
+
+		address_t addressToPrefetch = (((address_t)blockAddressesToPrefetch[0]) << BLOCK_SIZE_LOG2);
+
+		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
+				(addressToPrefetch != 0);
+
+		/*
+		if(performPrefetch){
+			prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
+		}
+		*/
+		if(performPrefetch)
+			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+	}
+
+}
+
+
 void RecursiveSGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
 		axi_data_t& prefetchedData,
