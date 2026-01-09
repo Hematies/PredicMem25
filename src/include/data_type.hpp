@@ -60,7 +60,12 @@ typedef ap_uint<AXI_MAX_BLOCK_BURST_LENGTH_LOG2 + BLOCK_SIZE_LOG2 - WORD_BYTES_S
 typedef ap_uint<PB_NUM_SETS_LOG2> pb_index_t;  
 typedef ap_uint<PB_NUM_TAG_BITS> pb_tag_t;
 typedef ap_uint<CFS_QUEUE_LENGTH_INCLUDING_NULL_LOG2> cfs_queue_length_t;
+#if MAX_PREFETCHING_DEGREE > 1
 typedef ap_uint<PREFETCHING_DEGREE_LOG2> prefetch_degree_t;
+#else
+typedef ap_uint<1> prefetch_degree_t;
+#endif
+
 #endif
 
 

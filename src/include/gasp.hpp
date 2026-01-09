@@ -375,10 +375,12 @@ public:
 		static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 	#pragma HLS DEPENDENCE false variable=svm
 	
+#if MAX_PREFETCHING_DEGREE > 1
 		static RecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t> recursivePrefetchLookupTable = 
 			initRecursivePrefetchLookupTable<ib_confidence_t, prefetch_degree_t>();
 	#pragma HLS ARRAY_PARTITION variable=recursivePrefetchLookupTable.entries complete
 	#pragma HLS DEPENDENCE false variable=recursivePrefetchLookupTable
+#endif
 
 
 	#pragma HLS PIPELINE
@@ -585,7 +587,9 @@ public:
 			confidenceBuffer.write(confidenceBufferEntriesMatrix.entries, index, way, confidenceBufferEntry);
 
 			performPrefetch = isInputBufferHit && confidence >= PREDICTION_CONFIDENCE_THRESHOLD;
+#if MAX_PREFETCHING_DEGREE > 1
 			prefetchDegree = recursivePrefetchLookupTable.entries[confidence];
+#endif
 
 			// 7) Select the predicted address to prefetch:
 			if(performPrefetch){
