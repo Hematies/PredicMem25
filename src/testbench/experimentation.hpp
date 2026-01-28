@@ -34,6 +34,8 @@ enum ExperimentType {
   BSGASP_SOFT_VALIDATION
 }; 
 
+#define MAX_NUM_OPERATIONS 5000000
+
 
 class Experiment{
 protected:
@@ -52,8 +54,10 @@ public:
         return filePath;
     }
     int getNumOperations(){
-    	return numOperations;
+    	return numOperations <= MAX_NUM_OPERATIONS? numOperations : MAX_NUM_OPERATIONS;
     }
+
+    string getResults();
 };
 
 struct InputBufferValidationInput{
@@ -114,6 +118,10 @@ public:
     	return allChecksAreCorrect;
     }
 
+    string getResults(){
+    	return "";
+    }
+
 };
 
 class InputBufferSoftValidation : public InputBufferValidation{
@@ -155,10 +163,20 @@ public:
 		double targetHitRate = ((double)numTargetHits) / numReads;
 		bool res = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
 
-		std::cout << "Input buffer hit rate: " << std::to_string(hitRate) << std::endl;
-		std::cout << "Target input buffer hit rate: " << std::to_string(targetHitRate) << std::endl;
-		std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << this->getResults();
 
+		return res;
+	}
+
+	string getResults(){
+		string res = "";
+		double hitRate = ((double)numHits) / numReads;
+		double targetHitRate = ((double)numTargetHits) / numReads;
+		bool passed = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
+
+		res += "Input buffer hit rate: " + std::to_string(hitRate) + "\n";
+		res += "Target input buffer hit rate: " + std::to_string(targetHitRate) + "\n";
+		res += "Test passed? " + std::to_string(passed) + "\n";
 		return res;
 	}
 
@@ -220,6 +238,10 @@ public:
 		return allChecksAreCorrect;
 	}
 
+	string getResults(){
+		return "";
+	}
+
     void readTraceFile(string filePath);
 };
 
@@ -262,12 +284,24 @@ public:
 
 		bool res = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
 
-		std::cout << "Dictionary hit rate: " << std::to_string(hitRate) << std::endl;
-		std::cout << "Target dictionary hit rate: " << std::to_string(targetHitRate) << std::endl;
-		std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << getResults();
 
 		return res;
 
+	}
+
+	string getResults(){
+		string res = "";
+		double hitRate = ((double)numHits) / numWrites;
+		double targetHitRate = ((double)numTargetHits) / numWrites;
+
+		bool passed = hitRate > targetHitRate - this->hitRateDifferenceThreshold;
+
+		res += "Dictionary hit rate: " + std::to_string(hitRate) + "\n";
+		res += "Target dictionary hit rate: " + std::to_string(targetHitRate) + "\n";
+		res += "Test passed? " + std::to_string(passed) + "\n";
+
+		return res;
 	}
 
 };
@@ -327,6 +361,10 @@ public:
 		return allChecksAreCorrect;
 	}
 
+	string getResults(){
+		return "";
+	}
+
     void readTraceFile(string filePath);
 };
 
@@ -383,12 +421,24 @@ public:
 
 		bool res = matchRate > this->matchingThreshold;
 
-		std::cout << "SVM results match rate: " << std::to_string(matchRate) << std::endl;
-		std::cout << "SVM results precision difference: " << std::to_string(precisionDifference) << std::endl;
-		std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << getResults();
 
 		return res;
 
+	}
+
+	string getResults(){
+		string res = "";
+		double matchRate = ((double) numMatches) / numPredictions;
+		double precisionDifference = ((double)numHits - (double)numTargetHits) / numPredictions;
+
+		bool passed = matchRate > this->matchingThreshold;
+
+		res += "SVM results match rate: " + std::to_string(matchRate) + "\n";
+		res += "SVM results precision difference: " + std::to_string(precisionDifference) + "\n";
+		res += "Test passed? " + std::to_string(passed) + "\n";
+
+		return res;
 	}
 
 };
@@ -463,11 +513,22 @@ public:
 
 		bool res = matchRate > this->matchingThreshold;
 
-		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
-		std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << getResults();
 
 		return res;
 
+	}
+
+	string getResults(){
+		string res = "";
+		double matchRate = ((double) numMatches) / numPrefetches;
+
+		bool passed = matchRate > this->matchingThreshold;
+
+		res += "Prefetching results match rate: " + std::to_string(matchRate) + "\n";
+		res += "Test passed? " + std::to_string(passed) + "\n";
+
+		return res;
 	}
 
     void readTraceFile(string filePath);
@@ -578,13 +639,27 @@ public:
 
 		bool res = matchRate > this->matchingThreshold && precision > this->precisionThreshold;
 
-		std::cout << "Prefetching results match rate: " << std::to_string(matchRate) << std::endl;
-		std::cout << "Burst prediction results precision: " << std::to_string(precision) << std::endl;
-		std::cout << "Test passed? " << std::to_string(res) << std::endl;
+		std::cout << getResults();
 
 		return res;
 
 	}
+
+	string getResults(){
+		string res = "";
+		double matchRate = ((double) numMatches) / numPrefetches;
+
+		double precision = ((double) numHits) / numPredictions;
+
+		bool passed = matchRate > this->matchingThreshold && precision > this->precisionThreshold;
+
+		res += "Prefetching results match rate: " + std::to_string(matchRate) + "\n";
+		res += "Burst prediction results precision: " + std::to_string(precision) + "\n";
+		res += "Test passed? " + std::to_string(passed) + "\n";
+
+		return res;
+	}
+
 	void readTraceFile(string filePath);
 };
 
