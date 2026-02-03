@@ -232,7 +232,6 @@ void prefetchWithBSGASP(address_t inputAddress,
 	prefetch_block_burst_length_t prefetchBurstLength = 0;
 	bool performPrefetch = false;
 
-
 	block_address_t prefetchAddress_, memoryBlockAddress = inputAddress >> BLOCK_SIZE_LOG2;
 	region_address_t regionAddress = memoryBlockAddress >> (REGION_BLOCK_SIZE_LOG2);
 	block_burst_length_t blockBurstLength_ = (((burst_size_and_length_t)(burstLength + 1)) << burstSize) >> BLOCK_SIZE_LOG2;
