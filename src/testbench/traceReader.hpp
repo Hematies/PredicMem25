@@ -85,6 +85,9 @@ public:
 		unsigned long res = 0;
 		while (getline(file, line))
 		{
+			if (!line.empty() && line.back() == '\r') {
+				line.pop_back();
+			}
 			if (line.compare(endLine) == 0) {
 				break;
 			}
@@ -117,9 +120,12 @@ public:
 			file.clear();
 			while (getline(file, line))
 			{
+				if (!line.empty() && line.back() == '\r') {
+					line.pop_back();
+				}
 				if ((k >= end) || (line.compare(endLine) == 0)) break;
 				else 
-					if (k < end) {
+					if (k < end && line[0] != '#') {
 						res.push_back(line);
 					}
 				k++;

@@ -84,6 +84,7 @@ The trace types correspond with each type of validation, and are parsed followin
 - **Input fields:**
   - `<input class[0]>, ..., <input class[SEQUENCE_LENGTH - 1]>` (input vector)
   - `target class` (target class to learn)
+  - `clock cycle`
 
 - **Target fields:**
   - `output class`(predicted, output class)
@@ -144,6 +145,10 @@ The `main.cpp` file is the main executable for running validation experiments on
 
    Additionally, the directory where the traces and the header are located has to be indicated with:
    - `--tracePath <path>` / `-t <path>`: Indicates the path of the directory containing the traces and the header.
+
+   The output given by Vitis HLS stdout is stored in `<output path>/<hardware module>Validation.txt` with the following argument:
+    - `--outputDir <output path>` / `-o <output path>`: Indicates the path of the directory containing the output files.
+
 
 2. **Experiment setup**  
    For each selected validation, loads the corresponding trace header and sets up a series of experiments using the `Experimentation` class.
