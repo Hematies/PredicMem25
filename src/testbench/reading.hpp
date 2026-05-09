@@ -77,6 +77,7 @@ void parseSVMInOutLine(string line, SVMValidationInput& input, SVMValidationOutp
         input.input[i] = (class_t) std::stoi(inputElements[i]);
     } 
     input.target = (class_t) std::stoi(inputElements[SEQUENCE_LENGTH]);
+    input.cycle = (ap_uint<64>) std::stol(inputElements[SEQUENCE_LENGTH + 1]);
 
     // Output:
     for(int i = 0; i < MAX_PREFETCHING_DEGREE; i++){

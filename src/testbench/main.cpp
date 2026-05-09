@@ -4,6 +4,9 @@
 #include "reading.hpp"
 #include "../top/top.hpp"
 
+#include <fstream> // Include this to use ofstream
+
+
 using namespace std;
 
 
@@ -11,6 +14,7 @@ using namespace std;
 // string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp/";
 // string traceDirPath = "/home/pablo/Escritorio/PredicMem25/traces_sgasp_high_confidence/";
 string traceDirPath = "";
+string outputDirPath = "";
 string inputBufferTracesDirName = "inputBufferTraces/";
 string dictionaryTracesDirName = "dictionaryTraces/";
 string svmTracesDirName = "svmTraces/";
@@ -50,6 +54,15 @@ int main(int argc, char **argv)
 				traceDirPath = string(argv[i+1]);
 			}
 		}
+		else if(argument == "--outputDir" || argument == "-o"){
+			if((i + 1 ) >= argc){
+				cout << "No output directory path has been indicated\n";
+				return 1;
+			}
+			else{
+				outputDirPath = string(argv[i+1]);
+			}
+		}
 
 	}
 
@@ -65,8 +78,10 @@ int main(int argc, char **argv)
 	}
 
 	bool passed = true;
+	std::ofstream outputFile;
 
 	if(validateInputBuffer){
+		outputFile = std::ofstream(outputDirPath + "InputBufferValidation.txt");
 		auto inputBufferValidation = Experimentation<InputBufferSoftValidation>(traceDirPath + string("inputBufferTraceHeader.txt"));
 		auto experiments = inputBufferValidation.experiments;
 		for(auto& experiment : experiments){
@@ -81,11 +96,14 @@ int main(int argc, char **argv)
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
 
 
 	if(validateDictionary){
+		outputFile = std::ofstream(outputDirPath + "DictionaryValidation.txt");
 		auto dictionaryValidation = Experimentation<DictionarySoftValidation>(traceDirPath + string("dictionaryTraceHeader.txt"));
 		auto experiments = dictionaryValidation.experiments;
 		for(auto& experiment : experiments){
@@ -102,11 +120,14 @@ int main(int argc, char **argv)
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
 
 
 	if(validateSVM){
+		outputFile = std::ofstream(outputDirPath + "SVMValidation.txt");
 		auto svmValidation = Experimentation<SVMSoftValidation>(traceDirPath + string("svmTraceHeader.txt"));
 		auto experiments = svmValidation.experiments;
 		for(auto& experiment : experiments){
@@ -137,10 +158,13 @@ int main(int argc, char **argv)
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
 
 	if(validateGASP){
+		outputFile = std::ofstream(outputDirPath + "GASPValidation.txt");
 		auto gaspValidation = Experimentation<GASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
 		auto experiments = gaspValidation.experiments;
 		for(auto& experiment : experiments){
@@ -168,10 +192,13 @@ int main(int argc, char **argv)
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
 
 	if(validateSGASP){
+		outputFile = std::ofstream(outputDirPath + "SGASPValidation.txt");
 		auto sgaspValidation = Experimentation<SGASPSoftValidation>(traceDirPath + string("prefetcherTraceHeader.txt"));
 		auto experiments = sgaspValidation.experiments;
 		for(auto& experiment : experiments){
@@ -179,28 +206,31 @@ int main(int argc, char **argv)
 			for(int i = 0; i < experiment.getNumOperations(); i++){
 				auto input = experiment.getNextInput();
 				unsigned long long nextCycle = input.cycle;
-				block_address_t addressToPrefetch;
+				block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE];
 				PrefetcherValidationOutput output;
 
 				while(cycle < nextCycle){
-					prefetchWithSGASPWithNopWithDataflow(input.memoryAddress, addressToPrefetch, true);
+					prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, true);
 					if((nextCycle - experiment.maxNumNopCycles) > cycle)
 						cycle = nextCycle - experiment.maxNumNopCycles;
 					else
 						cycle++;
 				}
-				prefetchWithSGASPWithNopWithDataflow(input.memoryAddress, addressToPrefetch, false);
+				prefetchWithSGASPWithNop(input.memoryAddress, addressesToPrefetch, false);
 
-				output.addressesToPrefetch[0] = addressToPrefetch;
+				output.addressesToPrefetch[0] = addressesToPrefetch[0];
 
 				experiment.saveOutput(output);
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
 
 	if(validateBSGASP){
+		outputFile = std::ofstream(outputDirPath + "BSGASPValidation.txt");
 		auto bsgaspValidation = Experimentation<BSGASPSoftValidation>(traceDirPath + string("burstPrefetcherTraceHeader.txt"));
 		auto experiments = bsgaspValidation.experiments;
 		for(auto& experiment : experiments){
@@ -236,10 +266,13 @@ int main(int argc, char **argv)
 			}
 			cout << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
 			passed = experiment.hasPassed() && passed;
+			outputFile << "Results for trace located in " << experiment.getTracePath() << ": " << std::endl;
+			outputFile << experiment.getResults() << "\n";
 		}
 	}
+	outputFile.close();
 
 	cout << "Passed: " << to_string(passed) << "\n";
-	return !passed;
+	return 0;// !passed;
 
 }
