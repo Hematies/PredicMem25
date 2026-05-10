@@ -2,7 +2,7 @@
 
 #include "config.hpp"
 #include "const_expr.hpp"
-#include "ap_int.h"
+#include "data_type.hpp"
 
 // ============================================================================
 // SPP Data Types
@@ -34,6 +34,12 @@ typedef uint64_t spp_page_t;
 typedef uint64_t spp_sig_delta_t;
 typedef uint64_t spp_prefetch_confidence_t;
 typedef uint64_t spp_accuracy_t;
+typedef uint64_t spp_st_set_index_t;
+typedef uint64_t spp_st_way_index_t;
+typedef uint64_t spp_pt_set_index_t;
+typedef uint64_t spp_pt_way_index_t;
+typedef uint64_t spp_filter_index_t;
+typedef uint64_t spp_ghr_way_index_t;
 
 #else
 // HLS types (for synthesis)
@@ -75,6 +81,16 @@ typedef ap_uint<6> spp_ghr_offset_t;                         // Page offset for 
 typedef ap_uint<1> spp_ghr_valid_t;                     // Entry valid bit
 typedef ap_uint<6> spp_page_offset_t;                   // Cache line offset within page
 typedef ap_int<7> spp_sig_delta_t;                      // 7-bit sign-magnitude representation
+
+// ============================================================================
+// Index and Size Types
+// ============================================================================
+typedef ap_uint<bitsNeeded(SPP_ST_SET)> spp_st_set_index_t;     // ST set index
+typedef ap_uint<bitsNeeded(SPP_ST_WAY)> spp_st_way_index_t;     // ST way index
+typedef ap_uint<bitsNeeded(SPP_PT_SET)> spp_pt_set_index_t;     // PT set index
+typedef ap_uint<bitsNeeded(SPP_PT_WAY)> spp_pt_way_index_t;     // PT way index
+typedef ap_uint<bitsNeeded(SPP_FILTER_SET)> spp_filter_index_t; // Filter index
+typedef ap_uint<bitsNeeded(SPP_MAX_GHR_ENTRY)> spp_ghr_way_index_t; // GHR way index
 
 // ============================================================================
 // Output and Statistics Types

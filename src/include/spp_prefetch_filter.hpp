@@ -21,12 +21,12 @@ template<typename filter_tag_t = spp_filter_tag_t>
 class SPPPrefetchFilter {
 public:
     filter_tag_t remainder_tag[SPP_FILTER_SET];
-    ap_uint<1> valid[SPP_FILTER_SET];      // Marked as prefetched
-    ap_uint<1> useful[SPP_FILTER_SET];     // Actually used
+    spp_ghr_valid_t valid[SPP_FILTER_SET];      // Marked as prefetched
+    spp_ghr_valid_t useful[SPP_FILTER_SET];     // Actually used
 
     SPPPrefetchFilter() {
         #pragma HLS UNROLL
-        for (uint32_t i = 0; i < SPP_FILTER_SET; i++) {
+        for (spp_filter_index_t i = 0; i < SPP_FILTER_SET; i++) {
             remainder_tag[i] = 0;
             valid[i] = 0;
             useful[i] = 0;
@@ -50,15 +50,15 @@ public:
 
     // Check filter and update counters
     // Returns: true if prefetch should proceed, false to skip
-    ap_uint<1> check(spp_address_t pf_addr, SPPFilterRequest filter_request,
+    spp_ghr_valid_t check(spp_address_t pf_addr, SPPFilterRequest filter_request,
                      spp_ghr_counter_t& pf_issued,
                      spp_ghr_counter_t& pf_useful) {
         spp_block_address_t cache_line = pf_addr >> SPP_LOG2_BLOCK_SIZE;
         uint64_t hash = hash_cache_line(cache_line);
-        uint32_t quotient = (hash >> SPP_REMAINDER_BIT) & ((1 << SPP_QUOTIENT_BIT) - 1);
+        spp_filter_index_t quotient = (hash >> SPP_REMAINDER_BIT) & ((1 << SPP_QUOTIENT_BIT) - 1);
         filter_tag_t remainder = hash & ((1 << SPP_REMAINDER_BIT) - 1);
 
-        ap_uint<1> should_prefetch = 1;
+        spp_ghr_valid_t should_prefetch = 1;
 
         switch (filter_request) {
         case SPP_L2_PREFETCH:

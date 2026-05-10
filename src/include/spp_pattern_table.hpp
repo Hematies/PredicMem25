@@ -49,9 +49,9 @@ public:
     // Update pattern table with (signature, delta) pair
     // Called when we observe a delta from a previous signature
     void update_pattern(uint32_t last_sig, pt_delta_t curr_delta) {
-        uint32_t set = hash_signature(last_sig) % SPP_PT_SET;
-        uint32_t match = SPP_PT_WAY;
-        uint32_t victim_way = SPP_PT_WAY;
+        spp_pt_set_index_t set = hash_signature(last_sig) % SPP_PT_SET;
+        spp_pt_way_index_t match = SPP_PT_WAY;
+        spp_pt_way_index_t victim_way = SPP_PT_WAY;
         pt_confidence_t min_counter = SPP_C_DELTA_MAX + 1;
 
         // Search for matching delta entry
@@ -99,12 +99,12 @@ public:
     void read_pattern(uint32_t curr_sig, 
                      pt_delta_t* delta_q, 
                      pt_confidence_t* confidence_q,
-                     uint32_t& lookahead_way,
+                     spp_pt_way_index_t& lookahead_way,
                      pt_confidence_t& lookahead_conf,
                      uint32_t& pf_q_tail,
                      uint32_t& depth,
                      spp_accuracy_t global_accuracy) {
-        uint32_t set = hash_signature(curr_sig) % SPP_PT_SET;
+        spp_pt_set_index_t set = hash_signature(curr_sig) % SPP_PT_SET;
         pt_confidence_t local_conf = 0;
         pt_confidence_t pf_conf = 0;
         pt_confidence_t max_conf = 0;

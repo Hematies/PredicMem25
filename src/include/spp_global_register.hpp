@@ -30,7 +30,7 @@ public:
         global_accuracy = 0;
 
         #pragma HLS UNROLL
-        for (uint32_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
+        for (spp_ghr_way_index_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
             valid[i] = 0;
             sig[i] = 0;
             confidence[i] = 0;
@@ -66,11 +66,11 @@ public:
     void update_entry(st_sig_t pf_sig, st_confidence_t pf_confidence, 
                       spp_ghr_offset_t pf_offset, st_delta_t pf_delta) {
         st_confidence_t min_conf = 100;
-        uint32_t victim_way = SPP_MAX_GHR_ENTRY;
+        spp_ghr_way_index_t victim_way = SPP_MAX_GHR_ENTRY;
 
         // Search for matching offset or minimum confidence entry
         #pragma HLS UNROLL
-        for (uint32_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
+        for (spp_ghr_way_index_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
             // Check if offset matches - update existing entry
             if (valid[i] && (offset[i] == pf_offset)) {
                 sig[i] = pf_sig;
@@ -98,12 +98,12 @@ public:
 
     // Check if there's a matching GHR entry for given page offset
     // Returns way index if found, SPP_MAX_GHR_ENTRY if not found
-    uint32_t check_entry(spp_ghr_offset_t page_offset) {
+    spp_ghr_way_index_t check_entry(spp_ghr_offset_t page_offset) {
         st_confidence_t max_conf = 0;
-        uint32_t max_conf_way = SPP_MAX_GHR_ENTRY;
+        spp_ghr_way_index_t max_conf_way = SPP_MAX_GHR_ENTRY;
 
         #pragma HLS UNROLL
-        for (uint32_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
+        for (spp_ghr_way_index_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
             if (valid[i] && (offset[i] == page_offset) && 
                 (confidence[i] > max_conf)) {
                 max_conf = confidence[i];

@@ -15,7 +15,7 @@
 template<typename st_tag_t = spp_st_tag_t, typename st_sig_t = spp_st_sig_t, typename st_confidence_t = spp_st_confidence_t>
 class SPPSignatureTable {
 public:
-    ap_uint<1> valid[SPP_ST_SET][SPP_ST_WAY];
+    spp_ghr_valid_t valid[SPP_ST_SET][SPP_ST_WAY];
     st_tag_t tag[SPP_ST_SET][SPP_ST_WAY];
     spp_page_offset_t last_offset[SPP_ST_SET][SPP_ST_WAY];  // Last cache line offset in page
     st_sig_t sig[SPP_ST_SET][SPP_ST_WAY];            // Current signature
@@ -50,13 +50,13 @@ public:
 
     // Read and update signature based on new page access
     // Returns: last_sig (previous signature), curr_sig (new signature), delta (offset difference)
-    void read_and_update_sig(uint64_t page, spp_page_offset_t page_offset,
+    void read_and_update_sig(spp_address_t page, spp_page_offset_t page_offset,
                             st_sig_t& last_sig, st_sig_t& curr_sig, 
                             spp_pt_delta_t& delta) {
-        uint32_t set = hash_address(page) % SPP_ST_SET;
+        spp_st_set_index_t set = hash_address(page) % SPP_ST_SET;
         st_tag_t partial_page = page & SPP_ST_TAG_MASK;
-        uint32_t match = SPP_ST_WAY;
-        ap_uint<1> st_hit = 0;
+        spp_st_way_index_t match = SPP_ST_WAY;
+        spp_ghr_valid_t st_hit = 0;
 
         // Stage 1: Search for matching tag
         #pragma HLS UNROLL

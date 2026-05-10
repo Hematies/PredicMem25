@@ -42,7 +42,7 @@ public:
     // ========================================================================
     // Main prefetcher interface
     // ========================================================================
-    // Processes a cache access and generates prefetch requests
+    // Processes a cache access and generates a single prefetch request per cycle
     //
     // Input:
     //   - addr: Physical memory address
@@ -50,25 +50,22 @@ public:
     //   - useful_prefetch: Whether previous prefetch was useful (feedback)
     //
     // Output:
-    //   - prefetch_deltas: Array of cache line offsets to prefetch
-    //   - prefetch_confidences: Confidence scores for each prefetch
-    //   - num_prefetches: Number of valid prefetch requests generated
-    //   - num_prefetches_l2: Number of L2-level prefetches (high confidence)
+    //   - prefetch_deltas: Single prefetch delta (highest confidence)
+    //   - prefetch_confidences: Confidence score for the prefetch
+    //   - num_prefetches: 0 or 1 (prefetch valid or not)
+    //   - num_prefetches_l2: 0 or 1 (prefetch tier level)
 
     void process_cache_access(address_t addr,
-                             ap_uint<1> cache_hit,
-                             ap_uint<1> useful_prefetch,
+                             spp_ghr_valid_t cache_hit,
+                             spp_ghr_valid_t useful_prefetch,
                              pt_delta_t* prefetch_deltas,
                              pt_confidence_t* prefetch_confidences,
                              uint32_t& num_prefetches,
                              uint32_t& num_prefetches_l2) {
-        #pragma HLS PIPELINE
+        #pragma HLS PIPELINE II=1
         
-        // Update global accuracy
-        global_register.update_global_accuracy();
-
         // Extract page and offset information
-        uint32_t page = addr >> SPP_LOG2_PAGE_SIZE;
+        spp_address_t page = addr >> SPP_LOG2_PAGE_SIZE;
         spp_page_offset_t page_offset = (addr >> SPP_LOG2_BLOCK_SIZE) & 
                                   ((SPP_PAGE_SIZE / SPP_BLOCK_SIZE) - 1);
         
@@ -83,11 +80,6 @@ public:
         signature_table.read_and_update_sig(page, page_offset, 
                                            last_sig, curr_sig, delta);
 
-        // Also check filter for this demand request
-        global_register.global_accuracy = 
-            (global_register.pf_issued > 0) ? 
-            ((100 * global_register.pf_useful) / global_register.pf_issued) : 0;
-
         // ====================================================================
         // Stage 2: Pattern Table Update
         // ====================================================================
@@ -97,118 +89,87 @@ public:
         }
 
         // ====================================================================
-        // Stage 3: Prefetch Generation
+        // Stage 3: Global Accuracy Update
         // ====================================================================
-        // Generate prefetch candidates using lookahead
-        block_address_t base_addr = addr & ~(SPP_BLOCK_SIZE - 1);
-        uint32_t pf_queue_head = 0;
-        uint32_t pf_queue_tail = 0;
-        pt_delta_t delta_queue[SPP_MAX_PREFETCH_QUEUE];
-        pt_confidence_t confidence_queue[SPP_MAX_PREFETCH_QUEUE];
+        global_register.update_global_accuracy();
 
+        // ====================================================================
+        // Stage 4: Prefetch Generation (Single Prefetch Per Cycle)
+        // ====================================================================
+        // Generate only the highest-confidence prefetch
+        block_address_t base_addr = addr & ~(SPP_BLOCK_SIZE - 1);
+        
         num_prefetches = 0;
         num_prefetches_l2 = 0;
 
-        // Initialize first prefetch queue entry
-        confidence_queue[0] = 100;
-        pf_queue_tail = 1;
+        // Read patterns for current signature and find max confidence prefetch
+        spp_pt_set_index_t pt_set = SPPPatternTable<pt_delta_t, 
+                                                    pt_confidence_t>::hash_signature(curr_sig) % 
+                                    SPP_PT_SET;
+        
+        pt_delta_t best_delta = 0;
+        pt_confidence_t best_conf = 0;
+        spp_pt_way_index_t best_way = SPP_PT_WAY;
 
-        uint32_t lookahead_depth = 0;
-        ap_uint<1> do_lookahead = 1;
+        // Find highest confidence delta in pattern table
+        #pragma HLS UNROLL
+        for (spp_pt_way_index_t way = 0; way < SPP_PT_WAY; way++) {
+            pt_confidence_t local_conf = (pattern_table.c_sig[pt_set] > 0) ?
+                (100 * pattern_table.c_delta[pt_set][way]) / pattern_table.c_sig[pt_set] : 0;
+            
+            if (local_conf > best_conf && local_conf >= SPP_PF_THRESHOLD) {
+                best_conf = local_conf;
+                best_delta = pattern_table.delta[pt_set][way];
+                best_way = way;
+            }
+        }
 
-        // Lookahead loop - generate speculative prefetch sequences
-        while (do_lookahead && lookahead_depth < 3) {  // Max 3 lookaheads
-            uint32_t lookahead_way = SPP_PT_WAY;
-            pt_confidence_t lookahead_conf = 0;
-            uint32_t pf_q_start = pf_queue_head;
+        // If a valid prefetch was found
+        if (best_way < SPP_PT_WAY && best_conf >= SPP_PF_THRESHOLD) {
+            // Calculate prefetch address
+            block_address_t pf_addr = base_addr + 
+                                      (best_delta << SPP_LOG2_BLOCK_SIZE);
 
-            // Read patterns for current signature
-            pattern_table.read_pattern(curr_sig, 
-                                       delta_queue, 
-                                       confidence_queue,
-                                       lookahead_way,
-                                       lookahead_conf,
-                                       pf_queue_tail,
-                                       lookahead_depth,
-                                       global_register.global_accuracy);
+            // Check if within same page (page boundary protection)
+            if ((addr & ~(SPP_PAGE_SIZE - 1)) == 
+                (pf_addr & ~(SPP_PAGE_SIZE - 1))) {
+                
+                // Determine L2 vs LLC prefetch based on confidence
+                SPPFilterRequest request_type = 
+                    (best_conf >= SPP_FILL_THRESHOLD) ? 
+                    SPP_L2_PREFETCH : SPP_LLC_PREFETCH;
 
-            do_lookahead = 0;
+                // Check filter and issue if allowed
+                spp_ghr_valid_t should_prefetch = 
+                    prefetch_filter.check(pf_addr, request_type,
+                                        global_register.pf_issued,
+                                        global_register.pf_useful);
 
-            // Process all prefetches in current queue batch
-            for (uint32_t i = pf_q_start; i < pf_queue_tail && 
-                 num_prefetches < SPP_MAX_PREFETCH_QUEUE; i++) {
-                if (confidence_queue[i] >= SPP_PF_THRESHOLD) {
-                    // Calculate prefetch address
-                    block_address_t pf_addr = base_addr + 
-                                              (delta_queue[i] << SPP_LOG2_BLOCK_SIZE);
-
-                    // Check if within same page (page boundary protection)
-                    if ((addr & ~(SPP_PAGE_SIZE - 1)) == 
-                        (pf_addr & ~(SPP_PAGE_SIZE - 1))) {
-                        
-                        // Determine L2 vs LLC prefetch based on confidence
-                        SPPFilterRequest request_type = 
-                            (confidence_queue[i] >= SPP_FILL_THRESHOLD) ? 
-                            SPP_L2_PREFETCH : SPP_LLC_PREFETCH;
-
-                        // Check filter and issue if allowed
-                        ap_uint<1> should_prefetch = 
-                            prefetch_filter.check(pf_addr, request_type,
-                                                global_register.pf_issued,
-                                                global_register.pf_useful);
-
-                        if (should_prefetch) {
-                            prefetch_deltas[num_prefetches] = delta_queue[i];
-                            prefetch_confidences[num_prefetches] = confidence_queue[i];
-                            
-                            if (request_type == SPP_L2_PREFETCH) {
-                                num_prefetches_l2++;
-                                // Increment prefetch issued counter
-                                global_register.increment_pf_issued();
-                                if (global_register.pf_issued > SPP_GLOBAL_COUNTER_MAX) {
-                                    global_register.pf_issued >>= 1;
-                                    global_register.pf_useful >>= 1;
-                                }
-                            }
-                            
-                            num_prefetches++;
-                        }
-                    } else {
-                        // Cross-page prefetch - store in GHR for future learning
-                        if constexpr (SPP_GHR_ON) {
-                            ap_uint<6> pf_offset = (pf_addr >> SPP_LOG2_BLOCK_SIZE) & 0x3F;
-                            global_register.update_entry(curr_sig, 
-                                                        confidence_queue[i],
-                                                        pf_offset,
-                                                        delta_queue[i]);
+                if (should_prefetch) {
+                    prefetch_deltas[0] = best_delta;
+                    prefetch_confidences[0] = best_conf;
+                    
+                    num_prefetches = 1;
+                    
+                    if (request_type == SPP_L2_PREFETCH) {
+                        num_prefetches_l2 = 1;
+                        // Increment prefetch issued counter with saturation
+                        global_register.increment_pf_issued();
+                        if (global_register.pf_issued > SPP_GLOBAL_COUNTER_MAX) {
+                            global_register.pf_issued >>= 1;
+                            global_register.pf_useful >>= 1;
                         }
                     }
-
-                    do_lookahead = 1;
                 }
-            }
-
-            // Update base address and signature for next lookahead iteration
-            if (lookahead_way < SPP_PT_WAY) {
-                uint32_t pt_set = SPPPatternTable<pt_delta_t, 
-                                                  pt_confidence_t>::hash_signature(curr_sig) % 
-                                  SPP_PT_SET;
-                pt_delta_t lookahead_delta = pattern_table.delta[pt_set][lookahead_way];
-                
-                base_addr += (lookahead_delta << SPP_LOG2_BLOCK_SIZE);
-
-                // Update signature for next iteration
-                spp_sig_delta_t sig_delta = (lookahead_delta < 0) ? 
-                    (((-lookahead_delta) & 0x3F) | 0x40) : lookahead_delta;
-                curr_sig = ((curr_sig << SPP_SIG_SHIFT) ^ sig_delta) & SPP_SIG_MASK;
-                
-                lookahead_depth++;
             } else {
-                do_lookahead = 0;
-            }
-
-            if (!SPP_LOOKAHEAD_ON) {
-                do_lookahead = 0;
+                // Cross-page prefetch - store in GHR for future learning
+                if constexpr (SPP_GHR_ON) {
+                    spp_ghr_offset_t pf_offset = (pf_addr >> SPP_LOG2_BLOCK_SIZE) & 0x3F;
+                    global_register.update_entry(curr_sig, 
+                                                best_conf,
+                                                pf_offset,
+                                                best_delta);
+                }
             }
         }
     }
@@ -219,6 +180,7 @@ public:
     // Called when a cache line is evicted to update filter
 
     void notify_cache_evict(address_t evicted_addr) {
+        #pragma HLS INLINE
         if constexpr (SPP_FILTER_ON) {
             spp_ghr_counter_t temp_issued = global_register.pf_issued;
             spp_ghr_counter_t temp_useful = global_register.pf_useful;
@@ -236,6 +198,7 @@ public:
     // Called when demand request hits a prefetched line
 
     void notify_cache_hit(address_t hit_addr) {
+        #pragma HLS INLINE
         if constexpr (SPP_FILTER_ON) {
             spp_ghr_counter_t temp_issued = global_register.pf_issued;
             spp_ghr_counter_t temp_useful = global_register.pf_useful;
