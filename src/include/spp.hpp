@@ -140,10 +140,15 @@ public:
                     SPP_L2_PREFETCH : SPP_LLC_PREFETCH;
 
                 // Check filter and issue if allowed
+                #if SPP_FILTER_ON
                 spp_ghr_valid_t should_prefetch = 
                     prefetch_filter.check(pf_addr, request_type,
                                         global_register.pf_issued,
                                         global_register.pf_useful);
+                #else
+                spp_ghr_valid_t should_prefetch = 1;  // Always prefetch if filter is off
+                #endif
+
 
                 if (should_prefetch) {
                     prefetch_deltas[0] = best_delta;
@@ -163,13 +168,13 @@ public:
                 }
             } else {
                 // Cross-page prefetch - store in GHR for future learning
-                if constexpr (SPP_GHR_ON) {
+                #if SPP_GHR_ON
                     spp_ghr_offset_t pf_offset = (pf_addr >> SPP_LOG2_BLOCK_SIZE) & 0x3F;
                     global_register.update_entry(curr_sig, 
                                                 best_conf,
                                                 pf_offset,
                                                 best_delta);
-                }
+                #endif
             }
         }
     }
@@ -180,8 +185,8 @@ public:
     // Called when a cache line is evicted to update filter
 
     void notify_cache_evict(address_t evicted_addr) {
-        #pragma HLS INLINE
-        if constexpr (SPP_FILTER_ON) {
+        #if SPP_FILTER_ON
+            #pragma HLS INLINE
             spp_ghr_counter_t temp_issued = global_register.pf_issued;
             spp_ghr_counter_t temp_useful = global_register.pf_useful;
             
@@ -189,7 +194,7 @@ public:
                                 temp_issued, temp_useful);
             
             global_register.pf_useful = temp_useful;
-        }
+        #endif
     }
 
     // ========================================================================
@@ -198,8 +203,8 @@ public:
     // Called when demand request hits a prefetched line
 
     void notify_cache_hit(address_t hit_addr) {
-        #pragma HLS INLINE
-        if constexpr (SPP_FILTER_ON) {
+        #if SPP_FILTER_ON
+            #pragma HLS INLINE
             spp_ghr_counter_t temp_issued = global_register.pf_issued;
             spp_ghr_counter_t temp_useful = global_register.pf_useful;
             
@@ -207,6 +212,6 @@ public:
                                 temp_issued, temp_useful);
             
             global_register.pf_useful = temp_useful;
-        }
+        #endif
     }
 };
