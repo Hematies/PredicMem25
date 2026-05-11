@@ -12,6 +12,9 @@
 // - Last cache block offset within the page
 // - LRU replacement information
 
+// Forward declaration of matrix struct (defined in spp_init.hpp)
+struct SPPSignatureTableMatrix;
+
 template<typename st_tag_t = spp_st_tag_t, typename st_sig_t = spp_st_sig_t, typename st_confidence_t = spp_st_confidence_t>
 class SPPSignatureTable {
 public:
@@ -21,18 +24,8 @@ public:
     st_sig_t sig[SPP_ST_SET][SPP_ST_WAY];            // Current signature
     spp_st_lru_t lru[SPP_ST_SET][SPP_ST_WAY];        // LRU counter
 
-    SPPSignatureTable() {
-        #pragma HLS UNROLL collapse=2
-        for (uint32_t set = 0; set < SPP_ST_SET; set++) {
-            for (uint32_t way = 0; way < SPP_ST_WAY; way++) {
-                valid[set][way] = 0;
-                tag[set][way] = 0;
-                last_offset[set][way] = 0;
-                sig[set][way] = 0;
-                lru[set][way] = way;
-            }
-        }
-    }
+    // Default constructor - initialization via constexpr in caller
+    SPPSignatureTable() = default;
 
     // Hash function for address-to-set mapping (Robert Jenkins' 32-bit mix)
     static uint64_t hash_address(uint64_t key) {

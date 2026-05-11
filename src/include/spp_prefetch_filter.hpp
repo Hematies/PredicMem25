@@ -17,6 +17,9 @@ enum SPPFilterRequest {
     SPP_L2_EVICT = 3          // Cache line eviction (cleanup)
 };
 
+// Forward declaration of matrix struct (defined in spp_init.hpp)
+struct SPPPrefetchFilterMatrix;
+
 template<typename filter_tag_t = spp_filter_tag_t>
 class SPPPrefetchFilter {
 public:
@@ -24,14 +27,8 @@ public:
     spp_ghr_valid_t valid[SPP_FILTER_SET];      // Marked as prefetched
     spp_ghr_valid_t useful[SPP_FILTER_SET];     // Actually used
 
-    SPPPrefetchFilter() {
-        #pragma HLS UNROLL
-        for (spp_filter_index_t i = 0; i < SPP_FILTER_SET; i++) {
-            remainder_tag[i] = 0;
-            valid[i] = 0;
-            useful[i] = 0;
-        }
-    }
+    // Default constructor - initialization via constexpr in caller
+    SPPPrefetchFilter() = default;
 
     // Hash function
     static uint64_t hash_cache_line(uint64_t cache_line) {

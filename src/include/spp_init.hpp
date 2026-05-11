@@ -24,7 +24,7 @@ typedef SPP<spp_address_t, spp_block_address_t, spp_st_tag_t,
 
 // Signature Table storage matrix
 struct SPPSignatureTableMatrix {
-    ap_uint<1> valid[SPP_ST_SET][SPP_ST_WAY];
+    spp_ghr_valid_t valid[SPP_ST_SET][SPP_ST_WAY];
     spp_st_tag_t tag[SPP_ST_SET][SPP_ST_WAY];
     spp_page_offset_t last_offset[SPP_ST_SET][SPP_ST_WAY];
     spp_st_sig_t sig[SPP_ST_SET][SPP_ST_WAY];
@@ -41,8 +41,8 @@ struct SPPPatternTableMatrix {
 // Prefetch Filter storage matrix
 struct SPPPrefetchFilterMatrix {
     spp_filter_tag_t remainder_tag[SPP_FILTER_SET];
-    ap_uint<1> valid[SPP_FILTER_SET];
-    ap_uint<1> useful[SPP_FILTER_SET];
+    spp_ghr_valid_t valid[SPP_FILTER_SET];
+    spp_ghr_valid_t useful[SPP_FILTER_SET];
 };
 
 // Global Register storage

@@ -9,6 +9,9 @@
 // Stores information about prefetch requests that cross page boundaries
 // to bootstrap SPP learning when accessing new pages
 
+// Forward declaration of storage struct (defined in spp_init.hpp)
+struct SPPGlobalRegisterStorage;
+
 template<typename st_tag_t = spp_st_tag_t, typename st_sig_t = spp_st_sig_t, typename st_confidence_t = spp_st_confidence_t, typename st_delta_t = spp_pt_delta_t>
 class SPPGlobalRegister {
 public:
@@ -24,20 +27,8 @@ public:
     spp_ghr_offset_t offset[SPP_MAX_GHR_ENTRY];  // Page offset for matching
     st_delta_t delta[SPP_MAX_GHR_ENTRY];
 
-    SPPGlobalRegister() {
-        pf_issued = 0;
-        pf_useful = 0;
-        global_accuracy = 0;
-
-        #pragma HLS UNROLL
-        for (spp_ghr_way_index_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
-            valid[i] = 0;
-            sig[i] = 0;
-            confidence[i] = 0;
-            offset[i] = 0;
-            delta[i] = 0;
-        }
-    }
+    // Default constructor - initialization via constexpr in caller
+    SPPGlobalRegister() = default;
 
     // Update global accuracy counter
     void update_global_accuracy() {
