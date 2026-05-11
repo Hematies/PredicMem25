@@ -63,8 +63,26 @@ public:
                              uint32_t& num_prefetches,
                              uint32_t& num_prefetches_l2) {
         #pragma HLS PIPELINE II=1
+
+        // ====================================================================
+        // Static Initialization (Constexpr)
+        // ====================================================================
+        // Initialize SPP structures once using constexpr functions
+        static const SPPSignatureTableMatrix st_matrix = initSPPSignatureTable();
+        #pragma HLS ARRAY_RESHAPE variable=st_matrix.sig complete
+        #pragma HLS ARRAY_RESHAPE variable=st_matrix.tag complete
         
+        static const SPPPatternTableMatrix pt_matrix = initSPPPatternTable();
+        #pragma HLS ARRAY_PARTITION variable=pt_matrix.delta complete dim=2
+        
+        static const SPPPrefetchFilterMatrix filter_matrix = initSPPPrefetchFilter();
+        #pragma HLS ARRAY_PARTITION variable=filter_matrix.remainder_tag complete
+        
+        static const SPPGlobalRegisterStorage ghr_storage = initSPPGlobalRegister();
+        
+        // ====================================================================
         // Extract page and offset information
+        // ====================================================================
         spp_address_t page = addr >> SPP_LOG2_PAGE_SIZE;
         spp_page_offset_t page_offset = (addr >> SPP_LOG2_BLOCK_SIZE) & 
                                   ((SPP_PAGE_SIZE / SPP_BLOCK_SIZE) - 1);

@@ -13,6 +13,9 @@
 // - c_delta: confidence counter for this delta
 // - c_sig: total confidence for all deltas at this signature
 
+// Forward declaration of matrix struct (defined in spp_init.hpp)
+struct SPPPatternTableMatrix;
+
 template<typename pt_delta_t = spp_pt_delta_t, typename pt_confidence_t = spp_pt_confidence_t>
 class SPPPatternTable {
 public:
@@ -20,16 +23,8 @@ public:
     pt_confidence_t c_delta[SPP_PT_SET][SPP_PT_WAY];  // Confidence counter per delta
     pt_confidence_t c_sig[SPP_PT_SET];                 // Total confidence per signature
 
-    SPPPatternTable() {
-        #pragma HLS UNROLL collapse=2
-        for (uint32_t set = 0; set < SPP_PT_SET; set++) {
-            for (uint32_t way = 0; way < SPP_PT_WAY; way++) {
-                delta[set][way] = 0;
-                c_delta[set][way] = 0;
-            }
-            c_sig[set] = 0;
-        }
-    }
+    // Default constructor - initialization via constexpr in caller
+    SPPPatternTable() = default;
 
     // Hash function (same as used in ST)
     static uint64_t hash_signature(uint64_t sig) {
