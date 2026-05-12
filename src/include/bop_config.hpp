@@ -34,6 +34,11 @@
 #define BOP_SCORE_MAX ((1 << BOP_SCORE_BIT) - 1)
 #define BOP_COUNTER_BIT 16          // Bit width for round counter
 
+// Index bitwidth parameters (derived from dimensions)
+#define BOP_RR_INDEX_BIT 9          // Bit width for recency ring indices (256 entries)
+#define BOP_CANDIDATE_INDEX_BIT 6   // Bit width for candidate indices (44 candidates fit in 6 bits)
+#define BOP_TOP_N_INDEX_BIT 2       // Bit width for top-N index (BOP_TOP_N <= 4)
+
 // Memory layout constants
 #define BOP_LOG2_PAGE_SIZE 12       // 4KB page size
 #define BOP_LOG2_BLOCK_SIZE 6       // 64-byte cache line

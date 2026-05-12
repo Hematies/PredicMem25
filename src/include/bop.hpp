@@ -23,6 +23,27 @@
 // 6. Issue prefetches based on best offsets
 // 7. On cache fills, insert backward-predicted addresses into RR
 //
+// ============================================================================
+// Compilation Modes (controlled by BOP_SINGLE_PREFETCH in bop_config.hpp)
+// ============================================================================
+// BOP_SINGLE_PREFETCH = 1 (Default for HLS):
+//   - Issues exactly 1 prefetch per cycle (II=1)
+//   - Uses only the best-scoring offset
+//   - Optimized for single-cycle throughput in hardware
+//   - Minimal resource usage, deterministic latency
+//   - Code path: Compiled with #if BOP_SINGLE_PREFETCH
+//
+// BOP_SINGLE_PREFETCH = 0 (For multi-prefetch operation):
+//   - Issues up to BOP_TOP_N prefetches per cycle
+//   - Uses variable-length loop over best offsets
+//   - Higher throughput but may require II > 1
+//   - More resource usage in hardware
+//   - Code path: Compiled with #else (when BOP_SINGLE_PREFETCH = 0)
+//
+// To switch modes, edit bop_config.hpp:
+//   #define BOP_SINGLE_PREFETCH 1   // For single prefetch (HLS optimized)
+//   #define BOP_SINGLE_PREFETCH 0   // For multiple prefetches
+//
 // Template Parameters (with default types from bop_data_type.hpp):
 //   address_t: Full memory address type
 //   block_address_t: Cache-line address type
@@ -143,8 +164,13 @@ public:
         num_prefetches = 0;
         num_prefetches_l2 = 0;
 
-        // For single prefetch per cycle: use first (best) offset only
-        if (pattern_learner.num_best_offsets > 0 && BOP_SINGLE_PREFETCH) {
+#if BOP_SINGLE_PREFETCH
+        // ====================================================================
+        // Optimized Mode: Single Prefetch Per Cycle (II=1)
+        // ====================================================================
+        // Use only the best offset, eliminating variable-length loop
+        // This path is compiled-in when BOP_SINGLE_PREFETCH=1
+        if (pattern_learner.num_best_offsets > 0) {
             bop_offset_t pf_offset = pattern_learner.best_offsets[0];
             bop_offset_t final_offset = page_offset + pf_offset;
 
@@ -154,23 +180,30 @@ public:
                 prefetch_confidences[0] = pattern_learner.scores[0];  // Use score as confidence
                 num_prefetches = 1;
             }
-        } else if (!BOP_SINGLE_PREFETCH) {
-            // Multiple prefetches mode (not optimized for HLS)
-            #pragma HLS UNROLL FACTOR=2
-            for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
-                #pragma HLS UNROLL
-                if (i < pattern_learner.num_best_offsets) {
-                    bop_offset_t pf_offset = pattern_learner.best_offsets[i];
-                    bop_offset_t final_offset = page_offset + pf_offset;
+        }
 
-                    if (final_offset >= 0 && final_offset < BOP_PAGE_OFFSET_MASK + 1) {
-                        prefetch_deltas[num_prefetches] = final_offset - page_offset;
-                        prefetch_confidences[num_prefetches] = pattern_learner.scores[i];
-                        num_prefetches++;
-                    }
+#else
+        // ====================================================================
+        // Full Mode: Multiple Prefetches (Variable Prefetch Degree)
+        // ====================================================================
+        // Issue up to BOP_TOP_N prefetches per cycle
+        // This path is compiled-in when BOP_SINGLE_PREFETCH=0
+        #pragma HLS UNROLL FACTOR=2
+        for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
+            #pragma HLS UNROLL
+            if (i < pattern_learner.num_best_offsets && num_prefetches < BOP_PREF_DEGREE) {
+                bop_offset_t pf_offset = pattern_learner.best_offsets[i];
+                bop_offset_t final_offset = page_offset + pf_offset;
+
+                if (final_offset >= 0 && final_offset < BOP_PAGE_OFFSET_MASK + 1) {
+                    prefetch_deltas[num_prefetches] = final_offset - page_offset;
+                    prefetch_confidences[num_prefetches] = pattern_learner.scores[i];
+                    num_prefetches++;
                 }
             }
         }
+
+#endif
     }
 
     // ========================================================================
