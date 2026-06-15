@@ -171,13 +171,13 @@ void SGASPWithAXI(address_t inputAddress,
 
 }
 
-void SGASPWithAXI_03_01(address_t inputAddress,
+void SGASPWithAXI_04_02(address_t inputAddress,
 		axi_data_t *readPort,
 		axi_data_t& prefetchedData,
 		bool nop
 		){
 #pragma HLS INTERFACE mode=ap_ctrl_none port=return
-#pragma HLS TOP name=SGASP_IP_03_01
+#pragma HLS TOP name=SGASP_IP_04_02
 // #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
 	#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
 
