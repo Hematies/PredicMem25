@@ -2,6 +2,9 @@
 #include "top.hpp"
 #include <hls_stream.h>
 #include <ap_axi_sdata.h>
+#include "../include/spp.hpp"
+#include "../include/bop.hpp"
+#include "../include/mlop.hpp"
 
 
 DictionaryEntry<delta_t, dic_confidence_t> operateDictionary(dic_index_t index, delta_t delta, bool performRead, dic_index_t &resultIndex, bool &isHit){
@@ -106,6 +109,69 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 #pragma HLS PIPELINE
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 	gasp(memoryAddress >> REGION_BLOCK_SIZE_LOG2, memoryAddress, addressesToPrefetch);
+}
+
+void prefetchWithSPP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	SPP<> spp = SPP<>();
+	spp_pt_delta_t prefetch_deltas[1];
+	spp_pt_confidence_t prefetch_confidences[1];
+	uint32_t num_prefetches = 0;
+	
+	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
+	spp.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
+	
+	if (num_prefetches > 0) {
+		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
+		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
+	} else {
+		addressesToPrefetch[0] = 0;
+	}
+}
+
+void prefetchWithBOP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	BOPrefetcher<> bop = BOPrefetcher<>();
+	bop_offset_t prefetch_deltas[1];
+	bop_score_t prefetch_confidences[1];
+	uint32_t num_prefetches = 0;
+	
+	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
+	bop.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
+	
+	if (num_prefetches > 0) {
+		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
+		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
+	} else {
+		addressesToPrefetch[0] = 0;
+	}
+}
+
+void prefetchWithMLOP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		){
+#pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
+#pragma HLS PIPELINE
+	MLOPrefetcher<> mlop = MLOPrefetcher<>();
+	mlop_offset_t prefetch_deltas[1];
+	mlop_score_t prefetch_confidences[1];
+	uint32_t num_prefetches = 0;
+	
+	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
+	mlop.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
+	
+	if (num_prefetches > 0) {
+		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
+		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
+	} else {
+		addressesToPrefetch[0] = 0;
+	}
 }
 
 void SGASPWithAXI(address_t inputAddress,

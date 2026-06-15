@@ -46,22 +46,16 @@ public:
     //
     // Input:
     //   - addr: Physical memory address
-    //   - cache_hit: Whether this was a cache hit or miss
-    //   - useful_prefetch: Whether previous prefetch was useful (feedback)
     //
     // Output:
     //   - prefetch_deltas: Single prefetch delta (highest confidence)
     //   - prefetch_confidences: Confidence score for the prefetch
     //   - num_prefetches: 0 or 1 (prefetch valid or not)
-    //   - num_prefetches_l2: 0 or 1 (prefetch tier level)
 
     void process_cache_access(address_t addr,
-                             spp_ghr_valid_t cache_hit,
-                             spp_ghr_valid_t useful_prefetch,
                              pt_delta_t* prefetch_deltas,
                              pt_confidence_t* prefetch_confidences,
-                             uint32_t& num_prefetches,
-                             uint32_t& num_prefetches_l2) {
+                             uint32_t& num_prefetches) {
         #pragma HLS PIPELINE II=1
 
         // ====================================================================
@@ -118,7 +112,6 @@ public:
         block_address_t base_addr = addr & ~(SPP_BLOCK_SIZE - 1);
         
         num_prefetches = 0;
-        num_prefetches_l2 = 0;
 
         // Read patterns for current signature and find max confidence prefetch
         spp_pt_set_index_t pt_set = SPPPatternTable<pt_delta_t, 

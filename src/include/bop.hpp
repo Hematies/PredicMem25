@@ -74,19 +74,13 @@ public:
     // ========================================================================
     // Signature: Same as GASP/SPP pattern for consistency
     //   addr: Full memory address of access
-    //   cache_hit: Whether this access hit in cache (1=hit, 0=miss)
-    //   useful_prefetch: Whether any prefetch was useful (for feedback)
     //   prefetch_deltas: Output array for cache-line offsets to prefetch
     //   prefetch_confidences: Output array for confidence scores (unused for BOP)
     //   num_prefetches: Output count of prefetches to issue
-    //   num_prefetches_l2: Output count for L2 (unused)
     void process_cache_access(address_t addr,
-                             bop_valid_t cache_hit,
-                             bop_valid_t useful_prefetch,
                              bop_offset_t* prefetch_deltas,
                              score_t* prefetch_confidences,
-                             uint32_t& num_prefetches,
-                             uint32_t& num_prefetches_l2) {
+                             uint32_t& num_prefetches) {
         #pragma HLS PIPELINE II=1
 
         // ====================================================================
@@ -162,7 +156,6 @@ public:
         // ====================================================================
         // Generate prefetches based on best offsets discovered so far
         num_prefetches = 0;
-        num_prefetches_l2 = 0;
 
 #if BOP_SINGLE_PREFETCH
         // ====================================================================

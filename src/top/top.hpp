@@ -22,6 +22,18 @@ void prefetchWithSGASP(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		);
 
+void prefetchWithSPP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		);
+
+void prefetchWithBOP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		);
+
+void prefetchWithMLOP(block_address_t memoryAddress,
+		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		);
+
 void prefetchWithSGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
 		axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE]
