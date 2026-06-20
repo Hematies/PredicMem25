@@ -1,6 +1,6 @@
 #pragma once
 
-#include "spp.hpp"
+// #include "spp.hpp"
 #include "spp_config.hpp"
 #include "spp_data_type.hpp"
 
@@ -14,15 +14,18 @@
 // template parameters in SPP components
 
 // Full SPP instance type with default parameters
-typedef SPP<spp_address_t, spp_block_address_t, spp_st_tag_t,
+/*
+#define SPP<spp_address_t, spp_block_address_t, spp_st_tag_t,
             spp_st_sig_t, spp_st_confidence_t,
             spp_pt_delta_t, spp_pt_confidence_t, spp_filter_tag_t> SPPPrefetcher;
+*/
 
 // ============================================================================
 // SPP Data Structure Matrices (for memory layout in HLS)
 // ============================================================================
 
 // Signature Table storage matrix
+template<typename spp_ghr_valid_t, typename spp_st_tag_t, typename spp_page_offset_t, typename spp_st_sig_t, typename spp_st_lru_t>
 struct SPPSignatureTableMatrix {
     spp_ghr_valid_t valid[SPP_ST_SET][SPP_ST_WAY];
     spp_st_tag_t tag[SPP_ST_SET][SPP_ST_WAY];
@@ -32,6 +35,7 @@ struct SPPSignatureTableMatrix {
 };
 
 // Pattern Table storage matrix
+template<typename spp_pt_delta_t, typename spp_pt_confidence_t>
 struct SPPPatternTableMatrix {
     spp_pt_delta_t delta[SPP_PT_SET][SPP_PT_WAY];
     spp_pt_confidence_t c_delta[SPP_PT_SET][SPP_PT_WAY];
@@ -39,6 +43,7 @@ struct SPPPatternTableMatrix {
 };
 
 // Prefetch Filter storage matrix
+template<typename spp_filter_tag_t, typename spp_ghr_valid_t>
 struct SPPPrefetchFilterMatrix {
     spp_filter_tag_t remainder_tag[SPP_FILTER_SET];
     spp_ghr_valid_t valid[SPP_FILTER_SET];
@@ -46,6 +51,7 @@ struct SPPPrefetchFilterMatrix {
 };
 
 // Global Register storage
+template<typename spp_ghr_counter_t, typename spp_accuracy_t, typename spp_ghr_valid_t, typename spp_st_sig_t, typename spp_st_confidence_t, typename spp_ghr_offset_t, typename spp_pt_delta_t>
 struct SPPGlobalRegisterStorage {
     spp_ghr_counter_t pf_issued;
     spp_ghr_counter_t pf_useful;
@@ -63,8 +69,9 @@ struct SPPGlobalRegisterStorage {
 // ============================================================================
 
 // Initialize SPP Signature Table
-constexpr SPPSignatureTableMatrix initSPPSignatureTable() {
-    SPPSignatureTableMatrix res;
+template<typename spp_ghr_valid_t, typename spp_st_tag_t, typename spp_page_offset_t, typename spp_st_sig_t, typename spp_st_lru_t>
+constexpr SPPSignatureTableMatrix<spp_ghr_valid_t, spp_st_tag_t, spp_page_offset_t, spp_st_sig_t, spp_st_lru_t> initSPPSignatureTable() {
+    SPPSignatureTableMatrix<spp_ghr_valid_t, spp_st_tag_t, spp_page_offset_t, spp_st_sig_t, spp_st_lru_t> res;
     for (int set = 0; set < SPP_ST_SET; set++) {
         for (int way = 0; way < SPP_ST_WAY; way++) {
             res.valid[set][way] = 0;
@@ -78,8 +85,9 @@ constexpr SPPSignatureTableMatrix initSPPSignatureTable() {
 }
 
 // Initialize SPP Pattern Table
-constexpr SPPPatternTableMatrix initSPPPatternTable() {
-    SPPPatternTableMatrix res;
+template<typename spp_pt_delta_t, typename spp_pt_confidence_t>
+constexpr SPPPatternTableMatrix<spp_pt_delta_t, spp_pt_confidence_t> initSPPPatternTable() {
+    SPPPatternTableMatrix<spp_pt_delta_t, spp_pt_confidence_t> res;
     for (int set = 0; set < SPP_PT_SET; set++) {
         for (int way = 0; way < SPP_PT_WAY; way++) {
             res.delta[set][way] = 0;
@@ -91,8 +99,9 @@ constexpr SPPPatternTableMatrix initSPPPatternTable() {
 }
 
 // Initialize SPP Prefetch Filter
-constexpr SPPPrefetchFilterMatrix initSPPPrefetchFilter() {
-    SPPPrefetchFilterMatrix res;
+template<typename spp_filter_tag_t, typename spp_ghr_valid_t>
+constexpr SPPPrefetchFilterMatrix<spp_filter_tag_t, spp_ghr_valid_t> initSPPPrefetchFilter() {
+    SPPPrefetchFilterMatrix<spp_filter_tag_t, spp_ghr_valid_t> res;
     for (int set = 0; set < SPP_FILTER_SET; set++) {
         res.remainder_tag[set] = 0;
         res.valid[set] = 0;
@@ -102,8 +111,9 @@ constexpr SPPPrefetchFilterMatrix initSPPPrefetchFilter() {
 }
 
 // Initialize SPP Global Register
-constexpr SPPGlobalRegisterStorage initSPPGlobalRegister() {
-    SPPGlobalRegisterStorage res;
+template<typename spp_ghr_counter_t, typename spp_accuracy_t, typename spp_ghr_valid_t, typename spp_st_sig_t, typename spp_st_confidence_t, typename spp_ghr_offset_t, typename spp_pt_delta_t>
+constexpr SPPGlobalRegisterStorage<spp_ghr_counter_t, spp_accuracy_t, spp_ghr_valid_t, spp_st_sig_t, spp_st_confidence_t, spp_ghr_offset_t, spp_pt_delta_t> initSPPGlobalRegister() {
+    SPPGlobalRegisterStorage<spp_ghr_counter_t, spp_accuracy_t, spp_ghr_valid_t, spp_st_sig_t, spp_st_confidence_t, spp_ghr_offset_t, spp_pt_delta_t> res;
     res.pf_issued = 0;
     res.pf_useful = 0;
     res.global_accuracy = 0;
@@ -121,7 +131,9 @@ constexpr SPPGlobalRegisterStorage initSPPGlobalRegister() {
 // ============================================================================
 // SPP Prefetch Output Structure
 // ============================================================================
-
+// Applying the template pattern here as well for consistency,
+// in case it needs static instantiation.
+template<typename spp_pt_delta_t, typename spp_pt_confidence_t>
 struct SPPPrefetchOutput {
     spp_pt_delta_t deltas[SPP_MAX_PREFETCH_QUEUE];
     spp_pt_confidence_t confidences[SPP_MAX_PREFETCH_QUEUE];
@@ -133,20 +145,20 @@ struct SPPPrefetchOutput {
 // ============================================================================
 // Static Initialization Helpers
 // ============================================================================
-// Usage example for static initialization in HLS:
+// Usage example for static initialization in HLS (now requires template args):
 //
-// static SPPSignatureTableMatrix sppSignatureTableMatrix = 
-//     initSPPSignatureTable();
+// static const auto sppSignatureTableMatrix =
+//      initSPPSignatureTable<spp_ghr_valid_t, spp_st_tag_t, spp_page_offset_t, spp_st_sig_t, spp_st_lru_t>();
 // #pragma HLS ARRAY_RESHAPE variable=sppSignatureTableMatrix.sig complete
 // #pragma HLS ARRAY_RESHAPE variable=sppSignatureTableMatrix.tag complete
 //
-// static SPPPatternTableMatrix sppPatternTableMatrix = 
-//     initSPPPatternTable();
+// static const auto sppPatternTableMatrix =
+//      initSPPPatternTable<spp_pt_delta_t, spp_pt_confidence_t>();
 // #pragma HLS ARRAY_PARTITION variable=sppPatternTableMatrix.delta complete
 //
-// static SPPPrefetchFilterMatrix sppPrefetchFilterMatrix = 
-//     initSPPPrefetchFilter();
+// static const auto sppPrefetchFilterMatrix =
+//      initSPPPrefetchFilter<spp_filter_tag_t, spp_ghr_valid_t>();
 // #pragma HLS ARRAY_PARTITION variable=sppPrefetchFilterMatrix.remainder_tag complete
 //
-// static SPPGlobalRegisterStorage sppGlobalRegisterStorage = 
-//     initSPPGlobalRegister();
+// static const auto sppGlobalRegisterStorage =
+//      initSPPGlobalRegister<spp_ghr_counter_t, spp_accuracy_t, spp_ghr_valid_t, spp_st_sig_t, spp_st_confidence_t, spp_ghr_offset_t, spp_pt_delta_t>();

@@ -44,10 +44,10 @@
 #define SPP_MAX_GHR_ENTRY 8
 
 // HLS-specific buffer sizes
-#define SPP_MAX_PREFETCH_QUEUE 64;
+#define SPP_MAX_PREFETCH_QUEUE 64
 
 // Memory layout constants
 #define SPP_LOG2_PAGE_SIZE 12
 #define SPP_PAGE_SIZE (1 << SPP_LOG2_PAGE_SIZE)
 #define SPP_LOG2_BLOCK_SIZE BLOCK_SIZE_LOG2
-#define SPP_BLOCK_SIZE BLOCK_SIZE;
+#define SPP_BLOCK_SIZE BLOCK_SIZE

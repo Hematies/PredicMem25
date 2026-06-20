@@ -14,7 +14,7 @@
 // - c_sig: total confidence for all deltas at this signature
 
 // Forward declaration of matrix struct (defined in spp_init.hpp)
-struct SPPPatternTableMatrix;
+// struct SPPPatternTableMatrix;
 
 template<typename pt_delta_t = spp_pt_delta_t, typename pt_confidence_t = spp_pt_confidence_t>
 class SPPPatternTable {

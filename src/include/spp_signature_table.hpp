@@ -13,16 +13,25 @@
 // - LRU replacement information
 
 // Forward declaration of matrix struct (defined in spp_init.hpp)
-struct SPPSignatureTableMatrix;
+// struct SPPSignatureTableMatrix;
 
 template<typename st_tag_t = spp_st_tag_t, typename st_sig_t = spp_st_sig_t, typename st_confidence_t = spp_st_confidence_t>
 class SPPSignatureTable {
 public:
-    spp_ghr_valid_t valid[SPP_ST_SET][SPP_ST_WAY];
-    st_tag_t tag[SPP_ST_SET][SPP_ST_WAY];
-    spp_page_offset_t last_offset[SPP_ST_SET][SPP_ST_WAY];  // Last cache line offset in page
-    st_sig_t sig[SPP_ST_SET][SPP_ST_WAY];            // Current signature
-    spp_st_lru_t lru[SPP_ST_SET][SPP_ST_WAY];        // LRU counter
+	spp_ghr_valid_t valid[SPP_ST_SET][SPP_ST_WAY];
+	    //#pragma HLS ARRAY_PARTITION variable=valid complete dim=2
+
+	    st_tag_t tag[SPP_ST_SET][SPP_ST_WAY];
+	    //#pragma HLS ARRAY_PARTITION variable=tag complete dim=2
+
+	    spp_page_offset_t last_offset[SPP_ST_SET][SPP_ST_WAY];
+	    //#pragma HLS ARRAY_PARTITION variable=last_offset complete dim=2
+
+	    st_sig_t sig[SPP_ST_SET][SPP_ST_WAY];
+	    //#pragma HLS ARRAY_PARTITION variable=sig complete dim=2
+
+	    spp_st_lru_t lru[SPP_ST_SET][SPP_ST_WAY];
+	    // #pragma HLS ARRAY_PARTITION variable=lru complete dim=2
 
     // Default constructor - initialization via constexpr in caller
     SPPSignatureTable() = default;
@@ -46,6 +55,17 @@ public:
     void read_and_update_sig(spp_address_t page, spp_page_offset_t page_offset,
                             st_sig_t& last_sig, st_sig_t& curr_sig, 
                             spp_pt_delta_t& delta) {
+
+    	    #pragma HLS ARRAY_PARTITION variable=valid complete dim=2
+
+    	    #pragma HLS ARRAY_PARTITION variable=tag complete dim=2
+
+    	    #pragma HLS ARRAY_PARTITION variable=last_offset complete dim=2
+
+    	    #pragma HLS ARRAY_PARTITION variable=sig complete dim=2
+
+    	    #pragma HLS ARRAY_PARTITION variable=lru complete dim=2
+
         spp_st_set_index_t set = hash_address(page) % SPP_ST_SET;
         st_tag_t partial_page = page & SPP_ST_TAG_MASK;
         spp_st_way_index_t match = SPP_ST_WAY;
@@ -68,7 +88,7 @@ public:
             if (delta != 0) {
                 // Generate signature delta with 7-bit sign magnitude representation
                 spp_sig_delta_t sig_delta = (delta < 0) ? 
-                    (((-delta) & 0x3F) | 0x40) : delta;
+                    (spp_sig_delta_t)(((-delta) & 0x3F) | 0x40) : delta;
                 
                 sig[set][match] = ((last_sig << SPP_SIG_SHIFT) ^ sig_delta) & SPP_SIG_MASK;
             }

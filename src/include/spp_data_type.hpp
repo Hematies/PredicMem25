@@ -62,7 +62,7 @@ typedef ap_uint<8> spp_st_lru_t;                        // LRU counter (max 256 
 // Pattern Table (PT) Types
 // ============================================================================
 typedef ap_int<SPP_SIG_DELTA_BIT> spp_pt_delta_t;       // Signed delta (7-bit sign-magnitude)
-typedef ap_uint<SPP_C_DELTA_BIT> spp_pt_confidence_t;   // Delta confidence counter
+typedef ap_uint<32> spp_pt_confidence_t;   // Delta confidence counter
 
 // ============================================================================
 // Prefetch Filter Types

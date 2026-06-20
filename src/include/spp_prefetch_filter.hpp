@@ -18,7 +18,7 @@ enum SPPFilterRequest {
 };
 
 // Forward declaration of matrix struct (defined in spp_init.hpp)
-struct SPPPrefetchFilterMatrix;
+// struct SPPPrefetchFilterMatrix;
 
 template<typename filter_tag_t = spp_filter_tag_t>
 class SPPPrefetchFilter {
