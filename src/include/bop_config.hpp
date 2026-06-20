@@ -19,7 +19,7 @@
 #define BOP_RR_ADDR_BIT 32          // Address width for RR entries
 
 // Pattern learning parameters
-#define BOP_NUM_CANDIDATES 44       // Number of offset candidates to test
+#define BOP_NUM_CANDIDATES 46       // Number of offset candidates to test
 #define BOP_MAX_ROUNDS 100          // Max accesses before phase ends
 #define BOP_MAX_SCORE 31            // Max score before phase ends
 #define BOP_TOP_N 1                 // Number of best offsets to keep (prefetch degree)

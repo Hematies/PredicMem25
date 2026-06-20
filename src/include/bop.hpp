@@ -59,13 +59,12 @@ template <typename address_t = bop_address_t,
           typename score_t = bop_score_t,
           typename candidate_index_t = bop_candidate_index_t>
 class BOPrefetcher {
-private:
+public: // <-- Asegurado public para poder aplicar pragmas a los miembros
     // Component instances
     BOPRecencyRing<rr_entry_t> recency_ring;
     BOPPatternLearner<candidate_t, score_t, candidate_index_t> pattern_learner;
     BOPPrefetchBuffer<address_t> prefetch_buffer;
 
-public:
     // Constructor: trivial initialization
     BOPrefetcher() = default;
 
@@ -81,22 +80,28 @@ public:
                              bop_offset_t* prefetch_deltas,
                              score_t* prefetch_confidences,
                              uint32_t& num_prefetches) {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+
+        // ====================================================================
+        // HW Object Array Partitioning
+        // ====================================================================
+        // Force array partitioning on the ACTUAL hardware instances, not just
+        // the static initialization matrices, to prevent II violations during reset.
+        #pragma HLS ARRAY_PARTITION variable=pattern_learner.scores complete
+        #pragma HLS ARRAY_PARTITION variable=pattern_learner.best_offsets complete
 
         // ====================================================================
         // Static Initialization (Constexpr - Compile-time)
         // ====================================================================
         // Initialize BOP structures once using constexpr functions
-        static const BOPRecencyRingMatrix rr_matrix = initBOPRecencyRing();
-        #pragma HLS ARRAY_RESHAPE variable=rr_matrix.entries cyclic=16
+        static const BOPRecencyRingMatrix<bop_rr_entry_t, bop_rr_index_t> rr_matrix = initBOPRecencyRing<bop_rr_entry_t, bop_rr_index_t>();
 
-        static const BOPPatternLearnerMatrix pl_matrix = initBOPPatternLearner();
-        #pragma HLS ARRAY_PARTITION variable=pl_matrix.scores complete
+        static const BOPPatternLearnerMatrix<bop_score_t, bop_candidate_loop_t, bop_counter_t, bop_candidate_t> pl_matrix =
+                initBOPPatternLearner<bop_score_t, bop_candidate_loop_t, bop_counter_t, bop_candidate_t>();
 
-        static const BOPPrefetchBufferMatrix pb_matrix = initBOPPrefetchBuffer();
-        #pragma HLS ARRAY_PARTITION variable=pb_matrix.buffer cyclic=4
+        static const BOPPrefetchBufferMatrix<bop_address_t, bop_rr_index_t> pb_matrix = initBOPPrefetchBuffer<bop_address_t, bop_rr_index_t>();
 
-        static const BOPCandidateOffsets candidates = initBOPCandidateOffsets();
+        static const BOPCandidateOffsets<bop_candidate_t> candidates = initBOPCandidateOffsets<bop_candidate_t>();
         #pragma HLS ARRAY_PARTITION variable=candidates.values complete
 
         // ====================================================================
@@ -126,13 +131,11 @@ public:
         recency_ring.insert_entry(block_addr);
 
         // ====================================================================
-        // Stage 3: Advance to Next Candidate
+        // Stage 3 & 4: Phase Transition and Advance (Mutually Exclusive)
         // ====================================================================
-        pattern_learner.next_candidate();
-
-        // ====================================================================
-        // Stage 4: Check for Phase Transition
-        // ====================================================================
+        // We check phase_end first. If the phase ends, we reset (which resets
+        // the candidate_ptr to 0). If it hasn't ended, we move to the next.
+        // This entirely eliminates the double-write (WAW) dependency.
         bop_valid_t phase_end = pattern_learner.check_phase_end();
 
         if (phase_end) {
@@ -143,12 +146,14 @@ public:
             // Map indices to actual offset values
             #pragma HLS UNROLL
             for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
-                #pragma HLS UNROLL
                 pattern_learner.best_offsets[i] = candidates.values[best_indices[i]];
             }
 
             // Reset for next learning phase
             pattern_learner.reset_phase();
+        } else {
+            // Only advance if phase has not ended
+            pattern_learner.next_candidate();
         }
 
         // ====================================================================
@@ -204,6 +209,7 @@ public:
     // ========================================================================
     // Insert backward-predicted addresses into recency ring
     void notify_cache_fill(address_t filled_addr) {
+        /*
         #pragma HLS PIPELINE II=1
 
         static const BOPCandidateOffsets candidates = initBOPCandidateOffsets();
@@ -221,6 +227,7 @@ public:
                 recency_ring.insert_entry(pred_addr);
             }
         }
+        */
     }
 
     // ========================================================================

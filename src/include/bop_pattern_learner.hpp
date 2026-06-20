@@ -40,7 +40,8 @@ public:
     // ========================================================================
     // Called when candidate offset matches in recency ring
     void increment_score() {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         if (scores[candidate_ptr] < BOP_SCORE_MAX) {
             scores[candidate_ptr] = scores[candidate_ptr] + 1;
@@ -52,7 +53,8 @@ public:
     // ========================================================================
     // Cycles through candidates in round-robin fashion, increments round counter
     void next_candidate() {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         candidate_ptr = (candidate_ptr + 1) % BOP_NUM_CANDIDATES;
         round_counter = round_counter + 1;
@@ -63,13 +65,12 @@ public:
     // ========================================================================
     // Returns true if round counter exceeded or max score reached
     bop_valid_t check_phase_end() {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         bop_valid_t end_by_rounds = (round_counter >= BOP_MAX_ROUNDS) ? 1 : 0;
         bop_valid_t end_by_score = 0;
 
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL FACTOR=8
         for (bop_candidate_loop_t i = 0; i < BOP_NUM_CANDIDATES; i++) {
             #pragma HLS UNROLL
             if (scores[i] >= BOP_MAX_SCORE) {
@@ -86,14 +87,13 @@ public:
     // Uses heap-like selection to find the N best-performing offsets
     // Requires external storage of candidate values to map indices to offsets
     void select_best_offsets_indices(candidate_index_t best_indices[BOP_TOP_N]) {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         // For BOP_TOP_N=1, find the single best offset
         score_t max_score = 0;
         candidate_index_t max_idx = 0;
 
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL FACTOR=8
         for (bop_candidate_loop_t i = 0; i < BOP_NUM_CANDIDATES; i++) {
             #pragma HLS UNROLL
             if (scores[i] >= max_score) {
@@ -110,8 +110,8 @@ public:
     // reset_phase: Clear scores and counters for next learning phase
     // ========================================================================
     void reset_phase() {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL FACTOR=16
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         for (bop_candidate_loop_t i = 0; i < BOP_NUM_CANDIDATES; i++) {
             #pragma HLS UNROLL
@@ -126,7 +126,8 @@ public:
     // clear: Reset all learner state
     // ========================================================================
     void clear() {
-        #pragma HLS PIPELINE II=1
+        #pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=scores complete 
 
         reset_phase();
         #pragma HLS UNROLL FACTOR=4

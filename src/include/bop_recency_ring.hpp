@@ -33,8 +33,11 @@ public:
     // Returns true if the address is found, false otherwise
     // Time Complexity: O(BOP_RR_SIZE)
     bop_valid_t search_entry(rr_entry_t addr) {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL FACTOR=16
+        // #pragma HLS PIPELINE II=1
+        // #pragma HLS UNROLL FACTOR=16
+		#pragma HLS INLINE
+
+        #pragma HLS ARRAY_PARTITION variable=entries complete 
 
         bop_valid_t found = 0;
         for (bop_rr_index_loop_t i = 0; i < BOP_RR_SIZE; i++) {
@@ -51,7 +54,9 @@ public:
     // ========================================================================
     // Inserts address at current head, wraps around after reaching end
     void insert_entry(rr_entry_t addr) {
-        #pragma HLS PIPELINE II=1
+        // #pragma HLS PIPELINE II=1
+		#pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=entries complete 
 
         entries[head] = addr;
         head = (head + 1) % BOP_RR_SIZE;
@@ -61,8 +66,10 @@ public:
     // clear: Reset recency ring
     // ========================================================================
     void clear() {
-        #pragma HLS PIPELINE II=1
-        #pragma HLS UNROLL FACTOR=32
+        // #pragma HLS PIPELINE II=1
+        // #pragma HLS UNROLL FACTOR=32
+		#pragma HLS INLINE
+        #pragma HLS ARRAY_PARTITION variable=entries complete 
 
         for (bop_rr_index_loop_t i = 0; i < BOP_RR_SIZE; i++) {
             #pragma HLS UNROLL
