@@ -2,7 +2,7 @@
 
 
 constexpr unsigned bitsNeeded(unsigned n) {
-	return n <= 1 ? 0 : 1 + bitsNeeded((n + 1) / 2);
+	return n <= 1 ? 1 : 1 + bitsNeeded((n + 1) / 2);
 }
 
 template<typename data_t, unsigned N>
