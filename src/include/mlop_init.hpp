@@ -18,17 +18,10 @@
 // Structure: scores[degree][offset]
 // Each score tracks how many times an offset predicted a cache hit
 //
+template<typename mlop_score_t>
 struct MLOPOffsetScoresMatrix {
     mlop_score_t scores[MLOP_PF_DEGREE][MLOP_NUM_OFFSETS];
-
-    // Constructor for constexpr initialization
-    constexpr MLOPOffsetScoresMatrix() {
-        for (int d = 0; d < MLOP_PF_DEGREE; d++) {
-            for (int o = 0; o < MLOP_NUM_OFFSETS; o++) {
-                scores[d][o] = 0;
-            }
-        }
-    }
+    // Eliminado: MLOPOffsetScoresMatrix(){};
 };
 
 // ============================================================================
@@ -37,19 +30,11 @@ struct MLOPOffsetScoresMatrix {
 // Stores the best offsets selected after each learning round
 // Structure: offsets[degree][index], with counts[degree] tracking how many per degree
 //
+template<typename mlop_offset_t>
 struct MLOPBestOffsetsMatrix {
     mlop_offset_t offsets[MLOP_PF_DEGREE][MLOP_NUM_OFFSETS];
     uint8_t counts[MLOP_PF_DEGREE];
-
-    // Constructor for constexpr initialization
-    constexpr MLOPBestOffsetsMatrix() {
-        for (int d = 0; d < MLOP_PF_DEGREE; d++) {
-            counts[d] = 0;
-            for (int o = 0; o < MLOP_NUM_OFFSETS; o++) {
-                offsets[d][o] = 0;
-            }
-        }
-    }
+    // Eliminado: MLOPBestOffsetsMatrix(){};
 };
 
 // ============================================================================
@@ -57,15 +42,10 @@ struct MLOPBestOffsetsMatrix {
 // ============================================================================
 // Stores the prefetch fill level (L1, L2, LLC) for each degree
 //
+template<typename level_t>
 struct MLOPPrefetchLevelMatrix {
-    uint8_t levels[MLOP_PF_DEGREE];
-
-    // Constructor for constexpr initialization
-    constexpr MLOPPrefetchLevelMatrix() {
-        for (int d = 0; d < MLOP_PF_DEGREE; d++) {
-            levels[d] = 0;
-        }
-    }
+	level_t levels[MLOP_PF_DEGREE];
+    // Eliminado: MLOPPrefetchLevelMatrix(){};
 };
 
 // ============================================================================
@@ -73,13 +53,11 @@ struct MLOPPrefetchLevelMatrix {
 // ============================================================================
 // Tracks progress within current learning round
 //
+template<typename mlop_counter_t>
 struct MLOPRoundTrackingMatrix {
     mlop_counter_t update_count;    // Counts accesses in current round
     mlop_counter_t round_count;     // Total completed rounds
-
-    // Constructor for constexpr initialization
-    constexpr MLOPRoundTrackingMatrix() : update_count(0), round_count(0) {
-    }
+    // Eliminado: MLOPRoundTrackingMatrix(){};
 };
 
 // ============================================================================
@@ -89,17 +67,11 @@ struct MLOPRoundTrackingMatrix {
 // - access_map: State (INIT, ACCESS, PREFETCH) for each block
 // - prefetch_map: Fill level for prefetched blocks
 //
+template<typename mlop_state_t>
 struct MLOPAccessMapEntry {
     mlop_state_t access_map[MLOP_BLOCKS_IN_ZONE];
     uint8_t prefetch_map[MLOP_BLOCKS_IN_ZONE];
-
-    // Constructor for constexpr initialization
-    constexpr MLOPAccessMapEntry() {
-        for (int i = 0; i < MLOP_BLOCKS_IN_ZONE; i++) {
-            access_map[i] = MLOP_STATE_INIT;
-            prefetch_map[i] = 0;
-        }
-    }
+    // Eliminado: MLOPAccessMapEntry(){};
 };
 
 // ============================================================================
@@ -108,19 +80,12 @@ struct MLOPAccessMapEntry {
 // Stores all zone entries for the access map table
 // Each entry tracks block states within its zone
 //
+template<typename mlop_state_t>
 struct MLOPAccessMapTable {
-    MLOPAccessMapEntry entries[MLOP_AMT_SIZE];
+    MLOPAccessMapEntry<mlop_state_t> entries[MLOP_AMT_SIZE];
     uint8_t valid[MLOP_AMT_SIZE];
     uint32_t lru[MLOP_AMT_SIZE];
-
-    // Constructor for constexpr initialization
-    constexpr MLOPAccessMapTable() {
-        for (int i = 0; i < MLOP_AMT_SIZE; i++) {
-            valid[i] = 0;
-            lru[i] = 0;
-            entries[i] = MLOPAccessMapEntry();
-        }
-    }
+    // Eliminado: MLOPAccessMapTable(){};
 };
 
 // ============================================================================
@@ -130,46 +95,69 @@ struct MLOPAccessMapTable {
 // ========================================================================
 // initMLOPOffsetScores: Create initial offset scores matrix
 // ========================================================================
-inline constexpr MLOPOffsetScoresMatrix initMLOPOffsetScores() {
-    return MLOPOffsetScoresMatrix();
+template<typename mlop_score_t>
+constexpr MLOPOffsetScoresMatrix<mlop_score_t> initMLOPOffsetScores() {
+    MLOPOffsetScoresMatrix<mlop_score_t> res;
+    for (int d = 0; d < MLOP_PF_DEGREE; d++) {
+        for (int o = 0; o < MLOP_NUM_OFFSETS; o++) {
+            res.scores[d][o] = 0;
+        }
+    }
+    return res;
 }
 
 // ========================================================================
 // initMLOPBestOffsets: Create initial best offsets matrix
 // ========================================================================
-inline constexpr MLOPBestOffsetsMatrix initMLOPBestOffsets() {
-    return MLOPBestOffsetsMatrix();
+template<typename mlop_offset_t>
+constexpr MLOPBestOffsetsMatrix<mlop_offset_t> initMLOPBestOffsets() {
+    MLOPBestOffsetsMatrix<mlop_offset_t> res;
+    for (int d = 0; d < MLOP_PF_DEGREE; d++) {
+        res.counts[d] = 0;
+        for (int o = 0; o < MLOP_NUM_OFFSETS; o++) {
+            res.offsets[d][o] = 0;
+        }
+    }
+    return res;
 }
 
 // ========================================================================
 // initMLOPPrefetchLevels: Create initial prefetch levels matrix
 // ========================================================================
-inline constexpr MLOPPrefetchLevelMatrix initMLOPPrefetchLevels() {
-    return MLOPPrefetchLevelMatrix();
+template<typename level_t>
+inline constexpr MLOPPrefetchLevelMatrix<level_t> initMLOPPrefetchLevels() {
+    MLOPPrefetchLevelMatrix<level_t> res;
+    for (int d = 0; d < MLOP_PF_DEGREE; d++) {
+        res.levels[d] = 0;
+    }
+    return res;
 }
 
 // ========================================================================
 // initMLOPRoundTracking: Create initial round tracking
 // ========================================================================
-inline constexpr MLOPRoundTrackingMatrix initMLOPRoundTracking() {
-    return MLOPRoundTrackingMatrix();
+template<typename mlop_counter_t>
+constexpr MLOPRoundTrackingMatrix<mlop_counter_t> initMLOPRoundTracking() {
+    MLOPRoundTrackingMatrix<mlop_counter_t> res;
+    res.update_count = 0;
+    res.round_count = 0;
+    return res;
 }
 
 // ========================================================================
 // initMLOPAccessMapTable: Create initial access map table
 // ========================================================================
-inline constexpr MLOPAccessMapTable initMLOPAccessMapTable() {
-    return MLOPAccessMapTable();
+template<typename mlop_state_t>
+constexpr MLOPAccessMapTable<mlop_state_t> initMLOPAccessMapTable() {
+    MLOPAccessMapTable<mlop_state_t> res;
+    for (int i = 0; i < MLOP_AMT_SIZE; i++) {
+        res.valid[i] = 0;
+        res.lru[i] = 0;
+        for (int j = 0; j < MLOP_BLOCKS_IN_ZONE; j++) {
+            res.entries[i].access_map[j] = MLOP_STATE_INIT;
+            res.entries[i].prefetch_map[j] = 0;
+        }
+    }
+    return res;
 }
-
-// ============================================================================
-// Threshold Pre-computation (Constexpr Static)
-// ============================================================================
-
-// Pre-computed thresholds (computed at compile-time)
-constexpr mlop_threshold_t MLOP_L1D_THRESHOLD = (mlop_threshold_t)(MLOP_L1D_THRESH * MLOP_NUM_UPDATES);
-constexpr mlop_threshold_t MLOP_L2C_THRESHOLD = (mlop_threshold_t)(MLOP_L2C_THRESH * MLOP_NUM_UPDATES);
-constexpr mlop_threshold_t MLOP_LLC_THRESHOLD = (mlop_threshold_t)(MLOP_LLC_THRESH * MLOP_NUM_UPDATES);
-
-
 
