@@ -62,14 +62,14 @@ void operateSVM(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[M
 
 	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices[NUM_CLASSES];
 	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices_copy[NUM_CLASSES];
-	
+
 	static svm_weight_t intercepts[NUM_CLASSES];
 	static svm_weight_t intercepts_copy[NUM_CLASSES];
 
 	static SVM<svm_weight_t, class_t, svm_distance_t, NUM_CLASSES, NUM_CLASSES_INCLUDING_NULL> svm;
 
 	svm.recursivelyPredictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target, output, MAX_PREFETCHING_DEGREE);
-	
+
 }
 
 void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t output[MAX_PREFETCHING_DEGREE],
@@ -82,7 +82,7 @@ void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t o
 
 	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices[NUM_CLASSES];
 	static WeightMatrix<svm_weight_t, NUM_CLASSES_INCLUDING_NULL> weight_matrices_copy[NUM_CLASSES];
-	
+
 	static svm_weight_t intercepts[NUM_CLASSES];
 	static svm_weight_t intercepts_copy[NUM_CLASSES];
 
@@ -90,7 +90,7 @@ void operateSVMWithNop(class_t input[SEQUENCE_LENGTH], class_t target, class_t o
 
 	if(!nop)
 		svm.recursivelyPredictAndFit(weight_matrices, weight_matrices_copy, intercepts, intercepts_copy, input, target, output, MAX_PREFETCHING_DEGREE);
-	
+
 }
 
 void prefetchWithGASP(address_t instructionPointer, block_address_t memoryAddress,
@@ -120,10 +120,10 @@ void prefetchWithSPP(block_address_t memoryAddress,
 	spp_pt_delta_t prefetch_deltas[1];
 	spp_pt_confidence_t prefetch_confidences[1];
 	uint32_t num_prefetches = 0;
-	
+
 	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
 	spp.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
-	
+
 	if (num_prefetches > 0) {
 		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
 		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
@@ -132,19 +132,20 @@ void prefetchWithSPP(block_address_t memoryAddress,
 	}
 }
 
+
 void prefetchWithBOP(block_address_t memoryAddress,
 		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
-	BOPrefetcher<> bop = BOPrefetcher<>();
+	static BOPrefetcher<> bop = BOPrefetcher<>();
 	bop_offset_t prefetch_deltas[1];
 	bop_score_t prefetch_confidences[1];
 	uint32_t num_prefetches = 0;
-	
+
 	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
 	bop.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
-	
+
 	if (num_prefetches > 0) {
 		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
 		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
@@ -158,14 +159,14 @@ void prefetchWithMLOP(block_address_t memoryAddress,
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
-	MLOPrefetcher<> mlop = MLOPrefetcher<>();
+	static MLOPrefetcher<> mlop = MLOPrefetcher<>();
 	mlop_offset_t prefetch_deltas[1];
 	mlop_score_t prefetch_confidences[1];
 	uint32_t num_prefetches = 0;
-	
+
 	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
 	mlop.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
-	
+
 	if (num_prefetches > 0) {
 		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
 		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
@@ -173,6 +174,7 @@ void prefetchWithMLOP(block_address_t memoryAddress,
 		addressesToPrefetch[0] = 0;
 	}
 }
+
 
 void SGASPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
@@ -296,7 +298,7 @@ void RecursiveSGASPWithAXI(address_t inputAddress,
 	GASP<SGASP_TYPES> gasp = GASP<SGASP_TYPES>();
 	/*
 	PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t> prefetchBuffer = PrefetchBuffer<block_address_t, pb_index_t, pb_tag_t>();
-	static PrefetchBufferEntriesMatrix<pb_tag_t> prefetchBufferEntriesMatrix = 
+	static PrefetchBufferEntriesMatrix<pb_tag_t> prefetchBufferEntriesMatrix =
 		PrefetchBufferEntriesMatrix<pb_tag_t>();
 	#pragma HLS ARRAY_PARTITION variable=prefetchBufferEntriesMatrix.entries complete
 	#pragma HLS DEPENDENCE array false variable=prefetchBufferEntriesMatrix.entries
@@ -499,7 +501,7 @@ void prefetchWithAXIBurst(hls::burst_maxi<axi_data_t>& readPort,
 	#pragma HLS PIPELINE
 	if(totalBurstLength != 0) {
 		readPort.read_request(prefetchAddress, totalBurstLength);
-			
+
 		for(burst_length_in_words_t i = 0; i < totalBurstLength; i++){
 	#pragma HLS LOOP_TRIPCOUNT min=0 max=64
 	#pragma HLS DEPENDENCE dependent=false type=inter variable=prefetchedData
@@ -660,7 +662,7 @@ void prefetchWithBSGASPWithDataflowWithAXI(address_t inputAddress,
 		index, way, nop, isInputBufferHit);
 
 	bgasp.phase2(regionAddress, memoryBlockAddress, blockBurstLength,
-		predictedAddress, predictedBurstLength, 
+		predictedAddress, predictedBurstLength,
 		prefetchAddress_, prefetchBurstLength,
 		index, way, nop, isInputBufferHit);
 
@@ -746,7 +748,7 @@ void prefetchWithBSGASPWithNop(address_t inputAddress,
 		prefetchAddress = 0;
 		totalBurstLength = 0;
 	}
-	
+
 }
 
 void prefetchWithBSGASPWithNopWithDataflow(address_t inputAddress,
@@ -838,7 +840,7 @@ void prefetchWithBSGASPWithNopWithDataflowForTesting(block_address_t memoryBlock
 	else{
 		prefetchAddress = 0;
 		outputBlockBurstLength = 1;
-	}	
+	}
 }
 
 
