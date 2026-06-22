@@ -144,8 +144,8 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
             pattern_learner.select_best_offsets_indices(best_indices);
 
             // Map indices to actual offset values
-            #pragma HLS UNROLL
             for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
+#pragma HLS UNROLL
                 pattern_learner.best_offsets[i] = candidates.values[best_indices[i]];
             }
 

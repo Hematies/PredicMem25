@@ -76,8 +76,8 @@ public:
         spp_ghr_way_index_t match_way = SPP_MAX_GHR_ENTRY;
 
         // Stage 1: Parallel Search (No early returns allowed!)
-        #pragma HLS UNROLL
         for (spp_ghr_way_index_t i = 0; i < SPP_MAX_GHR_ENTRY; i++) {
+#pragma HLS UNROLL
             // Check if offset matches
             if (valid[i] && (offset[i] == pf_offset)) {
                 match_way = i;

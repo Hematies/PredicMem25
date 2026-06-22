@@ -27,7 +27,7 @@
 
 // HLS-specific buffer sizes
 #define BOP_PREF_BUFFER_SIZE 256    // Prefetch buffer depth
-#define BOP_PREF_DEGREE 4           // Prefetches issued per cycle
+#define BOP_PREF_DEGREE 1           // Prefetches issued per cycle
 
 // Score tracking parameters
 #define BOP_SCORE_BIT 6             // Bit width for score counters

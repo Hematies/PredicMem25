@@ -72,8 +72,8 @@ public:
         spp_ghr_valid_t st_hit = 0;
 
         // Stage 1: Search for matching tag
-        #pragma HLS UNROLL
         for (uint32_t way = 0; way < SPP_ST_WAY; way++) {
+#pragma HLS UNROLL
             if (valid[set][way] && (tag[set][way] == partial_page)) {
                 match = way;
                 break;
@@ -101,8 +101,8 @@ public:
             match = SPP_ST_WAY;
             
             // First, try to find invalid entry
-            #pragma HLS UNROLL
             for (uint32_t way = 0; way < SPP_ST_WAY; way++) {
+#pragma HLS UNROLL
                 if (!valid[set][way]) {
                     match = way;
                     break;
@@ -111,8 +111,8 @@ public:
 
             // If no invalid entry, find LRU victim
             if (match == SPP_ST_WAY) {
-                #pragma HLS UNROLL
                 for (uint32_t way = 0; way < SPP_ST_WAY; way++) {
+#pragma HLS UNROLL
                     if (lru[set][way] == (SPP_ST_WAY - 1)) {
                         match = way;
                         break;
@@ -134,8 +134,8 @@ public:
 
         // Stage 4: Update LRU
         if (match < SPP_ST_WAY) {
-            #pragma HLS UNROLL
             for (uint32_t way = 0; way < SPP_ST_WAY; way++) {
+#pragma HLS UNROLL
                 if (lru[set][way] < lru[set][match]) {
                     lru[set][way]++;
                 }

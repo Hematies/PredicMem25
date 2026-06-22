@@ -24,7 +24,7 @@
 
 // Prefetching configuration
 #define MLOP_SINGLE_PREFETCH 1         // Single prefetch per cycle for HLS efficiency (1=yes, 0=multi-prefetch)
-#define MLOP_PF_DEGREE 16              // Number of prefetch degrees (lookahead levels)
+#define MLOP_PF_DEGREE 1              // Number of prefetch degrees (lookahead levels)
 #define MLOP_NUM_UPDATES 500           // Accesses per learning round
 #define MLOP_L1D_THRESH 2.0            // L1D score threshold (ratio to NUM_UPDATES)
 #define MLOP_L2C_THRESH 0.75           // L2C score threshold
@@ -102,4 +102,13 @@
 #define MLOP_DEGREE_BIT 4              // Degree bitwidth (log2(16))
 #define MLOP_COUNTER_BIT 16            // General counter bitwidth
 #define MLOP_STATE_BIT 2               // State bitwidth (3 states = 2 bits)
+
+// ============================================================================
+// Threshold Pre-computation (Constexpr Static)
+// ============================================================================
+
+// Pre-computed thresholds (computed at compile-time)
+#define MLOP_L1D_THRESHOLD (mlop_threshold_t)(MLOP_L1D_THRESH * MLOP_NUM_UPDATES)
+#define MLOP_L2C_THRESHOLD (mlop_threshold_t)(MLOP_L2C_THRESH * MLOP_NUM_UPDATES)
+#define MLOP_LLC_THRESHOLD (mlop_threshold_t)(MLOP_LLC_THRESH * MLOP_NUM_UPDATES)
 

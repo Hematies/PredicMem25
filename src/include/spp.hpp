@@ -124,8 +124,8 @@ public:
         spp_pt_way_index_t best_way = SPP_PT_WAY;
 
         // Find highest confidence delta in pattern table
-        #pragma HLS UNROLL
         for (spp_pt_way_index_t way = 0; way < SPP_PT_WAY; way++) {
+#pragma HLS UNROLL
             pt_confidence_t local_conf = (pattern_table.c_sig[pt_set] > 0) ?
                 (pt_confidence_t)(((pt_confidence_t)100 * pattern_table.c_delta[pt_set][way]) / pattern_table.c_sig[pt_set]) : (pt_confidence_t)0;
 
@@ -166,7 +166,7 @@ public:
                     prefetch_deltas[0] = best_delta;
                     prefetch_confidences[0] = best_conf;
 
-                    num_prefetches = 1;
+                    num_prefetches = 0;
 
                     if (request_type == SPP_L2_PREFETCH) {
                         num_prefetches = 1;

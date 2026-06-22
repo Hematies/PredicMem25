@@ -50,8 +50,8 @@ public:
         pt_confidence_t min_counter = SPP_C_DELTA_MAX + 1;
 
         // Search for matching delta entry
-        #pragma HLS UNROLL
         for (uint32_t way = 0; way < SPP_PT_WAY; way++) {
+#pragma HLS UNROLL
             if (delta[set][way] == curr_delta) {
                 match = way;
                 break;
@@ -80,8 +80,8 @@ public:
             c_sig[set]++;
         } else {
             // Half all confidence values when saturated
-            #pragma HLS UNROLL
             for (uint32_t way = 0; way < SPP_PT_WAY; way++) {
+#pragma HLS UNROLL
                 c_delta[set][way] >>= 1;
             }
             c_sig[set] >>= 1;
