@@ -32,18 +32,28 @@ public:
 
     // Hash function
     static uint64_t hash_cache_line(uint64_t cache_line) {
-        uint64_t key = cache_line;
-        key += (key << 12);
-        key ^= (key >> 22);
-        key += (key << 4);
-        key ^= (key >> 9);
-        key += (key << 10);
-        key ^= (key >> 2);
-        key += (key << 7);
-        key ^= (key >> 12);
-        key = (key >> 3) * 2654435761ULL;
-        return key;
+#pragma HLS INLINE
+            // Las primeras líneas de tu hash actual...
+    	uint64_t key = cache_line;
+		key += (key << 12);
+		key ^= (key >> 22);
+		key += (key << 4);
+		key ^= (key >> 9);
+		key += (key << 10);
+		key ^= (key >> 2);
+		key += (key << 7);
+		key ^= (key >> 12);
+
+		// --- SUSTITUCIÓN DE LA MULTIPLICACIÓN ---
+		// key = (key >> 3) * 2654435761ULL;
+		// La constante 2654435761 (aprox 0x9E3779B1) se puede descomponer:
+		key = (key >> 3);
+		key = (key << 16) - key + (key << 8) + (key << 4) + (key << 1);
+
+		return key;
     }
+
+
 
     // Check filter and update counters
     // Returns: true if prefetch should proceed, false to skip

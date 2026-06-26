@@ -28,17 +28,25 @@ public:
 
     // Hash function (same as used in ST)
     static uint64_t hash_signature(uint64_t sig) {
-        uint64_t key = sig;
-        key += (key << 12);
-        key ^= (key >> 22);
-        key += (key << 4);
-        key ^= (key >> 9);
-        key += (key << 10);
-        key ^= (key >> 2);
-        key += (key << 7);
-        key ^= (key >> 12);
-        key = (key >> 3) * 2654435761ULL;
-        return key;
+#pragma HLS INLINE
+		// Las primeras líneas de tu hash actual...
+    	uint64_t key = sig;
+		key += (key << 12);
+		key ^= (key >> 22);
+		key += (key << 4);
+		key ^= (key >> 9);
+		key += (key << 10);
+		key ^= (key >> 2);
+		key += (key << 7);
+		key ^= (key >> 12);
+
+		// --- SUSTITUCIÓN DE LA MULTIPLICACIÓN ---
+		// key = (key >> 3) * 2654435761ULL;
+		// La constante 2654435761 (aprox 0x9E3779B1) se puede descomponer:
+		key = (key >> 3);
+		key = (key << 16) - key + (key << 8) + (key << 4) + (key << 1);
+
+		return key;
     }
 
     // Update pattern table with (signature, delta) pair
@@ -48,13 +56,17 @@ public:
         spp_pt_way_index_t match = SPP_PT_WAY;
         spp_pt_way_index_t victim_way = SPP_PT_WAY;
         pt_confidence_t min_counter = SPP_C_DELTA_MAX + 1;
+#pragma HLS INLINE
+// #pragma HLS ARRAY_PARTITION variable=delta complete dim=2
+// #pragma HLS ARRAY_PARTITION variable=c_delta complete dim=2
+// #pragma HLS ARRAY_PARTITION variable=c_sig complete
 
         // Search for matching delta entry
         for (uint32_t way = 0; way < SPP_PT_WAY; way++) {
 #pragma HLS UNROLL
             if (delta[set][way] == curr_delta) {
                 match = way;
-                break;
+
             }
             // Track minimum confidence for replacement
             if (c_delta[set][way] < min_counter) {
@@ -99,6 +111,12 @@ public:
                      uint32_t& pf_q_tail,
                      uint32_t& depth,
                      spp_accuracy_t global_accuracy) {
+#pragma HLS INLINE
+
+// #pragma HLS ARRAY_PARTITION variable=delta complete dim=2
+// #pragma HLS ARRAY_PARTITION variable=c_delta complete dim=2
+// #pragma HLS ARRAY_PARTITION variable=c_sig complete
+
         spp_pt_set_index_t set = hash_signature(curr_sig) % SPP_PT_SET;
         pt_confidence_t local_conf = 0;
         pt_confidence_t pf_conf = 0;

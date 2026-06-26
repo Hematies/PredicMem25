@@ -116,7 +116,7 @@ void prefetchWithSPP(block_address_t memoryAddress,
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
-	SPP<> spp = SPP<>();
+	static SPP<> spp = SPP<>();
 	spp_pt_delta_t prefetch_deltas[1];
 	spp_pt_confidence_t prefetch_confidences[1];
 	uint32_t num_prefetches = 0;
@@ -464,7 +464,7 @@ void SPPWithAXI(address_t inputAddress,
 
 void BOPWithAXI(address_t inputAddress,
 		axi_data_t *readPort,
-		axi_data_t& prefetchedData,
+		axi_data_t *prefetchedData,
 		bool nop
 		){
 #pragma HLS INTERFACE mode=ap_ctrl_none port=return
@@ -508,7 +508,7 @@ void BOPWithAXI(address_t inputAddress,
 		}
 		*/
 		if(performPrefetch)
-			prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+			*prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
 	}
 
 }

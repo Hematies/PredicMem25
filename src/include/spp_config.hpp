@@ -13,8 +13,8 @@
 #define SPP_GHR_ON 1
 
 // Signature table parameters
-#define SPP_ST_SET 1
-#define SPP_ST_WAY 256
+#define SPP_ST_SET 256
+#define SPP_ST_WAY 4
 #define SPP_ST_TAG_BIT 16
 #define SPP_ST_TAG_MASK ((1 << SPP_ST_TAG_BIT) - 1)
 #define SPP_SIG_SHIFT 3

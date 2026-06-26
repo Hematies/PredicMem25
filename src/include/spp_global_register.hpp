@@ -60,16 +60,17 @@ public:
     // Update or create a GHR entry for cross-page prefetch
     void update_entry(st_sig_t pf_sig, st_confidence_t pf_confidence, 
                       spp_ghr_offset_t pf_offset, st_delta_t pf_delta) {
+#pragma HLS INLINE
 
-    	    #pragma HLS ARRAY_PARTITION variable=valid complete
+    	    // // #pragma HLS ARRAY_PARTITION variable=valid complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=sig complete
+    	    // #pragma HLS ARRAY_PARTITION variable=sig complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=confidence complete
+    	    // #pragma HLS ARRAY_PARTITION variable=confidence complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=offset complete
+    	    // #pragma HLS ARRAY_PARTITION variable=offset complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=delta complete
+    	    // #pragma HLS ARRAY_PARTITION variable=delta complete
 
         st_confidence_t min_conf = 100;
         spp_ghr_way_index_t victim_way = SPP_MAX_GHR_ENTRY;
@@ -109,15 +110,16 @@ public:
     // Check if there's a matching GHR entry for given page offset
     // Returns way index if found, SPP_MAX_GHR_ENTRY if not found
     spp_ghr_way_index_t check_entry(spp_ghr_offset_t page_offset) {
-    	    #pragma HLS ARRAY_PARTITION variable=valid complete
+#pragma HLS INLINE
+    	    // #pragma HLS ARRAY_PARTITION variable=valid complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=sig complete
+    	    // #pragma HLS ARRAY_PARTITION variable=sig complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=confidence complete
+    	    // #pragma HLS ARRAY_PARTITION variable=confidence complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=offset complete
+    	    // #pragma HLS ARRAY_PARTITION variable=offset complete
 
-    	    #pragma HLS ARRAY_PARTITION variable=delta complete
+    	    // #pragma HLS ARRAY_PARTITION variable=delta complete
 
         st_confidence_t max_conf = 0;
         spp_ghr_way_index_t max_conf_way = SPP_MAX_GHR_ENTRY;

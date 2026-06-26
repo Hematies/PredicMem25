@@ -80,7 +80,7 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
                              bop_offset_t* prefetch_deltas,
                              score_t* prefetch_confidences,
                              uint32_t& num_prefetches) {
-        #pragma HLS INLINE
+        #pragma HLS PIPELINE
 
         // ====================================================================
         // HW Object Array Partitioning

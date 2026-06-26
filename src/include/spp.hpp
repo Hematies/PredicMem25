@@ -54,24 +54,54 @@ public:
     //   - num_prefetches: 0 or 1 (prefetch valid or not)
 
     void process_cache_access(address_t addr,
-                             pt_delta_t* prefetch_deltas,
-                             pt_confidence_t* prefetch_confidences,
-                             uint32_t& num_prefetches) {
-        #pragma HLS PIPELINE II=1
+							 pt_delta_t* prefetch_deltas,
+							 pt_confidence_t* prefetch_confidences,
+							 uint32_t& num_prefetches) {
+		#pragma HLS PIPELINE II=1
 
-        // ====================================================================
-        // Static Initialization (Constexpr)
-        // ====================================================================
-        // Initialize SPP structures once using constexpr functions with templates
-        static const auto st_matrix = initSPPSignatureTable<spp_ghr_valid_t, st_tag_t, spp_page_offset_t, st_sig_t, spp_st_lru_t>();
-        #pragma HLS ARRAY_RESHAPE variable=st_matrix.sig complete
-        #pragma HLS ARRAY_RESHAPE variable=st_matrix.tag complete
-        
-        static const auto pt_matrix = initSPPPatternTable<pt_delta_t, pt_confidence_t>();
-        #pragma HLS ARRAY_PARTITION variable=pt_matrix.delta complete dim=2
-        
-        static const auto filter_matrix = initSPPPrefetchFilter<filter_tag_t, spp_ghr_valid_t>();
-        #pragma HLS ARRAY_PARTITION variable=filter_matrix.remainder_tag complete
+		// ====================================================================
+		// Partitioning Pragmas
+		// ====================================================================
+		// 1. Signature Table (Particiones existentes)
+		#pragma HLS ARRAY_PARTITION variable=signature_table.valid complete dim=2
+		#pragma HLS ARRAY_PARTITION variable=signature_table.tag complete dim=2
+		#pragma HLS ARRAY_PARTITION variable=signature_table.last_offset complete dim=2
+		#pragma HLS ARRAY_PARTITION variable=signature_table.sig complete dim=2
+		#pragma HLS ARRAY_PARTITION variable=signature_table.lru complete dim=2
+
+		// ====================================================================
+		// DEPENDENCE Pragmas (La Solución)
+		// ====================================================================
+		// Le dice al planificador que ignore las colisiones Read-After-Write
+		// entre ciclos consecutivos para el mismo arreglo BRAM.
+		#pragma HLS DEPENDENCE variable=signature_table.valid type=inter false
+		#pragma HLS DEPENDENCE variable=signature_table.tag type=inter false
+		#pragma HLS DEPENDENCE variable=signature_table.last_offset type=inter false
+		#pragma HLS DEPENDENCE variable=signature_table.sig type=inter false
+		#pragma HLS DEPENDENCE variable=signature_table.lru type=inter false
+
+		// (Haz lo mismo para pattern_table y global_register si te lanzan el mismo warning)
+		#pragma HLS DEPENDENCE variable=pattern_table.delta type=inter false
+#pragma HLS ARRAY_PARTITION variable=pattern_table.c_delta complete dim=2
+#pragma HLS BIND_STORAGE variable=pattern_table.c_delta type=RAM_T2P
+		#pragma HLS DEPENDENCE variable=pattern_table.c_sig type=inter false
+
+#pragma HLS DEPENDENCE variable=pattern_table.c_delta type=inter false
+    #pragma HLS DEPENDENCE variable=pattern_table.delta type=inter false
+    #pragma HLS DEPENDENCE variable=global_register.confidence type=inter false
+    #pragma HLS DEPENDENCE variable=global_register.valid type=inter false
+
+    	// Fuerza el uso de RAM de 2 puertos (True Dual Port)
+    	#pragma HLS BIND_STORAGE variable=pattern_table.delta type=RAM_T2P
+    	#pragma HLS BIND_STORAGE variable=pattern_table.c_delta type=RAM_T2P
+    	#pragma HLS BIND_STORAGE variable=global_register.confidence type=RAM_T2P
+    	#pragma HLS BIND_STORAGE variable=global_register.valid type=RAM_T2P
+    	#pragma HLS BIND_STORAGE variable=global_register.offset type=RAM_T2P
+
+            // ... Continúa el resto de tu código ...
+
+		// ELIMINA la inicialización de "st_matrix", "pt_matrix", etc. ¡Ya no se usan!
+		// ... (Tu código para extraer page y offset empieza aquí)
         
         // static const auto ghr_storage = initSPPGlobalRegister<spp_ghr_counter_t, spp_accuracy_t, spp_ghr_valid_t, st_sig_t, st_confidence_t, spp_ghr_offset_t, pt_delta_t>();
         
@@ -189,6 +219,7 @@ public:
                 #endif
             }
         }
+
     }
 
     // ========================================================================
