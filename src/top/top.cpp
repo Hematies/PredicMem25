@@ -467,7 +467,7 @@ void SPPWithAXI(address_t inputAddress,
 
 void BOPWithAXI(address_t inputAddress,
 		volatile axi_data_t *readPort,
-		volatile axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE],
+		axi_data_t& prefetchedData,
 	    // volatile bool *prefetchValid,   // new output valid
 		bool nop
 		){
@@ -497,14 +497,9 @@ void BOPWithAXI(address_t inputAddress,
 
 		bop.process_cache_access(inputAddress, prefetch_deltas, prefetch_confidences, num_prefetches);
 
-		// for(int i = 0; i < BOP_PREF_DEGREE; i++){
 		for(int i = 0; i < num_prefetches; i++){
-			// if (num_prefetches > i) {
-				block_address_t prefetch_offset = (block_address_t)prefetch_deltas[i];
-				blockAddressesToPrefetch[i] = memoryBlockAddress_ + prefetch_offset;
-			// } else {
-			//	blockAddressesToPrefetch[i] = 0;
-			// }
+			block_address_t prefetch_offset = (block_address_t)prefetch_deltas[i];
+			blockAddressesToPrefetch[i] = memoryBlockAddress_ + prefetch_offset;
 
 			address_t addressToPrefetch = (((address_t)blockAddressesToPrefetch[i]) << BLOCK_SIZE_LOG2);
 
@@ -512,15 +507,8 @@ void BOPWithAXI(address_t inputAddress,
 					(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
 					(addressToPrefetch != 0);
 
-			/*
 			if(performPrefetch){
-				prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
-			}
-			*/
-			// *prefetchValid = true;
-
-			if(performPrefetch){
-				prefetchedData[i] = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+				prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
 	        	// *prefetchValid = true;
 			}
 		}
