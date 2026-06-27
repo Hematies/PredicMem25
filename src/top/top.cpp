@@ -134,23 +134,26 @@ void prefetchWithSPP(block_address_t memoryAddress,
 
 
 void prefetchWithBOP(block_address_t memoryAddress,
-		block_address_t addressesToPrefetch[MAX_PREFETCHING_DEGREE]
+		block_address_t addressesToPrefetch[BOP_PREF_DEGREE]
 		){
 #pragma HLS INTERFACE ap_fifo port=addressesToPrefetch
 #pragma HLS PIPELINE
 	static BOPrefetcher<> bop = BOPrefetcher<>();
-	bop_offset_t prefetch_deltas[1];
-	bop_score_t prefetch_confidences[1];
+	bop_offset_t prefetch_deltas[BOP_PREF_DEGREE];
+	bop_score_t prefetch_confidences[BOP_PREF_DEGREE];
 	uint32_t num_prefetches = 0;
 
 	address_t full_addr = ((address_t)memoryAddress) << BLOCK_SIZE_LOG2;
 	bop.process_cache_access(full_addr, prefetch_deltas, prefetch_confidences, num_prefetches);
 
-	if (num_prefetches > 0) {
-		block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
-		addressesToPrefetch[0] = memoryAddress + prefetch_offset;
-	} else {
-		addressesToPrefetch[0] = 0;
+	for(int i = 0; i < BOP_PREF_DEGREE; i++){
+#pragma HLS UNROLL
+		if (num_prefetches > i) {
+			block_address_t prefetch_offset = (block_address_t)prefetch_deltas[i];
+			addressesToPrefetch[i] = memoryAddress + prefetch_offset;
+		} else {
+			addressesToPrefetch[i] = 0;
+		}
 	}
 }
 
@@ -463,14 +466,19 @@ void SPPWithAXI(address_t inputAddress,
 }
 
 void BOPWithAXI(address_t inputAddress,
-		axi_data_t *readPort,
-		axi_data_t *prefetchedData,
+		volatile axi_data_t *readPort,
+		volatile axi_data_t prefetchedData[MAX_PREFETCHING_DEGREE],
+	    // volatile bool *prefetchValid,   // new output valid
 		bool nop
 		){
 #pragma HLS INTERFACE mode=ap_ctrl_none port=return
 #pragma HLS TOP name=BOP_IP_24_06
 // #pragma HLS INTERFACE mode=m_axi depth=32 max_read_burst_length=16 max_write_burst_length=16 num_read_outstanding=32 num_write_outstanding=32 port=readPort
 	#pragma HLS INTERFACE mode=m_axi depth=8 num_read_outstanding=8 port=readPort offset=off
+// #pragma HLS INTERFACE mode=ap_vld port=prefetchValid
+#pragma HLS INTERFACE mode=ap_vld port=prefetchedData
+#pragma HLS INTERFACE mode=ap_none port=inputAddress
+#pragma HLS INTERFACE mode=ap_none port=nop
 
 	#pragma HLS PIPELINE
 
@@ -481,34 +489,41 @@ void BOPWithAXI(address_t inputAddress,
 	address_t memoryBlockAddress_ = inputAddress >> BLOCK_SIZE_LOG2;
 
 	nop = nop || !(((address_t)inputAddress >= START_CACHEABLE_MEM_REGION) && ((address_t)inputAddress < END_CACHEABLE_MEM_REGION));
-
+	// *prefetchValid = false;
 	if(!nop){
-		bop_offset_t prefetch_deltas[1];
-		bop_score_t prefetch_confidences[1];
-		uint32_t num_prefetches = 0;
+		bop_offset_t prefetch_deltas[BOP_PREF_DEGREE];
+		bop_score_t prefetch_confidences[BOP_PREF_DEGREE];
+		uint32_t num_prefetches = BOP_PREF_DEGREE;
 
 		bop.process_cache_access(inputAddress, prefetch_deltas, prefetch_confidences, num_prefetches);
 
-		if (num_prefetches > 0) {
-			block_address_t prefetch_offset = (block_address_t)prefetch_deltas[0];
-			blockAddressesToPrefetch[0] = memoryBlockAddress_ + prefetch_offset;
-		} else {
-			blockAddressesToPrefetch[0] = 0;
+		// for(int i = 0; i < BOP_PREF_DEGREE; i++){
+		for(int i = 0; i < num_prefetches; i++){
+			// if (num_prefetches > i) {
+				block_address_t prefetch_offset = (block_address_t)prefetch_deltas[i];
+				blockAddressesToPrefetch[i] = memoryBlockAddress_ + prefetch_offset;
+			// } else {
+			//	blockAddressesToPrefetch[i] = 0;
+			// }
+
+			address_t addressToPrefetch = (((address_t)blockAddressesToPrefetch[i]) << BLOCK_SIZE_LOG2);
+
+			bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
+					(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
+					(addressToPrefetch != 0);
+
+			/*
+			if(performPrefetch){
+				prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
+			}
+			*/
+			// *prefetchValid = true;
+
+			if(performPrefetch){
+				prefetchedData[i] = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
+	        	// *prefetchValid = true;
+			}
 		}
-
-		address_t addressToPrefetch = (((address_t)blockAddressesToPrefetch[0]) << BLOCK_SIZE_LOG2);
-
-		bool performPrefetch = (addressToPrefetch >= START_CACHEABLE_MEM_REGION) &&
-				(addressToPrefetch < END_CACHEABLE_MEM_REGION) &&
-				(addressToPrefetch != 0);
-
-		/*
-		if(performPrefetch){
-			prefetchBuffer(prefetchBufferEntriesMatrix.entries, blockAddressesToPrefetch[0], performPrefetch);
-		}
-		*/
-		if(performPrefetch)
-			*prefetchedData = readPort[addressToPrefetch >> AXI_DATA_SIZE_BYTES_LOG2];
 	}
 
 }

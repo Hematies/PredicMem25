@@ -79,7 +79,7 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
     void process_cache_access(address_t addr,
                              bop_offset_t* prefetch_deltas,
                              score_t* prefetch_confidences,
-                             uint32_t& num_prefetches) {
+                             volatile uint32_t& num_prefetches) {
         #pragma HLS PIPELINE
 
         // ====================================================================
@@ -89,6 +89,9 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
         // the static initialization matrices, to prevent II violations during reset.
         #pragma HLS ARRAY_PARTITION variable=pattern_learner.scores complete
         #pragma HLS ARRAY_PARTITION variable=pattern_learner.best_offsets complete
+
+#pragma HLS ARRAY_PARTITION variable=prefetch_deltas complete
+#pragma HLS ARRAY_PARTITION variable=prefetch_confidences complete
 
         // ====================================================================
         // Static Initialization (Constexpr - Compile-time)
@@ -142,9 +145,11 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
             // Phase ends: select best offsets and reset scores
             candidate_index_t best_indices[BOP_TOP_N];
             pattern_learner.select_best_offsets_indices(best_indices);
+#pragma HLS ARRAY_PARTITION variable=pattern_learner.best_offsets complete
+#pragma HLS ARRAY_PARTITION variable=candidates.values complete
 
             // Map indices to actual offset values
-            for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
+            for (uint i = 0; i < BOP_PREF_DEGREE; i++) {
 #pragma HLS UNROLL
                 pattern_learner.best_offsets[i] = candidates.values[best_indices[i]];
             }
@@ -186,9 +191,8 @@ public: // <-- Asegurado public para poder aplicar pragmas a los miembros
         // ====================================================================
         // Issue up to BOP_TOP_N prefetches per cycle
         // This path is compiled-in when BOP_SINGLE_PREFETCH=0
-        #pragma HLS UNROLL FACTOR=2
-        for (bop_top_n_index_t i = 0; i < BOP_TOP_N; i++) {
-            #pragma HLS UNROLL
+        for (uint i = 0; i < BOP_PREF_DEGREE; i++) {
+#pragma HLS UNROLL
             if (i < pattern_learner.num_best_offsets && num_prefetches < BOP_PREF_DEGREE) {
                 bop_offset_t pf_offset = pattern_learner.best_offsets[i];
                 bop_offset_t final_offset = page_offset + pf_offset;

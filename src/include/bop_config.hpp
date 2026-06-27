@@ -12,7 +12,7 @@
 
 // BOP functional knobs
 #define BOP_ENABLE_PREF_BUFFER 0    // Disable prefetch buffer for simplicity
-#define BOP_SINGLE_PREFETCH 1       // Single prefetch per cycle for HLS efficiency
+#define BOP_SINGLE_PREFETCH 0       // Single prefetch per cycle for HLS efficiency
 
 // Recency Ring (RR) parameters
 #define BOP_RR_SIZE 256             // Size of recency ring buffer
@@ -22,12 +22,12 @@
 #define BOP_NUM_CANDIDATES 46       // Number of offset candidates to test
 #define BOP_MAX_ROUNDS 100          // Max accesses before phase ends
 #define BOP_MAX_SCORE 31            // Max score before phase ends
-#define BOP_TOP_N 1                 // Number of best offsets to keep (prefetch degree)
+#define BOP_TOP_N 4                 // Number of best offsets to keep (prefetch degree)
 #define BOP_CANDIDATE_WIDTH 8       // Bit width for candidate offset values
 
 // HLS-specific buffer sizes
 #define BOP_PREF_BUFFER_SIZE 256    // Prefetch buffer depth
-#define BOP_PREF_DEGREE 1           // Prefetches issued per cycle
+#define BOP_PREF_DEGREE 4           // Prefetches issued per cycle
 
 // Score tracking parameters
 #define BOP_SCORE_BIT 6             // Bit width for score counters
